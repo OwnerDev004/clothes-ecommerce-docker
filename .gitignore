@@ -1,0 +1,28 @@
+# Docker
+docker-compose.override.yml
+.env
+*.env.local
+!.env.example
+
+# Laravel
+/api/.env
+/api/storage/logs/*
+/api/public/storage
+/api/bootstrap/cache/*
+!/api/storage/logs/.gitkeep
+
+# Nuxt
+/web/.env
+/web/.nuxt
+/web/.output
+/web/node_modules
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
