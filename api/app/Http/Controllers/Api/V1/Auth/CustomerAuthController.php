@@ -36,11 +36,14 @@ class CustomerAuthController extends Controller
             return $this->error('The provided credentials are incorrect',401);
         }
 
-            $token = $customer->=createToken('customer-token', ['customer'])->plainTextToken;
+            $token = $customer->createToken('customer-token', ['customer'])->plainTextToken;
 
-            return [
-                'token'=>$token
-            ];
+          return $this->success([
+        'customer' => $customer->makeHidden(['password']), // Hide sensitive data
+        'token' => $token,
+        'token_type' => 'Bearer',
+        'expires_in' => 60 * 24 * 7 // 7 days in minutes
+    ], 'Login successful');
         
       
          
