@@ -474,29 +474,35 @@ docker-compose up -d
 
 ## 📝 Environment Variables
 
-### API (.env)
+### API Configuration
 
-Key variables in `api/.env`:
+Key variables in `api/.env` (use `.env.example` as template):
 
 ```env
 APP_NAME="Clothes Shop"
-APP_ENV=local
-APP_DEBUG=true
+APP_ENV=local                    # Change to 'production' for production
+APP_DEBUG=true                   # Change to 'false' for production
 APP_URL=http://localhost:8000
 
-DB_CONNECTION=pgsql
-DB_HOST=db
-DB_PORT=5432
+DB_CONNECTION=pgsql             # Database type
+DB_HOST=db                       # Docker service name (or your host)
+DB_PORT=5432                     # PostgreSQL port
 DB_DATABASE=clothes_shop
-DB_USERNAME=admin
-DB_PASSWORD=securepassword123
+DB_USERNAME=admin                # Set your username
+DB_PASSWORD=***                  # Set your password (DO NOT commit)
 
 CACHE_DRIVER=redis
-REDIS_HOST=redis
+REDIS_HOST=redis                 # Docker service name
 REDIS_PORT=6379
 
 SESSION_DRIVER=database
 ```
+
+**⚠️ IMPORTANT:**
+- Never commit `.env` with real passwords
+- Use `.env.example` as template
+- Each developer has their own `.env`
+- `.env` is in `.gitignore`
 
 ---
 
