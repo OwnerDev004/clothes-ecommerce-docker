@@ -63,14 +63,14 @@ This is a complete e-commerce platform with:
 
 ## 💻 Tech Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| **Frontend** | Nuxt 3, Vue 3, Tailwind CSS | Latest |
-| **Backend** | Laravel 12, PHP | 8.4 |
-| **Database** | PostgreSQL | 18-alpine |
-| **Cache** | Redis | 8.4.0-alpine |
-| **Web Server** | Nginx | Latest |
-| **Containerization** | Docker & Docker Compose | Latest |
+| Layer                | Technology                  | Version      |
+| -------------------- | --------------------------- | ------------ |
+| **Frontend**         | Nuxt 3, Vue 3, Tailwind CSS | Latest       |
+| **Backend**          | Laravel 12, PHP             | 8.4          |
+| **Database**         | PostgreSQL                  | 18-alpine    |
+| **Cache**            | Redis                       | 8.4.0-alpine |
+| **Web Server**       | Nginx                       | Latest       |
+| **Containerization** | Docker & Docker Compose     | Latest       |
 
 ---
 
@@ -165,6 +165,7 @@ clothes_shop_docker/
 ```
 
 **Endpoint Examples:**
+
 ```
 GET  /api/products              # Get all products
 POST /api/products              # Create product
@@ -209,11 +210,13 @@ DELETE /api/products/{id}       # Delete product
 ### Backend Development (API)
 
 #### View API Logs
+
 ```bash
 docker-compose logs -f api
 ```
 
 #### Run Artisan Commands
+
 ```bash
 # Run migrations
 docker-compose exec api php artisan migrate
@@ -232,6 +235,7 @@ docker-compose exec api php artisan make:controller ProductController --resource
 ```
 
 #### Access API Shell
+
 ```bash
 # SSH into container
 docker-compose exec api bash
@@ -241,6 +245,7 @@ php artisan tinker
 ```
 
 #### API Structure
+
 - **Routes**: `api/routes/api.php`
 - **Controllers**: `api/app/Http/Controllers/`
 - **Models**: `api/app/Models/`
@@ -251,24 +256,29 @@ php artisan tinker
 ### Frontend Development (Web)
 
 #### View Frontend Logs
+
 ```bash
 docker-compose logs -f web
 ```
 
 #### Hot Reload
+
 Changes in `web/` folder automatically reload in browser (Vite dev server)
 
 #### Build for Production
+
 ```bash
 docker-compose exec web npm run build
 ```
 
 #### Access Frontend Shell
+
 ```bash
 docker-compose exec web sh
 ```
 
 #### Frontend Structure
+
 - **Pages**: `web/app/pages/` (auto-routing)
 - **Components**: `web/app/components/`
 - **Layouts**: `web/app/layouts/`
@@ -367,11 +377,13 @@ docker-compose exec redis redis-cli FLUSHDB
 ## 📊 API Response Examples
 
 ### Get Products
+
 ```bash
 curl http://localhost:8000/api/products
 ```
 
 Response:
+
 ```json
 {
   "data": [
@@ -386,6 +398,7 @@ Response:
 ```
 
 ### Create Product
+
 ```bash
 curl -X POST http://localhost:8000/api/products \
   -H "Content-Type: application/json" \
@@ -499,6 +512,7 @@ SESSION_DRIVER=database
 ```
 
 **⚠️ IMPORTANT:**
+
 - Never commit `.env` with real passwords
 - Use `.env.example` as template
 - Each developer has their own `.env`
@@ -511,6 +525,7 @@ SESSION_DRIVER=database
 ### 1. Make Changes
 
 **Backend:**
+
 ```bash
 # Edit api/app/Models/Product.php
 # Or create new migration
@@ -518,6 +533,7 @@ docker-compose exec api php artisan make:migration add_fields_to_products
 ```
 
 **Frontend:**
+
 ```bash
 # Edit web/app/pages/products.vue
 # Changes auto-reload in browser
@@ -552,6 +568,7 @@ docker-compose -f docker-compose.product.yml up -d
 ```
 
 Key differences:
+
 - Environment set to `production`
 - Debug disabled
 - Optimizations enabled
@@ -588,6 +605,7 @@ This project is licensed under the MIT License.
 ## 📞 Support
 
 For issues and questions:
+
 - Check [SETUP_NOTES.md](SETUP_NOTES.md) for detailed troubleshooting
 - Open GitHub Issues
 - Review Docker logs: `docker-compose logs`

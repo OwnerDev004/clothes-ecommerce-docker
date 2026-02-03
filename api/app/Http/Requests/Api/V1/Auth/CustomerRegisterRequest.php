@@ -23,7 +23,7 @@
       {
           return [
               'email' => 'nullable|email|unique:customers,email',
-              'user_name' => 'nullable|unique::customer,user_name',
+              'user_name' => 'required|unique:customers,user_name',
               'phone' => 'required|string|unique:customers,phone',
               'password' => 'required|string|min:6',
           ];

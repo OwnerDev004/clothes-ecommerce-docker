@@ -22,7 +22,7 @@
       public function rules(): array
       {
           return [
-              'user_name' => 'required|string|unique:customers,user_name',
+              'user_name' => 'required|string|exists:customers,user_name',
               'password' => 'required|string|min:6',
           ];
       }

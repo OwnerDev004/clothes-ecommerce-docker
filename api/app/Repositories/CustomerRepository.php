@@ -18,8 +18,7 @@ class CustomerRepository extends BaseRepository{
     if(isset($data['password'])){
       $data['password'] = Hash::make($data['password']);
     }
-    $customer = $this->create($data);
-    return $customer;
+    return parent::create($data);
     
   }
 

@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\Auth\CustomerLoginRequest;
 use App\Http\Requests\Api\V1\Auth\CustomerRegisterRequest;
 use App\Repositories\CustomerRepository;
 use App\Traits\ApiResponse;
+use Illuminate\Support\Facades\Hash;
 
 class CustomerAuthController extends Controller
 {
@@ -29,8 +30,16 @@ class CustomerAuthController extends Controller
         return $this->created($customer, 'Customer registered successfully');
     }
     public function login(CustomerLoginRequest $request){
-           
+       $customer =  $this->customerRepository->findByUsername($request->user_name);
+          
+        if(!$customer->user_name || Hash::check($request->password, $customer->password)){
+            return $this->error('The provided credentials are incorrect',401);
+        }
 
+        $token = $customer->createToken('customer-token', ['customer'])->plainTextToken;
+        
+      
+         
     }
     
 }
