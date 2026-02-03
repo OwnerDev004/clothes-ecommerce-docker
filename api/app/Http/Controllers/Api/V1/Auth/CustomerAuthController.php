@@ -32,11 +32,15 @@ class CustomerAuthController extends Controller
     public function login(CustomerLoginRequest $request){
        $customer =  $this->customerRepository->findByUsername($request->user_name);
           
-        if(!$customer->user_name || Hash::check($request->password, $customer->password)){
+        if(!$customer->user_name || !Hash::check($request->password, $customer->password)){
             return $this->error('The provided credentials are incorrect',401);
         }
 
-        $token = $customer->createToken('customer-token', ['customer'])->plainTextToken;
+            $token = $customer->=createToken('customer-token', ['customer'])->plainTextToken;
+
+            return [
+                'token'=>$token
+            ];
         
       
          
