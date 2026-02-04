@@ -54,7 +54,7 @@ services:
       - APP_DEBUG=false
     depends_on:
       db:
-        condition: service_healthy
+        condition:  
     ports:
       - "8000:8000"
     networks:

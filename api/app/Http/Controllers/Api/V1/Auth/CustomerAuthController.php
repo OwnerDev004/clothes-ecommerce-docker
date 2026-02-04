@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\Auth\CustomerLoginRequest;
 use App\Http\Requests\Api\V1\Auth\CustomerRegisterRequest;
 use App\Repositories\CustomerRepository;
 use App\Traits\ApiResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class CustomerAuthController extends Controller
@@ -16,6 +17,7 @@ class CustomerAuthController extends Controller
     public function __construct(CustomerRepository $customerRepo)
     {
        $this->customerRepository = $customerRepo;
+        
     }
     
     public function register(CustomerRegisterRequest $request){
@@ -29,25 +31,31 @@ class CustomerAuthController extends Controller
           $customer = $this->customerRepository->create($request->validated());
         return $this->created($customer, 'Customer registered successfully');
     }
-    public function login(CustomerLoginRequest $request){
-       $customer =  $this->customerRepository->findByUsername($request->user_name);
-          
-        if(!$customer->user_name || !Hash::check($request->password, $customer->password)){
-            return $this->error('The provided credentials are incorrect',401);
-        }
-
-            $token = $customer->createToken('customer-token', ['customer'])->plainTextToken;
-
-          return $this->success([
-        'customer' => $customer->makeHidden(['password']), // Hide sensitive data
-        'token' => $token,
-        'token_type' => 'Bearer',
-        'expires_in' => 60 * 24 * 7 // 7 days in minutes
-    ], 'Login successful');
-        
-      
-         
+ public function login(CustomerLoginRequest $request)
+{
+    // Find customer by username
+    $customer = $this->customerRepository->findByUsername($request->user_name);
+    
+    // Check if customer exists and password is correct
+    if (!$customer) {
+        return $this->error('Username not found', 401);
     }
+    
+    if (!Hash::check($request->password, $customer->password)) {
+        return $this->error('Invalid password', 401);
+    }
+    
+    // Generate JWT token
+    $token = Auth::guard('customer')->login($customer);
+    dd($token);
+    return $this->success([
+        'customer' => $customer->makeHidden(['password', 'created_at', 'updated_at']),
+        'access_token' => $token,
+        'token_type' => 'Bearer',
+        'expires_in' => auth('customer')->factory()->getTTL() * 60,
+    ], 'Login successful');
+}
+    
     
 }
 

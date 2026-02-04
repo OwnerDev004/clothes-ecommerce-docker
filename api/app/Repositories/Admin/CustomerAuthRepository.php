@@ -13,5 +13,7 @@ class CustomerAuthRepository{
         $this->model = $model;
 
     }
+
+    
     
 }
