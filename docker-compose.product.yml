@@ -1,52 +1,103 @@
-version: 3.8
+version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
+    restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - 5432:5432
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
   redis:
-    image: redis:8.4.0:alpine
+    image: redis:8.4.0-alpine
+    restart: always
     volumes:
-      -redis:/data
-    ports:
-      - 6379:6379
-    
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   api:
     build:
       context: api/
       dockerfile: Dockerfile
-    volumes:
-      - ./api:var/www/api
+    restart: always
     environment:
-      - DB_HOST:db
-      - DB_PASSWORD:${DB_PASSWORD:-securepassword123}
-      - REDIS_HOST:redis
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - APP_DEBUG=false
     depends_on:
-      - db
+      db:
+        condition:  
     ports:
-      - 8000:8000
-    
+      - "8000:8000"
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   web:
     build:
       context: web/
       dockerfile: Dockerfile
-    volumes:
-      - ./web:/app
+    restart: always
     depends_on:
       - api
     ports:
-      - 3000:3000
-  
+      - "3000:3000"
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
-   db_data:
-   redis:
+  db_data:
+    driver: local
+  redis:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge

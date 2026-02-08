@@ -1,13 +1,15 @@
-+customer
++customers
 -id
 -full_name
 -gender
+-dob
 -user_name
 -email (nullable)
 -phone
+-address
 -password
 
-+user
++users
 -id
 -first_name
 -last_name
@@ -24,11 +26,12 @@
 -desc (nullable)
 -slug
 
-+dress_type
++dress_types
 -id
 -name
 -desc (nullable)
 -sort_order
+-slug
 -img (nullable)
 
 +products
@@ -37,7 +40,7 @@
 -slug
 -name
 -desc
--base_price
+-price
 -category_id
 -dress_type_id
 
@@ -64,11 +67,11 @@
 -sku
 -color_id
 -size_id
--quantity
+-stock_quantity
 -price (can null base price)
 \*UNIQUE(product_id, color_id, size_id)
 
-+order
++orders
 -id
 -customer_id
 -order_date
@@ -85,17 +88,18 @@
 +order_items
 -id
 -order_id
--product_id
+-product_variant_id
 -quantity
--price
+-unit_price
 -total GENERATED ALWAYS AS (price \* quantity) STORED
 
 +vouchers
 -id
 -code (UNIQUE)
+-name
 -discount_type
 -discount_value
--min_order DECIMAL(10,2) DEFAULT 0,
+-minimum_order_amount DECIMAL(10,2) DEFAULT 0,
 -max_order int (100)
 -used_count (0)
 -expires_at
@@ -119,7 +123,7 @@ If cross-device
 -product_id
 -quantity
 
-+wishlist
++wishlists
 -id
 -customer_id
 -product_id -->
