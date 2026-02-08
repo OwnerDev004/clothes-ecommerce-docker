@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use App\Notifications\CustomerResetPasswordNotification;
 
 class Customer extends Authenticatable implements JWTSubject
 {
+    use Notifiable;
+
     protected $hidden = [
         "password"
     ];
@@ -18,8 +22,20 @@ class Customer extends Authenticatable implements JWTSubject
         "email",
         "phone",
         "address",
-        "password"
+        "password",
+        "avatar_url",
+        "avatar_public_id"
     ];
+
+    /**
+     * Send a password reset notification to the user.
+     *
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
+    }
 
     public function getJWTIdentifier()
     {
@@ -28,9 +44,7 @@ class Customer extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-      return [
-            'email' => $this->email,
-            'username' => $this->user_name,
+        return [
         ];
     }
 }

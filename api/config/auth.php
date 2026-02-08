@@ -36,21 +36,24 @@ return [
     */
 
     'guards' => [
-          'web' => [
+        'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
         'api' => [
             'driver' => 'jwt',
             'provider' => 'users',
+            'hash' => false
         ],
-        
         // Add this customer guard
         'customer' => [
             'driver' => 'jwt',
             'provider' => 'customers',  // Make sure this matches a provider below
+            'hash' => false
         ],
+
+
+
     ],
 
     /*
@@ -114,7 +117,7 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
-         'customers' => [
+        'customers' => [
             'provider' => 'customers',
             'table' => 'password_reset_tokens',
             'expire' => 60,
