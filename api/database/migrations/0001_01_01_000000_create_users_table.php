@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('first_name');
             $table->string('last_name');
             $table->enum('gender', ['male', 'female'])->default('male');
-            $table->date('dob');
+            $table->date('dob')->nullable();
             $table->string('user_name')->unique();
             $table->string('phone')->nullable();
             $table->enum('role', ['admin', 'super_admin']);

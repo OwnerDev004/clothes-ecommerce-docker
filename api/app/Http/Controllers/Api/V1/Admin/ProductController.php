@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Product\ProductFilterRequest;
-use App\Http\Requests\ProductStoreRequest;
+use App\Http\Requests\Api\V1\Product\ProductStoreRequest;
 use App\Models\Product;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;

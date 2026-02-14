@@ -30,7 +30,7 @@ class AdminRegisterRequest extends FormRequest
             'phone' => 'required|string|max:20|unique:users,phone',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:'
+            'role' => 'required|in:admin,super_admin'
         ];
     }
 }

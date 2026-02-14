@@ -9,6 +9,7 @@ use App\Services\Api\V1\Image\ImageService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ProductRepository extends BaseRepository
 {
@@ -20,6 +21,7 @@ class ProductRepository extends BaseRepository
     protected $image_service;
     public function __construct(Product $product_model, ProductImage $product_image, ImageService $image_service)
     {
+        parent::__construct($product_model);
         $this->product_model = $product_model;
         $this->product_image = $product_image;
         $this->image_service = $image_service;
@@ -137,32 +139,40 @@ class ProductRepository extends BaseRepository
     public function storeProduct(array $data = [])
     {
         $images = $data['images'] ?? [];
+        unset($data['images']);
 
-        $product = $this->product_model->create($data);
-        if ($product) {
+        return DB::transaction(function () use ($data, $images) {
+            $product = $this->product_model->create($data);
+
             foreach ($images as $image) {
-                if ($image['image_type'] == 'thumbnail') {
-                    $image_url_cloudinary = $this->image_service->uploadImage($image['file'], '/clothes_ecommerce/products/thumbnail');
-                    $this->product_image->create([
-                        'product_id' => $product->id,
-                        'image_url' => $image_url_cloudinary,
-                        'image_type' => $image['image_type'],
-                        'sort_order' => $image['sort_order']
-                    ]);
+                if (!isset($image['file'], $image['image_type'])) {
+                    continue;
                 }
-                $image_url_cloudinary = $this->image_service->uploadImage($image['file'], '/clothes_ecommerce/products/thumbnail');
+
+                $imageType = $image['image_type'] === 'thumbnail' ? 'thumbnail' : 'gallery';
+                $sortOrder = isset($image['sort_order']) ? (int) $image['sort_order'] : 0;
+                $folder = $imageType === 'thumbnail'
+                    ? '/clothes_ecommerce/products/thumbnail'
+                    : '/clothes_ecommerce/products/gallery';
+
+                $imageUrl = $this->image_service->uploadImage($image['file'], $folder);
+
                 $this->product_image->create([
                     'product_id' => $product->id,
-                    'image_url' => $image_url_cloudinary,
-                    'image_type' => $image['image_type'],
-                    'sort_order' => $image['sort_order']
+                    'image_url' => $imageUrl,
+                    'image_type' => $imageType,
+                    'sort_order' => $sortOrder,
                 ]);
-
-
             }
-        }
-        return $product->with(['images']);
 
+            return $product->load([
+                'thumbnail:id,product_id,image_url,image_type,sort_order',
+                'images' => function ($query) {
+                    $query->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
+                        ->orderBy('sort_order');
+                },
+            ]);
+        });
     }
 
     public function updateProduct(array $data = [])

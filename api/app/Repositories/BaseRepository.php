@@ -12,15 +12,18 @@ abstract class BaseRepository
         $this->model = $model;
     }
 
-    public function index(){
+    public function index()
+    {
         return $this->model->all();
     }
 
-    public function find($id){
+    public function find($id)
+    {
         return $this->model->find($id);
     }
 
-    public function create(array $data){
+    public function create(array $data)
+    {
         return $this->model->create($data);
     }
 }

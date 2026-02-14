@@ -3,9 +3,8 @@ namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\AdminRegisterRequest;
-use App\Http\Requests\Api\V1\Auth\CustomerLoginRequest;
-use App\Http\Requests\Api\V1\Auth\CustomerRegisterRequest;
-use App\Repositories\CustomerRepository;
+use App\Http\Requests\Api\V1\Auth\AdminLoginRequest;
+use App\Repositories\Admin\AdminRepository;
 use App\Traits\ApiResponse;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -14,7 +13,7 @@ class AdminAuthController extends Controller
     use ApiResponse;
     protected $adminRepository;
 
-    public function __construct(CustomerRepository $adminRepo)
+    public function __construct(AdminRepository $adminRepo)
     {
         $this->adminRepository = $adminRepo;
 
@@ -32,20 +31,20 @@ class AdminAuthController extends Controller
         $customer = $this->adminRepository->create($request->validated());
         return $this->created($customer, 'Customer registered successfully');
     }
-    public function login(CustomerLoginRequest $request)
+    public function login(AdminLoginRequest $request)
     {
-        $credentials = $request->only('user_name', 'password');
-        $customer = $this->adminRepository->findByUsername($request->user_name);
+        $credentials = $request->only('email', 'password');
+        $admin = $this->adminRepository->findByEmail($request->email);
         // Generate JWT token
-        if (!$customer || !$token = auth('customer')->attempt($credentials)) {
+        if (!$admin || !$token = auth('admin')->attempt($credentials)) {
             return $this->error('Credentials invalid', 401);
         }
 
         return $this->success([
             // 'customer' => $customer->makeHidden(['password', 'created_at', 'updated_at']),
-            'access_token' => $token,
+            'admin_access_token' => $token,
             'token_type' => 'Bearer',
-            'expires_in' => auth('customer')->factory()->getTTL() * 60,
+            'expires_in' => auth('admin')->factory()->getTTL() * 60,
         ], 'Login successful');
     }
 
