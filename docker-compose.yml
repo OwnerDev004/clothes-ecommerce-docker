@@ -11,6 +11,7 @@ services:
       - 5432:5432
     volumes:
       - db_data:/var/lib/postgresql/data
+      
 
   redis:
     image: redis:8.4.0-alpine
@@ -35,19 +36,41 @@ services:
       - db
     ports:
       - 8000:8000
-    
 
+  queue:
+    build:
+      context: api/
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:/var/www/html
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_PASSWORD=${DB_PASSWORD:-securepassword123}
+      - REDIS_HOST=redis
+    depends_on:
+      - db
+      - redis
+    entrypoint: ["php", "artisan", "queue:work", "--sleep=1", "--tries=3", "--timeout=90"]
   web:
     build:
       context: web/
       dockerfile: Dockerfile
+    env_file:
+      - ./web/.env
     volumes:
       - ./web:/app
       - /app/node_modules
+    environment:
+      - NUXT_PUBLIC_API_BASE=http://localhost:8000/api/v1
+      - NUXT_PUBLIC_GOOGLE_CLIENT_ID=906332352374-1q9m3svn4j48cvpk8k48v4mt7ooat2a7.apps.googleusercontent.com
+      - NUXT_PUBLIC_FACEBOOK_APP_ID=1630377581733106
+      - NUXT_PUBLIC_FACEBOOK_GRAPH_VERSION=v19.0
     depends_on:
       - api
     ports:
       - 3000:3000
+      
   
 volumes:
    db_data:

@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Auth\AdminRegisterRequest;
 use App\Http\Requests\Api\V1\Auth\CustomerLoginRequest;
 use App\Http\Requests\Api\V1\Auth\CustomerRegisterRequest;
 use App\Repositories\CustomerRepository;
@@ -11,30 +12,30 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class AdminAuthController extends Controller
 {
     use ApiResponse;
-    protected $customerRepository;
+    protected $adminRepository;
 
-    public function __construct(CustomerRepository $customerRepo)
+    public function __construct(CustomerRepository $adminRepo)
     {
-        $this->customerRepository = $customerRepo;
+        $this->adminRepository = $adminRepo;
 
     }
 
-    public function register(CustomerRegisterRequest $request)
+    public function register(AdminRegisterRequest $request)
     {
-        if ($this->customerRepository->findByEmail($request->email)) {
+        if ($this->adminRepository->findByEmail($request->email)) {
             return $this->error("Email Exist Please Try aggain", 409);
         }
-        if ($this->customerRepository->findByUsername($request->user_name)) {
+        if ($this->adminRepository->findByUsername($request->user_name)) {
             return $this->error("UserName Exist Please Try aggain", 409);
         }
 
-        $customer = $this->customerRepository->create($request->validated());
+        $customer = $this->adminRepository->create($request->validated());
         return $this->created($customer, 'Customer registered successfully');
     }
     public function login(CustomerLoginRequest $request)
     {
         $credentials = $request->only('user_name', 'password');
-        $customer = $this->customerRepository->findByUsername($request->user_name);
+        $customer = $this->adminRepository->findByUsername($request->user_name);
         // Generate JWT token
         if (!$customer || !$token = auth('customer')->attempt($credentials)) {
             return $this->error('Credentials invalid', 401);

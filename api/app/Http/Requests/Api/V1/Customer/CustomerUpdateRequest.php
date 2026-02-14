@@ -25,22 +25,24 @@ class CustomerUpdateRequest extends FormRequest
 
 
         return [
-            'full_name' => 'nullable|string|max:255',
-            'gender' => 'nullable|in:male,female,other',
-            'dob' => 'nullable|date|before:today',
+            'full_name' => 'sometimes|nullable|string|max:255',
+            'gender' => 'sometimes|nullable|in:male,female',
+            'dob' => 'sometimes|nullable|date|before:today',
             'email' => [
+                'sometimes',
                 'nullable',
                 'email',
                 'max:255',
                 'unique:customers,email,' . $customerId
             ],
             'phone' => [
-                'required',
+                'sometimes',
+                'nullable',
                 'string',
                 'max:20',
                 'unique:customers,phone,' . $customerId
             ],
-            'address' => 'nullable|string|max:500'
+            'address' => 'sometimes|nullable|string|max:500'
         ];
     }
 }

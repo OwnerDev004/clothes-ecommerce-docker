@@ -70,6 +70,23 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  queue:
+    build: 
+       context: api/
+       dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./api:/var/www/html
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_PASSWORD=${DB_PASSWORD:-securepassword123}
+      - REDIS_HOST=redis
+    depends_on:
+      - db
+      - redis
+    command: ["php", "artisan", "queue:work", "--sleep=1", "--tries=3", "--timeout=90"]
+
   web:
     build:
       context: web/

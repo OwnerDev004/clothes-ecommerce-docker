@@ -6,7 +6,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ImageService
 {
-    public function uploadImage($file, $folder = 'uploads')
+    public function uploadImage($file, $folder = 'clothes_ecommerce')
     {
         $upload = Cloudinary::uploadApi()->upload($file->getRealPath(), [
             'folder' => $folder,

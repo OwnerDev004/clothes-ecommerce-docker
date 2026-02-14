@@ -22,9 +22,11 @@
       public function rules(): array
       {
           return [
-              'email' => 'nullable|email|unique:customers,email',
-              'user_name' => 'required|unique:customers,user_name',
-              'phone' => 'required|string|unique:customers,phone',
+              'full_name' => 'nullable|string|max:255',
+              'gender' => 'required|in:male,female',
+              'email' => 'required|email|max:255|unique:customers,email',
+              'user_name' => 'required|string|max:255|unique:customers,user_name',
+              'phone' => 'required|string|max:20|unique:customers,phone',
               'password' => 'required|string|min:6',
           ];
       }
