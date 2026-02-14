@@ -3,7 +3,6 @@
 namespace App\Repositories\Admin;
 
 use App\Models\Product;
-use App\Models\ProductImage;
 use App\Repositories\BaseRepository;
 use App\Services\Api\V1\Image\ImageService;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,16 +13,14 @@ use Illuminate\Support\Facades\DB;
 class ProductRepository extends BaseRepository
 {
     protected $product_model;
-    protected $product_image;
 
     // Services
 
     protected $image_service;
-    public function __construct(Product $product_model, ProductImage $product_image, ImageService $image_service)
+    public function __construct(Product $product_model, ImageService $image_service)
     {
         parent::__construct($product_model);
         $this->product_model = $product_model;
-        $this->product_image = $product_image;
         $this->image_service = $image_service;
     }
 
@@ -45,9 +42,9 @@ class ProductRepository extends BaseRepository
             $dressStyle = $filters['dress_style'] ?? null;
 
             $query = $this->product_model->newQuery()->select('products.*')->with([
-                'thumbnail:id,product_id,image_url,image_type,sort_order',
+                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
                 'images' => function ($q) {
-                    $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
+                    $q->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
                         ->orderBy('sort_order');
                 },
             ]);
@@ -143,45 +140,65 @@ class ProductRepository extends BaseRepository
 
         return DB::transaction(function () use ($data, $images) {
             $product = $this->product_model->create($data);
-
-            foreach ($images as $image) {
-                if (!isset($image['file'], $image['image_type'])) {
-                    continue;
-                }
-
-                $imageType = $image['image_type'] === 'thumbnail' ? 'thumbnail' : 'gallery';
-                $sortOrder = isset($image['sort_order']) ? (int) $image['sort_order'] : 0;
-                $folder = $imageType === 'thumbnail'
-                    ? '/clothes_ecommerce/products/thumbnail'
-                    : '/clothes_ecommerce/products/gallery';
-
-                $imageUrl = $this->image_service->uploadImage($image['file'], $folder);
-
-                $this->product_image->create([
-                    'product_id' => $product->id,
-                    'image_url' => $imageUrl,
-                    'image_type' => $imageType,
-                    'sort_order' => $sortOrder,
-                ]);
-            }
+            $this->image_service->syncProductImages($product, null, $images, false);
 
             return $product->load([
-                'thumbnail:id,product_id,image_url,image_type,sort_order',
+                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
                 'images' => function ($query) {
-                    $query->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
+                    $query->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
                         ->orderBy('sort_order');
                 },
             ]);
         });
     }
 
-    public function updateProduct(array $data = [])
+
+    public function updateProduct(int $id, array $data = [])
     {
+        $hasClearImagesPayload = array_key_exists('clear_images', $data);
+        $hasExistingImagesPayload = array_key_exists('existing_images', $data);
+        $hasNewImagesPayload = array_key_exists('new_images', $data);
+
+        $clearImages = filter_var($data['clear_images'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $existingImages = $hasExistingImagesPayload ? ($data['existing_images'] ?? []) : null;
+        $newImages = $hasNewImagesPayload ? ($data['new_images'] ?? []) : null;
+
+        unset($data['clear_images']);
+        unset($data['existing_images']);
+        unset($data['new_images']);
+
+        return DB::transaction(function () use ($id, $data, $clearImages, $existingImages, $newImages, $hasClearImagesPayload, $hasExistingImagesPayload, $hasNewImagesPayload) {
+            $product = $this->product_model->findOrFail($id);
+            $product->update($data);
+
+            $shouldSyncImages = $hasClearImagesPayload || $hasExistingImagesPayload || $hasNewImagesPayload;
+
+            if ($shouldSyncImages) {
+                $this->image_service->syncProductImages($product, $existingImages, $newImages, $clearImages);
+            }
+
+            return $product->load([
+                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
+                'images' => function ($query) {
+                    $query->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
+                        ->orderBy('sort_order');
+                },
+            ]);
+        });
 
     }
 
     public function deleteProduct(array $data = [])
     {
+    }
+
+    public function findById($id)
+    {
+
+        $product = $this->product_model
+            ->with(['category', 'dressType', 'images', 'variants'])
+            ->findOrfail($id);
+        return $product;
     }
 
 }

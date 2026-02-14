@@ -645,6 +645,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'App\\Http\\Requests\\Api\\V1\\Customer\\CustomerAvatarRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Api/V1/Customer/CustomerAvatarRequest.php',
         'App\\Http\\Requests\\Api\\V1\\Customer\\CustomerUpdateRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Api/V1/Customer/CustomerUpdateRequest.php',
         'App\\Http\\Requests\\Api\\V1\\Product\\ProductFilterRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Api/V1/Product/ProductFilterRequest.php',
+        'App\\Http\\Requests\\Api\\V1\\Product\\ProductStoreRequest' => __DIR__ . '/../..' . '/app/Http/Requests/Api/V1/Product/ProductStoreRequest.php',
         'App\\Jobs\\TestJob' => __DIR__ . '/../..' . '/app/Jobs/TestJob.php',
         'App\\Models\\Category' => __DIR__ . '/../..' . '/app/Models/Category.php',
         'App\\Models\\Color' => __DIR__ . '/../..' . '/app/Models/Color.php',

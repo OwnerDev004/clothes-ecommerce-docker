@@ -35,6 +35,7 @@ return array(
     'App\\Http\\Requests\\Api\\V1\\Customer\\CustomerAvatarRequest' => $baseDir . '/app/Http/Requests/Api/V1/Customer/CustomerAvatarRequest.php',
     'App\\Http\\Requests\\Api\\V1\\Customer\\CustomerUpdateRequest' => $baseDir . '/app/Http/Requests/Api/V1/Customer/CustomerUpdateRequest.php',
     'App\\Http\\Requests\\Api\\V1\\Product\\ProductFilterRequest' => $baseDir . '/app/Http/Requests/Api/V1/Product/ProductFilterRequest.php',
+    'App\\Http\\Requests\\Api\\V1\\Product\\ProductStoreRequest' => $baseDir . '/app/Http/Requests/Api/V1/Product/ProductStoreRequest.php',
     'App\\Jobs\\TestJob' => $baseDir . '/app/Jobs/TestJob.php',
     'App\\Models\\Category' => $baseDir . '/app/Models/Category.php',
     'App\\Models\\Color' => $baseDir . '/app/Models/Color.php',

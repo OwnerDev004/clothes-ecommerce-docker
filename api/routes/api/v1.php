@@ -32,7 +32,7 @@ Route::middleware(['auth:customer'])->group(function () {
 });
 
 // Products
-Route::prefix('product')->group(function () {
+Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
 });
 
@@ -47,14 +47,14 @@ Route::prefix('admin')->group(function () {
     Route::post("/register", [AdminAuthController::class, 'register']);
 
     // Products
-    Route::prefix('product')->middleware(['auth:admin'])->group(function () {
+    Route::prefix('products')->middleware(['auth:admin'])->group(function () {
         Route::get('/', [AdminProductController::class, 'index']);
+        Route::get('/{id}', [AdminProductController::class, 'show']);
         Route::post('/', [AdminProductController::class, 'store']);
-        Route::put('/', [AdminProductController::class, 'update']);
-        Route::delete('/', [AdminProductController::class, 'delete']);
-
+        Route::post('/{id}', [AdminProductController::class, 'update']);
+        Route::put('/{id}', [AdminProductController::class, 'update']);
+        Route::delete('/{id}', [AdminProductController::class, 'destroy']);
     });
 
 
 });
-
