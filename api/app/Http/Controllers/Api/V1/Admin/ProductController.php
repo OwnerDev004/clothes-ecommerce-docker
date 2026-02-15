@@ -45,6 +45,9 @@ class ProductController extends Controller
     public function show(int $id)
     {
         $product = $this->productRepository->findById($id);
+        if (!$product) {
+            return $this->error("Product not exist", 404);
+        }
         return $this->success("success filter Product", $product, 200);
     }
 
@@ -76,6 +79,7 @@ class ProductController extends Controller
      */
     public function destroy(int $id)
     {
-        return $this->error("Not implemented yet", 501);
+        $this->productRepository->deleteProduct($id); // throws 404 if not found
+        return $this->success("Product deleted", null, 200);
     }
 }

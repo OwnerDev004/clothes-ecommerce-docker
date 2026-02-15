@@ -188,16 +188,41 @@ class ProductRepository extends BaseRepository
 
     }
 
-    public function deleteProduct(array $data = [])
+    public function deleteProduct(int $id): bool
     {
+        return DB::transaction(function () use ($id) {
+            $product = $this->product_model
+                ->with(['images:id,product_id,image_url,cloudinary_public_id'])
+                ->findOrFail($id);
+
+            $publicIdsToDelete = $product->images
+                ->map(function ($image) {
+                    return $image->cloudinary_public_id;
+                })
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $product->delete();
+
+            if (!empty($publicIdsToDelete)) {
+                DB::afterCommit(function () use ($publicIdsToDelete) {
+                    foreach ($publicIdsToDelete as $publicId) {
+                        $this->image_service->deleteImage((string) $publicId);
+                    }
+                });
+            }
+
+            return true;
+        });
     }
 
     public function findById($id)
     {
-
         $product = $this->product_model
             ->with(['category', 'dressType', 'images', 'variants'])
-            ->findOrfail($id);
+            ->find($id);
         return $product;
     }
 
