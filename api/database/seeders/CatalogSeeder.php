@@ -168,7 +168,8 @@ class CatalogSeeder extends Seeder
                     'color_id' => $colorsByName[$colorName]->id,
                     'size_id' => $sizesByName[$sizeName]->id,
                     'stock_quantity' => 20,
-                    'price' => $product->price,
+                    'sell_price' => $product->price,
+                    'cost_price' => round($product->price * 0.6, 2),
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -178,7 +179,7 @@ class CatalogSeeder extends Seeder
         DB::table('product_variants')->upsert(
             $variants,
             ['product_id', 'color_id', 'size_id'],
-            ['stock_quantity', 'price', 'updated_at']
+            ['stock_quantity', 'sell_price', 'cost_price', 'updated_at']
         );
     }
 }

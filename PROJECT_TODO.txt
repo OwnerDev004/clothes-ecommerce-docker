@@ -1,0 +1,189 @@
+CLOTHES SHOP PROJECT TODO (API + CLIENT)
+
+PHASE 1: API FOUNDATION (DO FIRST)
+
+PHASE 1.1 - API CONTRACT FREEZE
+Goal:
+- Lock one consistent request/response structure before adding more features.
+Tasks:
+- Define endpoint list for auth, products, variants, cart, checkout, orders, profile, admin.
+- Define success response shape: message, data, status.
+- Define error response shape: message, errors, status.
+- Document required/optional fields for each endpoint.
+Deliverable:
+- One API note file (or Postman collection) used by both backend and frontend.
+Done check:
+- Frontend can implement from docs without asking backend field meanings.
+
+PHASE 1.2 - PRODUCT VARIANTS MODULE
+Goal:
+- Fully support size/color variant data and stock on API side.
+Tasks:
+- Add admin CRUD endpoints for product variants.
+- Validate:
+  product_id exists
+  color_id exists
+  size_id exists
+  stock_quantity >= 0
+  price >= 0
+- Enforce unique (product_id, color_id, size_id).
+- Return variant list in product detail/admin detail.
+Deliverable:
+- Working variant endpoints with validation and clear error messages.
+Done check:
+- Admin can create/update/delete variants and see stock/price per variant.
+
+PHASE 1.3 - CART MODULE
+Goal:
+- Support customer cart operations using variant_id.
+Tasks:
+- Add endpoint: add item (variant_id, quantity).
+- Add endpoint: update quantity.
+- Add endpoint: remove item.
+- Add endpoint: get current cart.
+- Add endpoint: clear cart.
+- Validate requested quantity against stock rules.
+Deliverable:
+- Stable cart API with accurate item totals and cart total.
+Done check:
+- Customer can complete full add/update/remove flow without data mismatch.
+
+PHASE 1.4 - CHECKOUT + ORDER CREATION
+Goal:
+- Safely create orders and prevent overselling.
+Tasks:
+- Re-validate stock at checkout (do not trust cart snapshot).
+- Compute subtotal/discount/shipping/total on server only.
+- Create order + order_items in one DB transaction.
+- Decrease stock atomically (stock-safe query).
+- Save price snapshot in order_items.
+Deliverable:
+- Checkout endpoint that creates correct order records and updates stock.
+Done check:
+- Two simultaneous checkouts cannot push stock below zero.
+
+PHASE 1.5 - PAYMENT INTEGRATION
+Goal:
+- Finalize order payment status from provider callbacks.
+Tasks:
+- Add create payment intent/session endpoint.
+- Add webhook endpoint with signature verification.
+- Map payment events to order status changes.
+- Handle failed/expired payments safely.
+Deliverable:
+- Payment flow that updates order status automatically.
+Done check:
+- Paid event marks order as paid; failed event does not reduce final stock incorrectly.
+
+PHASE 1.6 - ORDER MANAGEMENT (CUSTOMER + ADMIN)
+Goal:
+- Manage full order lifecycle after checkout.
+Tasks:
+- Customer endpoints: my orders list, order detail, cancel (policy-based).
+- Admin endpoints: list/filter all orders, update status, cancel/refund.
+- Use clear statuses: pending, paid, processing, shipped, completed, cancelled, refunded.
+Deliverable:
+- Complete order APIs for both roles.
+Done check:
+- Status transitions are controlled and valid for each role.
+
+PHASE 1.7 - VOUCHER/DISCOUNT RULES
+Goal:
+- Apply promotions safely and trace usage.
+Tasks:
+- Validate voucher expiry, usage limit, minimum order, active flag.
+- Enforce per-customer/per-order usage rules.
+- Record voucher usage when order is successfully placed.
+Deliverable:
+- Predictable discount behavior with no duplicate abuse.
+Done check:
+- Invalid voucher is rejected with clear reason; valid voucher applies correct amount.
+
+PHASE 1.8 - API TESTS FOR CRITICAL FLOWS
+Goal:
+- Prevent regressions in purchase-critical logic.
+Tasks:
+- Add feature tests: auth, variants, cart, checkout, orders.
+- Add concurrency/oversell test.
+- Add payment webhook verification test.
+- Add negative tests (invalid variant, out of stock, invalid voucher).
+Deliverable:
+- Reliable automated test suite for core commerce logic.
+Done check:
+- Core API tests pass before each deploy.
+
+PHASE 2: CLIENT CORE FLOWS
+1. Auth pages
+- Register, login, forgot/reset password.
+
+2. Product listing page
+- Search/filter/sort/pagination.
+- Category/dress-style filtering.
+
+3. Product detail page
+- Variant selector (color + size).
+- Show stock per selected variant.
+- Add-to-cart with variant_id.
+
+4. Cart page
+- Update quantity.
+- Remove item.
+- Show totals from API.
+
+5. Checkout page
+- Address, shipping method, voucher apply.
+- Payment action and status handling.
+
+6. Orders pages
+- Order history.
+- Order detail with timeline/status.
+
+7. Profile pages
+- Update profile.
+- Change avatar/password.
+
+8. Admin panel pages
+- Product CRUD.
+- Image upload/edit/delete.
+- Variant editor (stock + price).
+- Order management.
+
+PHASE 3: INTEGRATION + HARDENING
+1. Enforce API auth/authorization
+- Role guards for customer/admin routes.
+
+2. Add idempotency for checkout
+- Prevent duplicate orders on double-click/retry.
+
+3. Add logging/monitoring
+- Track payment webhook failures and checkout errors.
+
+4. Performance and cache review
+- Verify product list caching invalidation after admin updates.
+
+5. API documentation
+- Postman collection or OpenAPI file.
+
+6. UAT checklist
+- Full purchase flow pass.
+- Cancel/refund flow pass.
+- Edge cases pass (out of stock, invalid voucher, payment fail).
+
+DEFINITION OF DONE (CORE E-COMMERCE)
+1. Customer can register/login and manage profile.
+2. Customer can browse products, choose variant, and add to cart.
+3. Customer can checkout and complete payment.
+4. Stock updates correctly and never goes below zero.
+5. Customer and admin can view/manage orders by status.
+6. Admin can fully manage products, images, and variants.
+7. Critical API flows are covered by automated tests.
+8. Project is deployable with stable env configuration and logs.
+
+SUGGESTED EXECUTION ORDER (SHORT)
+1. Variant APIs
+2. Cart APIs
+3. Checkout + order creation
+4. Payment webhook
+5. Client cart/checkout flow
+6. Admin variant/order UI
+7. Tests + docs + deploy hardening

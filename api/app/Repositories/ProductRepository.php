@@ -22,7 +22,7 @@ class ProductRepository extends BaseRepository
             return $value !== null && $value !== '';
         });
         ksort($normalized);
-        $cacheKey = 'products:getAll:' . md5(json_encode($normalized));
+        $cacheKey = 'products:public:getAll:' . md5(json_encode($normalized));
         $ttlSeconds = 300;
 
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {

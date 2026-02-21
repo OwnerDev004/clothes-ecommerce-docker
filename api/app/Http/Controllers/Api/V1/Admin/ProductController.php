@@ -25,7 +25,6 @@ class ProductController extends Controller
         $filters = $request->validated();
 
         $products = $this->productRepository->getAll($filters);
-
         return $this->success("success get products", $products, 200);
     }
 

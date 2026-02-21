@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\Notifications\CustomerResetPasswordNotification;
 
@@ -41,6 +42,21 @@ class Customer extends Authenticatable implements JWTSubject
     public function oauthAccounts(): HasMany
     {
         return $this->hasMany(CustomerOAuthAccount::class);
+    }
+
+    public function cart(): HasOne
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function voucherUses(): HasMany
+    {
+        return $this->hasMany(VoucherUse::class);
     }
 
     public function getJWTIdentifier()

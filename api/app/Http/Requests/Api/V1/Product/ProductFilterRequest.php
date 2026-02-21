@@ -16,7 +16,7 @@ class ProductFilterRequest extends FormRequest
         return [
             "search_txt" => "nullable|string",
             "category" => "nullable|string",
-            "price" => "numeric",
+            "price" => "nullable|numeric",
             "color" => "nullable|string",
             "size" => "nullable|string",
             "dress_style" => "nullable|string"

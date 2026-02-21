@@ -3,48 +3,64 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\V1\Order\OrderCancelRequest;
+use App\Repositories\OrderLifecycleRepository;
+use App\Traits\ApiResponse;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(private readonly OrderLifecycleRepository $orderLifecycleRepository)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
-    }
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        $orders = $this->orderLifecycleRepository->listForCustomer($customer->id, request()->all());
+        return $this->paginate($orders, 'Customer orders');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Order $order)
+    public function show(int $id)
     {
-        //
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        $order = $this->orderLifecycleRepository->findForCustomer($id, $customer->id);
+        if (!$order) {
+            return $this->error('Order not found', 404);
+        }
+
+        return $this->success($order, 'Order detail', 200);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Order $order)
+    public function cancel(OrderCancelRequest $request, int $id)
     {
-        //
-    }
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Order $order)
-    {
-        //
+        try {
+            $order = $this->orderLifecycleRepository->cancelByCustomer($id, $customer->id);
+        } catch (ValidationException $e) {
+            return $this->error('Unable to cancel order', 422, $e->errors());
+        }
+
+        return $this->success($order, 'Order cancelled', 200);
     }
 }

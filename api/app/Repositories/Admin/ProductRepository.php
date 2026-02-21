@@ -30,7 +30,7 @@ class ProductRepository extends BaseRepository
             return $value !== null && $value !== '';
         });
         ksort($normalized);
-        $cacheKey = 'products:getAll:' . md5(json_encode($normalized));
+        $cacheKey = 'products:admin:getAll:' . md5(json_encode($normalized));
         $ttlSeconds = 300;
 
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
@@ -48,6 +48,7 @@ class ProductRepository extends BaseRepository
                         ->orderBy('sort_order');
                 },
             ]);
+
 
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
