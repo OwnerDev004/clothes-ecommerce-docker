@@ -101,7 +101,7 @@ class CustomerAuthController extends Controller
     public function oauthLogin(Request $request, string $provider)
     {
         $provider = strtolower($provider);
-        if (!in_array($provider, ['google', 'facebook', 'github'], true)) {
+        if (!in_array($provider, ['google', 'facebook', 'github', 'telegram'], true)) {
             return $this->error('Unsupported provider', 422);
         }
 
@@ -165,6 +165,25 @@ class CustomerAuthController extends Controller
             $this->buildAuthPayload($customer, $token),
             'Login successful'
         )->withCookie($this->buildAccessTokenCookie($token));
+    }
+
+    public function storeAccessTokenCookie(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+        ]);
+
+        try {
+            $guard = auth('customer')->setToken($data['token']);
+            if (!$guard->check()) {
+                return $this->error('Invalid token', 401);
+            }
+        } catch (\Throwable $e) {
+            return $this->error('Invalid token', 401);
+        }
+
+        return $this->success(null, 'Token stored')
+            ->withCookie($this->buildAccessTokenCookie($data['token']));
     }
 
     private function buildAuthPayload($customer, string $token): array

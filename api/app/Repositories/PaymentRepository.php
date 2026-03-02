@@ -2,12 +2,20 @@
 
 namespace App\Repositories;
 
+use App\Jobs\SendingInvoiceTelegramJob;
 use App\Models\Order;
 use App\Models\PaymentEvent;
 use App\Models\PaymentTransaction;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use KHQR\BakongKHQR;
+use KHQR\Config\Constants;
+use KHQR\Exceptions\KHQRException;
+use KHQR\Helpers\KHQRData;
+use KHQR\Models\MerchantInfo;
 
 class PaymentRepository
 {
@@ -42,12 +50,21 @@ class PaymentRepository
                 'order_id' => ['Order is not payable'],
             ]);
         }
+        $qrString = null;
+        $khqrMd5 = null;
+        $currencyIso = strtoupper($currency);
+
+        if ($provider === 'khrqr') {
+            [$qrString, $khqrMd5] = $this->generateKhrqrQrData($order, $currencyIso);
+        }
 
         $providerPaymentId = strtoupper($provider) . '-' . Str::upper(Str::random(20));
         $clientToken = hash('sha256', $providerPaymentId . '|token');
         $checkoutUrl = rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/')
             . '/payment/' . strtolower($provider) . '/checkout/' . $providerPaymentId;
         $expiresAt = now()->addMinutes((int) config('payment.intent_ttl_minutes', 30));
+
+        $pollHash = $this->buildPollHashForProvider($provider, $order->id, $providerPaymentId);
 
         $transaction = PaymentTransaction::updateOrCreate(
             ['order_id' => $order->id, 'provider' => $provider],
@@ -59,6 +76,9 @@ class PaymentRepository
                 'client_token' => $clientToken,
                 'checkout_url' => $checkoutUrl,
                 'expires_at' => $expiresAt,
+                'poll_hash' => $pollHash,
+                'qr_string' => $qrString,
+                'khqr_md5' => $khqrMd5,
             ]
         );
 
@@ -77,6 +97,9 @@ class PaymentRepository
             'client_token' => $clientToken,
             'checkout_url' => $checkoutUrl,
             'expires_at' => optional($expiresAt)->toISOString(),
+            'poll_hash' => $pollHash,
+            'qr_string' => $qrString,
+            'khqr_md5' => $khqrMd5,
         ];
     }
 
@@ -84,22 +107,88 @@ class PaymentRepository
     {
         $provider = strtolower(trim($provider));
         $this->assertProviderSupported($provider);
+
+        $webhookEnabled = (bool) (config("payment.providers.{$provider}.webhook_enabled") ?? true);
+        if (!$webhookEnabled) {
+            throw ValidationException::withMessages([
+                'provider' => [ucfirst($provider) . ' webhook is disabled'],
+            ]);
+        }
+
         $this->verifySignature($provider, $signature, $rawBody);
 
         $normalized = $this->normalizeWebhookPayload($provider, $payload);
-        $eventId = (string) ($normalized['event_id'] ?? '');
-        $eventType = (string) ($normalized['event_type'] ?? '');
-        $data = (array) ($normalized['data'] ?? []);
-        $orderId = (int) ($data['order_id'] ?? 0);
-        $providerPaymentId = (string) ($data['provider_payment_id'] ?? '');
 
+        return $this->processPaymentEvent(
+            $provider,
+            $payload,
+            (string) ($normalized['event_id'] ?? ''),
+            (string) ($normalized['event_type'] ?? ''),
+            (array) ($normalized['data'] ?? [])
+        );
+    }
+
+    public function pollKhrqrPaymentStatus(int $customerId, string $pollHash): array
+    {
+        $transaction = PaymentTransaction::where('poll_hash', $pollHash)
+            ->where('provider', 'khrqr')
+            ->with('order')
+            ->first();
+
+        if (!$transaction || !$transaction->order) {
+            throw ValidationException::withMessages([
+                'hash' => ['KHQR payment not found'],
+            ]);
+        }
+
+        if ($transaction->order->customer_id !== $customerId) {
+            throw ValidationException::withMessages([
+                'hash' => ['KHQR payment does not belong to the authenticated customer'],
+            ]);
+        }
+
+        if ($transaction->khqr_md5 === null) {
+            throw ValidationException::withMessages([
+                'hash' => ['KHQR payment metadata is missing'],
+            ]);
+        }
+
+        $channelTimeout = (int) (config('payment.providers.khrqr.poll_timeout') ?? 10);
+        $payload = $this->postKhrqrPoll($transaction, $pollHash, $channelTimeout);
+
+        $normalized = $this->normalizeWebhookPayload('khrqr', $payload);
+        if (empty($normalized['event_type'])) {
+            $transaction->last_event_at = now();
+            $transaction->save();
+
+            return [
+                'duplicate' => false,
+                'event_id' => (string) ($normalized['event_id'] ?? $transaction->provider_payment_id),
+                'order_id' => $transaction->order_id,
+                'status' => $transaction->order->status,
+                'payment_state' => $transaction->order->payment_state,
+            ];
+        }
+
+        return $this->processPaymentEvent(
+            'khrqr',
+            $payload,
+            (string) ($normalized['event_id'] ?? ''),
+            (string) ($normalized['event_type'] ?? ''),
+            (array) ($normalized['data'] ?? [])
+        );
+    }
+
+    private function processPaymentEvent(string $provider, array $payload, string $eventId, string $eventType, array $data): array
+    {
+        $orderId = (int) ($data['order_id'] ?? 0);
         if ($eventId === '' || $eventType === '' || $orderId <= 0) {
             throw ValidationException::withMessages([
                 'payload' => ['Invalid webhook payload'],
             ]);
         }
 
-        return DB::transaction(function () use ($provider, $payload, $eventId, $eventType, $orderId, $providerPaymentId) {
+        return DB::transaction(function () use ($provider, $payload, $eventId, $eventType, $orderId, $data) {
             $event = PaymentEvent::where('provider', $provider)
                 ->where('event_id', $eventId)
                 ->lockForUpdate()
@@ -133,12 +222,15 @@ class PaymentRepository
                 ]);
             }
 
+            $providerPaymentId = (string) ($data['provider_payment_id'] ?? '');
+
             $paymentTx = PaymentTransaction::updateOrCreate(
                 ['order_id' => $order->id, 'provider' => $provider],
                 [
                     'provider_payment_id' => $providerPaymentId !== '' ? $providerPaymentId : ($order->payment_reference ?: null),
                     'amount' => (float) $order->total_price,
                     'currency' => (string) ($data['currency'] ?? 'USD'),
+                    'poll_hash' => $this->buildPollHashForProvider($provider, $order->id, $providerPaymentId),
                 ]
             );
 
@@ -165,6 +257,215 @@ class PaymentRepository
                 'payment_state' => $order->fresh()->payment_state,
             ];
         });
+    }
+
+    private function buildPollHashForProvider(string $provider, int $orderId, string $providerPaymentId): ?string
+    {
+        if ($provider !== 'khrqr' || $providerPaymentId === '') {
+            return null;
+        }
+
+        return md5($orderId . '|' . $providerPaymentId);
+    }
+
+    private function buildKhrqrHeaders(): array
+    {
+        $headers = ['Accept' => 'application/json'];
+
+        $apiKey = (string) (config('payment.providers.khrqr.api_key') ?? '');
+        if ($apiKey !== '') {
+            $headers['X-KHQR-API-KEY'] = $apiKey;
+        }
+
+        return $headers;
+    }
+
+    private function generateKhrqrQrData(Order $order, string $currencyIso): array
+    {
+        $merchantConfig = $this->resolveKhrqrMerchantConfig();
+        $currencyCode = $this->toKhrqrCurrency($currencyIso);
+        $amount = (float) $order->total_price;
+
+        $merchantInfo = new MerchantInfo(
+            bakongAccountID: $merchantConfig['account_id'],
+            merchantName: $merchantConfig['merchant_name'],
+            merchantCity: $merchantConfig['merchant_city'],
+            merchantID: $merchantConfig['merchant_id'],
+            acquiringBank: $merchantConfig['acquiring_bank'],
+            accountInformation: $merchantConfig['account_information'] ?? null,
+            currency: $currencyCode,
+            amount: $amount,
+            billNumber: (string) $order->id,
+            storeLabel: $merchantConfig['store_label'] ?? null,
+            terminalLabel: $merchantConfig['terminal_label'] ?? null,
+            mobileNumber: $merchantConfig['mobile_number'] ?? null,
+            purposeOfTransaction: $merchantConfig['purpose'] ?? null,
+            languagePreference: $merchantConfig['language_preference'] ?? null,
+            merchantNameAlternateLanguage: $merchantConfig['merchant_name_alt'] ?? null,
+            merchantCityAlternateLanguage: $merchantConfig['merchant_city_alt'] ?? null,
+            upiMerchantAccount: $merchantConfig['upi_merchant_account'] ?? null,
+        );
+
+        try {
+            $response = BakongKHQR::generateMerchant($merchantInfo);
+        } catch (KHQRException $exception) {
+            throw ValidationException::withMessages([
+                'khrqr' => [$exception->getMessage()],
+            ]);
+        }
+
+        $data = is_array($response->data ?? null) ? $response->data : [];
+        $qr = (string) ($data['qr'] ?? '');
+        $md5 = (string) ($data['md5'] ?? '');
+
+        if ($qr === '' || $md5 === '') {
+            throw ValidationException::withMessages([
+                'khrqr' => ['Failed to generate KHQR payload'],
+            ]);
+        }
+
+        return [$qr, $md5];
+    }
+
+    /**
+     * @return array<string, string|null>
+     */
+    private function resolveKhrqrMerchantConfig(): array
+    {
+        $config = (array) (config('payment.providers.khrqr.merchant') ?? []);
+        $required = ['account_id', 'merchant_name', 'merchant_city', 'merchant_id', 'acquiring_bank'];
+        $missing = array_filter($required, fn($key) => trim((string) ($config[$key] ?? '')) === '');
+
+        if ($missing !== []) {
+            throw ValidationException::withMessages([
+                'khrqr' => ['Missing KHQR merchant config: ' . implode(', ', $missing)],
+            ]);
+        }
+
+        return $config;
+    }
+
+    private function toKhrqrCurrency(string $currencyIso): int
+    {
+        return match (strtoupper($currencyIso)) {
+            'KHR' => KHQRData::CURRENCY_KHR,
+            'USD' => KHQRData::CURRENCY_USD,
+            default => throw ValidationException::withMessages([
+                'currency' => ['Unsupported KHQR currency: ' . $currencyIso],
+            ]),
+        };
+    }
+
+    private function resolveKhrqrToken(): string
+    {
+        $config = (array) (config('payment.providers.khrqr') ?? []);
+        $useSit = (bool) ($config['use_sit'] ?? false);
+
+        return (string) ($useSit ? ($config['token_sit'] ?? '') : ($config['token'] ?? ''));
+    }
+
+    private function postKhrqrPoll(PaymentTransaction $transaction, string $pollHash, int $timeout): array
+    {
+        $payload = [
+            'hash' => $pollHash,
+            'transaction_id' => $transaction->provider_payment_id,
+            'order_id' => $transaction->order_id,
+            'md5' => $transaction->khqr_md5,
+        ];
+
+        $customEndpoint = trim((string) (config('payment.providers.khrqr.check_payment_endpoint') ?? ''));
+
+        try {
+            if ($customEndpoint !== '') {
+                $response = Http::withHeaders($this->buildKhrqrHeaders())
+                    ->timeout($timeout)
+                    ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
+                    ->post($customEndpoint, $payload);
+            } else {
+                $token = $this->resolveKhrqrToken();
+                if ($token === '') {
+                    throw ValidationException::withMessages([
+                        'provider' => ['KHQR API token is not configured'],
+                    ]);
+                }
+
+                $endpoint = (bool) (config('payment.providers.khrqr.use_sit') ?? false)
+                    ? Constants::SIT_CHECK_TRANSACTION_MD5_URL
+                    : Constants::CHECK_TRANSACTION_MD5_URL;
+
+                $response = Http::withToken($token)
+                    ->acceptJson()
+                    ->timeout($timeout)
+                    ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
+                    ->post($endpoint, [
+                        'md5' => $transaction->khqr_md5,
+                        'bakong_id' => $this->resolveKhrqrMerchantConfig()['account_id'],
+                    ]);
+
+                if (!$response->successful()) {
+                    throw ValidationException::withMessages([
+                        'provider' => ['KHQR check endpoint returned an unexpected status'],
+                    ]);
+                }
+
+                $body = $response->json();
+                if (!is_array($body)) {
+                    throw ValidationException::withMessages([
+                        'provider' => ['Malformed KHQR check response'],
+                    ]);
+                }
+
+                return $this->normalizeOfficialKhrqrResponse($body, $transaction);
+            }
+
+            if (!$response->successful()) {
+                throw ValidationException::withMessages([
+                    'provider' => ['KHQR check endpoint returned an unexpected status'],
+                ]);
+            }
+
+            $result = $response->json();
+            if (!is_array($result)) {
+                throw ValidationException::withMessages([
+                    'provider' => ['Malformed KHQR check response'],
+                ]);
+            }
+
+            return $result + [
+                'provider_payment_id' => $transaction->provider_payment_id,
+                'order_id' => $transaction->order_id,
+                'md5' => $transaction->khqr_md5,
+            ];
+        } catch (ConnectionException) {
+            throw ValidationException::withMessages([
+                'provider' => ['Unable to reach KHQR check endpoint'],
+            ]);
+        }
+    }
+
+    private function normalizeOfficialKhrqrResponse(array $response, PaymentTransaction $transaction): array
+    {
+        $responseCode = isset($response['responseCode']) ? (int) $response['responseCode'] : null;
+        $status = 'pending';
+
+        if ($responseCode === 0) {
+            $status = 'success';
+        } elseif ($responseCode > 1) {
+            $status = 'failed';
+        }
+
+        $data = is_array($response['data'] ?? null) ? $response['data'] : [];
+
+        return [
+            'event_id' => $transaction->provider_payment_id,
+            'transaction_id' => $transaction->provider_payment_id,
+            'provider_payment_id' => $transaction->provider_payment_id,
+            'status' => $status,
+            'order_id' => $transaction->order_id,
+            'amount' => isset($data['amount']) ? (float) $data['amount'] : (float) $transaction->amount,
+            'currency' => $data['currency'] ?? $transaction->currency,
+            'md5' => $transaction->khqr_md5,
+        ];
     }
 
     private function assertProviderSupported(string $provider): void
@@ -242,6 +543,8 @@ class PaymentRepository
         $order->order_status = in_array($order->order_status, ['pending'], true) ? 'processing' : $order->order_status;
         $order->paid_at = $order->paid_at ?? now();
         $order->save();
+
+        SendingInvoiceTelegramJob::dispatch($order->id)->afterCommit();
     }
 
     private function markFailedOrExpired(Order $order, PaymentTransaction $paymentTx, string $eventType): void

@@ -20,7 +20,7 @@
           </div>
           <h1 class="brand-name">SecurePortal</h1>
         </div>
-        
+
         <div class="brand-quote">
           <h2>Welcome Back</h2>
           <p>Sign in to access your personalized workspace and continue your journey with us.</p>
@@ -74,12 +74,7 @@
                     <polyline points="22,6 12,13 2,6"></polyline>
                   </svg>
                 </div>
-                <input 
-                  type="text" 
-                  class="form-input"
-                  placeholder="your_username"
-                  v-model="userName"
-                >
+                <input type="text" class="form-input" placeholder="your_username" v-model="userName">
               </div>
               <div class="input-hint">Enter your registered username</div>
             </div>
@@ -97,12 +92,7 @@
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
                 </div>
-                <input 
-                  type="password" 
-                  class="form-input"
-                  placeholder="Enter your password"
-                  v-model="password"
-                >
+                <input type="password" class="form-input" placeholder="Enter your password" v-model="password">
                 <button type="button" class="password-toggle">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -148,28 +138,43 @@
             <div class="social-login">
               <button type="button" class="social-button google" @click="onGoogleLogin">
                 <svg class="social-icon" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"></path>
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"></path>
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"></path>
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"></path>
                 </svg>
                 <span>Google</span>
               </button>
-              
+
               <button type="button" class="social-button facebook" @click="onFacebookLogin">
                 <svg class="social-icon" viewBox="0 0 24 24">
-                  <path d="M22 12.06C22 6.5 17.52 2 11.94 2 6.37 2 1.88 6.5 1.88 12.06c0 5.02 3.66 9.19 8.44 9.94v-7.03H7.9v-2.91h2.42V9.41c0-2.4 1.43-3.73 3.62-3.73 1.05 0 2.15.19 2.15.19v2.37h-1.21c-1.2 0-1.57.75-1.57 1.52v1.83h2.67l-.43 2.91h-2.24V22c4.78-.75 8.44-4.92 8.44-9.94z" fill="#1877F2"></path>
+                  <path
+                    d="M22 12.06C22 6.5 17.52 2 11.94 2 6.37 2 1.88 6.5 1.88 12.06c0 5.02 3.66 9.19 8.44 9.94v-7.03H7.9v-2.91h2.42V9.41c0-2.4 1.43-3.73 3.62-3.73 1.05 0 2.15.19 2.15.19v2.37h-1.21c-1.2 0-1.57.75-1.57 1.52v1.83h2.67l-.43 2.91h-2.24V22c4.78-.75 8.44-4.92 8.44-9.94z"
+                    fill="#1877F2"></path>
                 </svg>
                 <span>Facebook</span>
               </button>
-               <button type="button" class="social-button google" @click="onGithubLogin">
-                <svg class="social-icon" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+              <button type="button" class="social-button github" @click="onGithubLogin">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="#181717"
+                    d="M12,2A10,10,0,0,0,2,12c0,4.42,2.87,8.17,6.84,9.49.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1,.07 1.53,1.03 1.53,1.03.89,1.52 2.34,1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0,0 .84-.27 2.75,1.02.8-.22 1.65-.33 2.5-.33s1.7.11 2.5.33c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .26.18.58.69.48A10,10,0,0,0,22,12,10,10,0,0,0,12,2Z" />
                 </svg>
                 <span>Github</span>
+              </button>
+              <button type="button" class="social-button telegram" @click="onTelegramLogin">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24">
+                  <path fill="#26A5E4"
+                    d="M512,256C512,397.4,397.4,512,256,512S0,397.4,0,256,114.6,0,256,0,512,114.6,512,256ZM382.2,140.2a21.5,21.5,0,0,0-21.9-5.2L111.5,197.6a20.5,20.5,0,0,0-2.3,39l80.6,24.1,31.3,96.7a18.5,18.5,0,0,0,33.1,5.9l44.9-54.8,81.6,60.7a22.1,22.1,0,0,0,35.1-11.6l44.2-198.4A21.3,21.3,0,0,0,382.2,140.2Z" />
+                </svg>
+                <span>Telegram</span>
               </button>
             </div>
 
@@ -219,7 +224,21 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
-const apiOrigin = apiBase.replace(/\/api\/v1\/?$/, '')
+const apiOrigin = (() => {
+  if (apiBase.startsWith('http://') || apiBase.startsWith('https://')) {
+    return apiBase.replace(/\/api\/v1\/?$/, '')
+  }
+  return 'http://localhost:8000'
+})()
+const frontendOrigin = (() => {
+  if (apiOrigin.includes('localhost:8000')) {
+    return 'http://localhost:3000'
+  }
+  if (apiOrigin.includes('127.0.0.1:8000')) {
+    return 'http://127.0.0.1:3000'
+  }
+  return apiOrigin
+})()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -229,6 +248,15 @@ const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 
+const applyAuthFromResponse = (response: any) => {
+  const token = response?.data?.access_token ?? null
+  const profile = response?.data?.user ?? response?.data?.customer ?? null
+
+  authStore.setAccessToken(token)
+  authStore.setAuthenticated(Boolean(token) || Boolean(profile))
+  authStore.setUserProfile(profile)
+}
+
 const submitLogin = async () => {
   errorMessage.value = ''
   if (!userName.value || !password.value) {
@@ -237,7 +265,7 @@ const submitLogin = async () => {
   }
   loading.value = true
   try {
-    await $fetch(`${apiBase}/auth/login`, {
+    const response: any = await $fetch(`${apiBase}/auth/login`, {
       method: 'POST',
       credentials: 'include',
       body: {
@@ -245,7 +273,7 @@ const submitLogin = async () => {
         password: password.value
       }
     })
-    authStore.setAuthenticated(true)
+    applyAuthFromResponse(response)
     await router.replace('/')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Login failed. Please try again.'
@@ -255,8 +283,35 @@ const submitLogin = async () => {
   }
 }
 
-onMounted(() => {
+const handleTelegramToken = async (token: string) => {
+  errorMessage.value = ''
+  try {
+    await $fetch(`${apiBase}/auth/telegram/cookie`, {
+      method: 'POST',
+      credentials: 'include',
+      body: { token },
+    })
+
+    authStore.setAccessToken(token)
+    authStore.setAuthenticated(true)
+    await router.replace('/')
+  } catch (err: any) {
+    errorMessage.value = err?.data?.message || 'Telegram login failed'
+    authStore.resetAuth()
+  }
+}
+
+onMounted(async () => {
   if (import.meta.client) {
+    const tokenParam = route.query.token
+
+    const telegramToken = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam
+    if (telegramToken) {
+
+      await handleTelegramToken(telegramToken)
+      return
+    }
+
     const errorParam = route.query.error
     const error = Array.isArray(errorParam) ? errorParam[0] : errorParam
     if (error) {
@@ -276,7 +331,7 @@ onMounted(() => {
 const onGoogleLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${window.location.origin}/auth/login`
+    const frontendRedirect = `${frontendOrigin}/auth/login`
     const redirectUrl = `${apiOrigin}/auth/google/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
     window.location.href = redirectUrl
   } catch (e: any) {
@@ -287,7 +342,7 @@ const onGoogleLogin = async () => {
 const onFacebookLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${window.location.origin}/auth/login`
+    const frontendRedirect = `${frontendOrigin}/auth/login`
     const redirectUrl = `${apiOrigin}/auth/facebook/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
     window.location.href = redirectUrl
   } catch (e: any) {
@@ -298,13 +353,26 @@ const onFacebookLogin = async () => {
 const onGithubLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${window.location.origin}/auth/login`
+    const frontendRedirect = `${frontendOrigin}/auth/login`
     const redirectUrl = `${apiOrigin}/auth/github/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
     window.location.href = redirectUrl
   } catch (e: any) {
     errorMessage.value = e?.message || 'Failed to start GitHub login'
   }
 }
+
+const onTelegramLogin = async () => {
+  errorMessage.value = ''
+  try {
+    const frontendRedirect = `${frontendOrigin}/auth/login`
+    const redirectUrl = `https://nonofficial-xzavier-paradoxically.ngrok-free.dev/auth/telegram/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
+    window.location.href = redirectUrl
+  } catch (e: any) {
+    errorMessage.value = e?.message || 'Failed to start Telegram login'
+  }
+}
+
+
 </script>
 
 <style scoped>
@@ -379,9 +447,19 @@ const onGithubLogin = async () => {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  33% { transform: translateY(-20px) rotate(120deg); }
-  66% { transform: translateY(20px) rotate(240deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  33% {
+    transform: translateY(-20px) rotate(120deg);
+  }
+
+  66% {
+    transform: translateY(20px) rotate(240deg);
+  }
 }
 
 /* Login Content Layout */
@@ -682,12 +760,12 @@ const onGithubLogin = async () => {
   transition: all 0.3s ease;
 }
 
-.checkbox-input:checked + .checkbox-checkmark {
+.checkbox-input:checked+.checkbox-checkmark {
   background: #667eea;
   border-color: #667eea;
 }
 
-.checkbox-input:checked + .checkbox-checkmark::after {
+.checkbox-input:checked+.checkbox-checkmark::after {
   opacity: 1;
   transform: scale(1);
 }
@@ -810,6 +888,7 @@ const onGithubLogin = async () => {
   border-color: #333;
   color: #333;
 }
+
 .facebook:hover {
   border-color: #1877f2;
   color: #1877f2;
@@ -952,9 +1031,17 @@ const onGithubLogin = async () => {
 
 /* Animation for interactive elements */
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+  }
 }
 
 .submit-button:focus {

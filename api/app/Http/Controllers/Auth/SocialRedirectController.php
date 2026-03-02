@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerOAuthAccount;
 use App\Repositories\CustomerRepository;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -19,17 +21,22 @@ class SocialRedirectController extends Controller
         $this->customerRepository = $customerRepo;
     }
 
-    public function redirect(Request $request, string $provider): RedirectResponse
+    public function redirect(Request $request, string $provider): Response|RedirectResponse
     {
         $provider = strtolower($provider);
-        if (!in_array($provider, ['google', 'facebook', 'github'], true)) {
+        if (!in_array($provider, ['google', 'facebook', 'github', 'telegram'], true)) {
             return redirect($this->buildFrontendRedirect(null, 'unsupported_provider'));
         }
 
         $redirect = $this->sanitizeRedirect($request->query('redirect'));
+
         $driver = Socialite::driver($provider)->stateless();
         if ($redirect) {
             $driver = $driver->with(['state' => $this->encodeState(['redirect' => $redirect])]);
+        }
+
+        if ($provider === 'telegram') {
+            return response($driver->redirect());
         }
 
         return $driver->redirect();
@@ -38,7 +45,7 @@ class SocialRedirectController extends Controller
     public function callback(Request $request, string $provider): RedirectResponse
     {
         $provider = strtolower($provider);
-        if (!in_array($provider, ['google', 'facebook', 'github'], true)) {
+        if (!in_array($provider, ['google', 'facebook', 'github', 'telegram'], true)) {
             return redirect($this->buildFrontendRedirect(null, 'unsupported_provider'));
         }
 
@@ -47,12 +54,13 @@ class SocialRedirectController extends Controller
         } catch (\Throwable $e) {
             return redirect($this->buildFrontendRedirect(null, 'oauth_failed'));
         }
-
         $customer = $this->findOrCreateCustomer($provider, $socialUser);
-        $token = auth('customer')->login($customer);
 
+        $token = auth('customer')->login($customer);
+        Log::info($token);
         $redirect = $this->extractRedirectFromState($request->query('state'));
-        return redirect($this->buildFrontendRedirect(null, null, $redirect, true))
+        $frontendToken = $provider === 'telegram' ? $token : null;
+        return redirect($this->buildFrontendRedirect($frontendToken, null, $redirect, true))
             ->withCookie($this->buildAccessTokenCookie($token));
     }
 

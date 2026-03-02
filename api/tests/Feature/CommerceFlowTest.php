@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\PaymentTransaction;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CommerceFlowTest extends TestCase
@@ -213,12 +215,15 @@ class CommerceFlowTest extends TestCase
         $this->assertDatabaseHas('product_variants', ['id' => $variant->id, 'stock_quantity' => 2]);
     }
 
-    public function test_khrqr_payment_webhook_marks_order_paid_and_processing(): void
+    public function test_khrqr_webhook_is_disabled_by_default(): void
     {
-        config(['payment.providers.khrqr.webhook_secret' => 'khqr-secret']);
+        config([
+            'payment.providers.khrqr.webhook_secret' => 'khqr-secret',
+            'payment.providers.khrqr.webhook_enabled' => false,
+        ]);
 
-        [$customer, $headers] = $this->createCustomerWithHeaders('khqr_paid');
-        $variant = $this->createVariant(5, 30);
+        [$customer, $headers] = $this->createCustomerWithHeaders('khqr_webhook');
+        $variant = $this->createVariant(1, 20);
 
         $this->postJson('/api/v1/cart/items', [
             'variant_id' => $variant->id,
@@ -239,11 +244,10 @@ class CommerceFlowTest extends TestCase
 
         $providerPaymentId = $intent->json('data.provider_payment_id');
         $payload = [
-            'id' => 'khqr_evt_paid_1',
             'transaction_id' => $providerPaymentId,
             'status' => 'SUCCESS',
             'order_id' => $orderId,
-            'amount' => 31.50,
+            'amount' => 20.00,
             'currency' => 'USD',
         ];
         $raw = json_encode($payload, JSON_THROW_ON_ERROR);
@@ -251,25 +255,30 @@ class CommerceFlowTest extends TestCase
 
         $this->postJson('/api/v1/payments/webhook/khrqr', $payload, [
             'X-KHQR-Signature' => 'sha256=' . $signature,
-        ])->assertStatus(200);
+        ])->assertStatus(422)
+            ->assertJsonPath('errors.provider.0', 'Khrqr webhook is disabled');
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'payment_state' => 'paid',
-            'status' => 'processing',
+            'payment_state' => 'pending',
         ]);
     }
 
-    public function test_khrqr_failed_payment_restores_stock(): void
+    public function test_khrqr_polling_updates_order_state(): void
     {
-        config(['payment.providers.khrqr.webhook_secret' => 'khqr-secret']);
+        config([
+            'payment.providers.khrqr.webhook_secret' => 'khqr-secret',
+            'payment.providers.khrqr.check_payment_endpoint' => 'https://khqr.example/check_payment',
+            'payment.providers.khrqr.api_key' => 'test-key',
+            'payment.providers.khrqr.poll_timeout' => 5,
+        ]);
 
-        [$customer, $headers] = $this->createCustomerWithHeaders('khqr_fail');
-        $variant = $this->createVariant(2, 40);
+        [$customer, $headers] = $this->createCustomerWithHeaders('khqr_poll');
+        $variant = $this->createVariant(3, 25);
 
         $this->postJson('/api/v1/cart/items', [
             'variant_id' => $variant->id,
-            'quantity' => 2,
+            'quantity' => 1,
         ], $headers)->assertStatus(200);
 
         $checkout = $this->postJson('/api/v1/checkout', [
@@ -278,33 +287,40 @@ class CommerceFlowTest extends TestCase
         ], $headers)->assertStatus(201);
 
         $orderId = $checkout->json('data.order.id');
-        $this->assertDatabaseHas('product_variants', ['id' => $variant->id, 'stock_quantity' => 0]);
 
         $intent = $this->postJson('/api/v1/payments/intent', [
             'order_id' => $orderId,
             'provider' => 'khrqr',
         ], $headers)->assertStatus(201);
 
-        $payload = [
-            'id' => 'khqr_evt_failed_1',
-            'transaction_id' => $intent->json('data.provider_payment_id'),
-            'status' => 'FAILED',
-            'order_id' => $orderId,
-            'amount' => 81.50,
-            'currency' => 'USD',
-        ];
-        $raw = json_encode($payload, JSON_THROW_ON_ERROR);
-        $signature = hash_hmac('sha256', $raw, 'khqr-secret');
+        $providerPaymentId = $intent->json('data.provider_payment_id');
 
-        $this->postJson('/api/v1/payments/webhook/khrqr', $payload, [
-            'X-KHQR-Signature' => $signature,
-        ])->assertStatus(200);
+        Http::fake([
+            'https://khqr.example/check_payment' => Http::response([
+                'transaction_id' => $providerPaymentId,
+                'status' => 'SUCCESS',
+                'order_id' => $orderId,
+                'amount' => 26.50,
+                'currency' => 'USD',
+            ], 200),
+        ]);
+
+        $transaction = PaymentTransaction::where('order_id', $orderId)
+            ->where('provider', 'khrqr')
+            ->first();
+
+        $this->assertNotNull($transaction?->poll_hash);
+        $this->assertNotNull($intent->json('data.poll_hash'));
+        $this->assertEquals($transaction->poll_hash, $intent->json('data.poll_hash'));
+
+        $this->getJson("/api/v1/payments/khrqr/check/{$transaction->poll_hash}", $headers)
+            ->assertStatus(200);
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'status' => 'cancelled',
+            'payment_state' => 'paid',
+            'status' => 'processing',
         ]);
-        $this->assertDatabaseHas('product_variants', ['id' => $variant->id, 'stock_quantity' => 2]);
     }
 
     public function test_customer_and_admin_order_management_transitions_are_guarded(): void

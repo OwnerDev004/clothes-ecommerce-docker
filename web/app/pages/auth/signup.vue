@@ -77,6 +77,15 @@ const form = reactive({
 const loading = ref(false)
 const errorMessage = ref('')
 
+const applyAuthFromResponse = (response: any) => {
+  const token = response?.data?.access_token ?? null
+  const profile = response?.data?.user ?? response?.data?.customer ?? null
+
+  authStore.setAccessToken(token)
+  authStore.setAuthenticated(Boolean(token) || Boolean(profile))
+  authStore.setUserProfile(profile)
+}
+
 const submitSignup = async () => {
   errorMessage.value = ''
   if (!form.user_name || !form.email || !form.phone || !form.gender || !form.password) {
@@ -86,12 +95,12 @@ const submitSignup = async () => {
 
   loading.value = true
   try {
-    await $fetch(`${apiBase}/auth/register`, {
+    const response: any = await $fetch(`${apiBase}/auth/register`, {
       method: 'POST',
       credentials: 'include',
       body: form
     })
-    authStore.setAuthenticated(true)
+    applyAuthFromResponse(response)
     await router.replace('/')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Signup failed. Please try again.'

@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\VoucherController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\Auth\CustomerAuthController;
+use App\Http\Controllers\Api\V1\TelegramLinkController;
+use App\Http\Controllers\Auth\SocialRedirectController;
 
 // Admin
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
@@ -26,13 +28,18 @@ Route::prefix('auth')->group(function () {
     Route::post('/forgot_password', [CustomerAuthController::class, 'forgotPassword']);
     Route::post('/reset_password', [CustomerAuthController::class, 'resetPassword']);
     Route::post('/oauth/{provider}', [CustomerAuthController::class, 'oauthLogin']);
+    Route::get('/telegram/redirect', [SocialRedirectController::class, 'redirect'])
+        ->defaults('provider', 'telegram');
+    Route::get('/telegram/callback', [SocialRedirectController::class, 'callback'])
+        ->defaults('provider', 'telegram');
+    Route::post('/telegram/cookie', [CustomerAuthController::class, 'storeAccessTokenCookie']);
 });
 
 
 
 
 // Profile_Customer
-Route::middleware(['auth:customer'])->group(function () {
+Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
     Route::get('/profile', [CustomerController::class, 'show']);
     Route::put('/profile', [CustomerController::class, 'update']);
     Route::post('/change_avatar', [CustomerController::class, 'editAvatar']);
@@ -48,6 +55,8 @@ Route::middleware(['auth:customer'])->group(function () {
 
     Route::post('/checkout', [PaymentController::class, 'checkout']);
     Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
+    Route::get('/payments/khrqr/check/{hash}', [PaymentController::class, 'checkKhrqrStatus']);
+    Route::post('/telegram/connect-link', [TelegramLinkController::class, 'createLink']);
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);
@@ -73,6 +82,10 @@ Route::prefix('vouchers')->group(function () {
 
 Route::prefix('payments')->group(function () {
     Route::post('/webhook/{provider}', [PaymentController::class, 'webhook']);
+});
+
+Route::prefix('telegram')->group(function () {
+    Route::post('/webhook/{secret}', [TelegramLinkController::class, 'webhook']);
 });
 
 

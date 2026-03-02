@@ -15,15 +15,20 @@ class PaymentTransaction extends Model
         'amount',
         'currency',
         'client_token',
+        'poll_hash',
         'checkout_url',
         'expires_at',
         'last_event_at',
+        'qr_string',
+        'khqr_md5',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'expires_at' => 'datetime',
         'last_event_at' => 'datetime',
+        'qr_string' => 'string',
+        'khqr_md5' => 'string',
     ];
 
     public function order(): BelongsTo

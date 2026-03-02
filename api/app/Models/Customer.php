@@ -26,7 +26,10 @@ class Customer extends Authenticatable implements JWTSubject
         "address",
         "password",
         "avatar_url",
-        "avatar_public_id"
+        "avatar_public_id",
+        "telegram_user_id",
+        "telegram_chat_id",
+        "telegram_username",
     ];
 
     /**
@@ -59,6 +62,11 @@ class Customer extends Authenticatable implements JWTSubject
         return $this->hasMany(VoucherUse::class);
     }
 
+    public function telegramLinkTokens(): HasMany
+    {
+        return $this->hasMany(CustomerTelegramLinkToken::class);
+    }
+
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -68,5 +76,10 @@ class Customer extends Authenticatable implements JWTSubject
     {
         return [
         ];
+    }
+
+    public function routeNotificationForTelegram(): ?string
+    {
+        return $this->telegram_chat_id ?: $this->telegram_user_id;
     }
 }

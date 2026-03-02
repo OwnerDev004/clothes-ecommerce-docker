@@ -18,8 +18,7 @@ class PaymentController extends Controller
     public function __construct(
         private readonly CheckoutRepository $checkoutRepository,
         private readonly PaymentRepository $paymentRepository
-    )
-    {
+    ) {
     }
 
     public function checkout(CheckoutRequest $request)
@@ -61,6 +60,22 @@ class PaymentController extends Controller
         }
 
         return $this->success($intent, 'Payment intent created', 201);
+    }
+
+    public function checkKhrqrStatus(string $hash)
+    {
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        try {
+            $result = $this->paymentRepository->pollKhrqrPaymentStatus($customer->id, $hash);
+        } catch (ValidationException $e) {
+            return $this->error('Unable to check payment status', 422, $e->errors());
+        }
+
+        return $this->success($result, 'KHQR payment status refreshed', 200);
     }
 
     public function webhook(Request $request, string $provider)

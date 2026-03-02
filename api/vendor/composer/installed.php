@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => 'dbb88593e9dedb758f9e5c8a9d85330e5af630b6',
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
+        'reference' => null,
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -436,6 +436,15 @@
                 0 => 'v12.48.1',
             ),
         ),
+        'khqr-gateway/bakong-khqr-php' => array(
+            'pretty_version' => 'v1.0.0',
+            'version' => '1.0.0.0',
+            'reference' => '1df08d33ebb85b3b6b284205c422c3d6d8433973',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../khqr-gateway/bakong-khqr-php',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'kodova/hamcrest-php' => array(
             'dev_requirement' => true,
             'replaced' => array(
@@ -461,9 +470,9 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => 'dbb88593e9dedb758f9e5c8a9d85330e5af630b6',
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => null,
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1141,6 +1150,24 @@
             'install_path' => __DIR__ . '/../sebastian/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'socialiteproviders/manager' => array(
+            'pretty_version' => 'v4.8.1',
+            'version' => '4.8.1.0',
+            'reference' => '8180ec14bef230ec2351cff993d5d2d7ca470ef4',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../socialiteproviders/manager',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'socialiteproviders/telegram' => array(
+            'pretty_version' => '4.1.2',
+            'version' => '4.1.2.0',
+            'reference' => '7097d79bd85e04e80447405db83ab28a3ec2b494',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../socialiteproviders/telegram',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'spatie/once' => array(
             'dev_requirement' => false,

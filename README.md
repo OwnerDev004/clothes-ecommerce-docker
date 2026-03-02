@@ -495,7 +495,7 @@ Key variables in `api/.env` (use `.env.example` as template):
 APP_NAME="Clothes Shop"
 APP_ENV=local                    # Change to 'production' for production
 APP_DEBUG=true                   # Change to 'false' for production
-APP_URL=http://localhost:8000
+APP_URL=https://127.0.0.1:8000
 
 DB_CONNECTION=pgsql             # Database type
 DB_HOST=db                       # Docker service name (or your host)

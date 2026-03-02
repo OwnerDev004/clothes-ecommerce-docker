@@ -12,10 +12,12 @@
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "cviebrock/eloquent-sluggable": "*",
+        "khqr-gateway/bakong-khqr-php": "^1.0",
         "laravel/framework": "^12.0",
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "predis/predis": "*",
+        "socialiteproviders/telegram": "^4.1",
         "tymon/jwt-auth": "^2.2"
     },
     "require-dev": {

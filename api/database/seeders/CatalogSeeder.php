@@ -71,14 +71,14 @@ class CatalogSeeder extends Seeder
             [
                 'name' => 'Classic Cotton Tee',
                 'desc' => 'Soft cotton t-shirt with a clean fit',
-                'price' => 19.99,
+                'price' => 200.00,
                 'category_slug' => 'tops',
                 'dress_type_slug' => 'casual',
             ],
             [
                 'name' => 'Oxford Button Shirt',
                 'desc' => 'Smart casual oxford shirt',
-                'price' => 39.99,
+                'price' => 200.00,
                 'category_slug' => 'tops',
                 'dress_type_slug' => 'formal',
             ],
