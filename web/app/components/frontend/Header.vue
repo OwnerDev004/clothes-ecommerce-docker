@@ -86,14 +86,8 @@
               class="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               @click.stop="toggleAccountMenu">
               <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-100">
-                <img
-                  v-if="userAvatarUrl"
-                  :src="userAvatarUrl"
-                  alt="Account avatar"
-                  class="h-full w-full object-cover"
-                >
-                <div
-                  v-else
+                <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="Account avatar" class="h-full w-full object-cover">
+                <div v-else
                   class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
                   {{ userInitials }}
                 </div>
@@ -111,9 +105,9 @@
               leave-active-class="transition duration-150 ease-in"
               leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 -translate-y-2 scale-95">
               <div v-if="isAuthenticated && accountMenuOpen"
-                class="absolute right-0 mt-3 w-72 origin-top-right rounded-2xl border border-gray-200 bg-white p-3 shadow-xl z-50">
-                <div class="mb-3 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 px-3 py-2 text-white">
-                  <p class="text-xs text-white/80">Signed in as</p>
+                class="absolute right-0 mt-3 w-72 origin-top-right rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-xl z-50">
+                <div class="mb-3 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 px-3 py-2 text-black">
+                  <p class="text-xs text-black/80">Signed in as</p>
                   <p class="truncate text-sm font-semibold">{{ userDisplayName }}</p>
                 </div>
 
@@ -460,69 +454,36 @@
     <div v-if="isMenuOpen || showMobileSearch" class="fixed inset-0 bg-black bg-opacity-50 z-30 desktop:hidden"
       @click="closeAll"></div>
 
-    <el-dialog
-      v-model="profileDialogOpen"
-      width="680px"
-      :close-on-click-modal="false"
-      title="Edit Profile"
-      class="profile-dialog"
-      @closed="onProfileDialogClosed"
-    >
+    <el-dialog v-model="profileDialogOpen" width="680px" :close-on-click-modal="false" title="Edit Profile"
+      class="profile-dialog" @closed="onProfileDialogClosed">
       <div class="space-y-4">
-        <el-alert
-          title="Username and password updates are not available in the current API yet."
-          type="info"
-          :closable="false"
-          show-icon
-        />
+        <el-alert title="Username and password updates are not available in the current API yet." type="info"
+          :closable="false" show-icon />
 
-        <el-alert
-          v-if="profileFormMessage"
-          :title="profileFormMessage"
-          :type="profileFormMessageType"
-          :closable="false"
-          show-icon
-        />
+        <el-alert v-if="profileFormMessage" :title="profileFormMessage" :type="profileFormMessageType" :closable="false"
+          show-icon />
 
         <div class="flex items-center gap-4 rounded-xl bg-gray-50 p-4">
           <div class="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-white">
-            <img
-              v-if="avatarPreview"
-              :src="avatarPreview"
-              alt="Profile avatar"
-              class="h-full w-full object-cover"
-            >
-            <div v-else class="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-gray-500">
+            <img v-if="avatarPreview" :src="avatarPreview" alt="Profile avatar" class="h-full w-full object-cover">
+            <div v-else
+              class="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-gray-500">
               {{ userInitials }}
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <el-upload
-              :auto-upload="false"
-              :show-file-list="false"
-              :on-change="onAvatarPicked"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-            >
+            <el-upload :auto-upload="false" :show-file-list="false" :on-change="onAvatarPicked"
+              accept="image/jpeg,image/png,image/webp,image/gif">
               <el-button type="primary" plain>Select image</el-button>
             </el-upload>
-            <el-button
-              type="danger"
-              plain
-              :disabled="!avatarPreview && !selectedAvatarFile"
-              @click="removeAvatar"
-            >
+            <el-button type="danger" plain :disabled="!avatarPreview && !selectedAvatarFile" @click="removeAvatar">
               Remove
             </el-button>
           </div>
         </div>
 
-        <el-form
-          ref="profileFormRef"
-          :model="profileForm"
-          :rules="profileRules"
-          label-position="top"
-          class="grid grid-cols-1 gap-3 md:grid-cols-2"
-        >
+        <el-form ref="profileFormRef" :model="profileForm" :rules="profileRules" label-position="top"
+          class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <el-form-item label="Username">
             <el-input v-model="profileForm.user_name" disabled />
           </el-form-item>
@@ -547,23 +508,12 @@
           </el-form-item>
 
           <el-form-item label="Date of Birth" prop="dob">
-            <el-date-picker
-              v-model="profileForm.dob"
-              type="date"
-              value-format="YYYY-MM-DD"
-              format="YYYY-MM-DD"
-              placeholder="Select date"
-              class="w-full"
-            />
+            <el-date-picker v-model="profileForm.dob" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+              placeholder="Select date" class="w-full" />
           </el-form-item>
 
           <el-form-item label="Address" prop="address" class="md:col-span-2">
-            <el-input
-              v-model="profileForm.address"
-              type="textarea"
-              :rows="3"
-              placeholder="Enter your address"
-            />
+            <el-input v-model="profileForm.address" type="textarea" :rows="3" placeholder="Enter your address" />
           </el-form-item>
 
           <el-form-item label="Password" class="md:col-span-2">
