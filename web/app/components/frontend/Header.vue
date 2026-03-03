@@ -85,9 +85,18 @@
             <button v-else type="button"
               class="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               @click.stop="toggleAccountMenu">
-              <div
-                class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
-                {{ userInitials }}
+              <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-100">
+                <img
+                  v-if="userAvatarUrl"
+                  :src="userAvatarUrl"
+                  alt="Account avatar"
+                  class="h-full w-full object-cover"
+                >
+                <div
+                  v-else
+                  class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
+                  {{ userInitials }}
+                </div>
               </div>
               <span class="max-w-[120px] truncate text-sm font-medium text-gray-700 group-hover:text-black">
                 {{ userDisplayName }}
@@ -682,6 +691,10 @@ const accountActionClass = computed(() => [
   'bg-gray-50 text-gray-700 hover:bg-black hover:text-white',
   'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100 disabled:hover:text-gray-400',
 ])
+const userAvatarUrl = computed(() => {
+  const profile = (userProfile.value || {}) as Record<string, any>
+  return String(profile.avatar_url || '')
+})
 
 const getAuthHeaders = () => {
   return accessToken.value
@@ -778,11 +791,12 @@ const toggleAccountMenu = () => {
   accountMenuOpen.value = !accountMenuOpen.value
 }
 
-const openProfileModal = () => {
+const openProfileModal = async () => {
   accountMenuOpen.value = false
   profileFormMessage.value = ''
   shouldDeleteAvatar.value = false
   selectedAvatarFile.value = null
+  await hydrateProfile()
   fillProfileFormFromStore()
   profileDialogOpen.value = true
 }
@@ -894,30 +908,40 @@ const submitProfileUpdate = async () => {
       address: profileForm.address || null,
     }
 
-    await $fetch(`${apiBase}/profile`, {
+    let latestProfile: Record<string, any> | null = null
+
+    const profileResponse: any = await $fetch(`${apiBase}/profile`, {
       method: 'PUT',
       credentials: 'include',
       headers,
       body: profilePayload
     })
+    latestProfile = profileResponse?.data || latestProfile
 
     if (shouldDeleteAvatar.value) {
-      await $fetch(`${apiBase}/delete_avatar`, {
+      const deleteAvatarResponse: any = await $fetch(`${apiBase}/delete_avatar`, {
         method: 'POST',
         credentials: 'include',
         headers
       })
+      latestProfile = deleteAvatarResponse?.data || latestProfile
     }
 
     if (selectedAvatarFile.value) {
       const avatarFormData = new FormData()
       avatarFormData.append('avatar', selectedAvatarFile.value)
-      await $fetch(`${apiBase}/change_avatar`, {
+      const avatarResponse: any = await $fetch(`${apiBase}/change_avatar`, {
         method: 'POST',
         credentials: 'include',
         headers,
         body: avatarFormData
       })
+      latestProfile = avatarResponse?.data || latestProfile
+    }
+
+    if (latestProfile) {
+      authStore.setUserProfile(latestProfile)
+      avatarPreview.value = String(latestProfile.avatar_url || '')
     }
 
     await hydrateProfile()
