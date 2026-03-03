@@ -283,20 +283,37 @@ const submitLogin = async () => {
   }
 }
 
-const handleTelegramToken = async (token: string) => {
+const decodeCustomerPayload = (raw: string | null | undefined) => {
+  if (!raw) {
+    return null
+  }
+  try {
+    const decoded = atob(raw)
+    const parsed = JSON.parse(decoded)
+    return typeof parsed === 'object' && parsed ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+const handleOAuthToken = async (token: string, encodedCustomer?: string | null) => {
   errorMessage.value = ''
   try {
-    await $fetch(`${apiBase}/auth/telegram/cookie`, {
+    await $fetch(`${apiBase}/auth/oauth/cookie`, {
       method: 'POST',
       credentials: 'include',
       body: { token },
     })
 
+    const customer = decodeCustomerPayload(encodedCustomer)
     authStore.setAccessToken(token)
-    authStore.setAuthenticated(true)
+    authStore.setAuthenticated(Boolean(token) || Boolean(customer))
+    if (customer) {
+      authStore.setUserProfile(customer)
+    }
     await router.replace('/')
   } catch (err: any) {
-    errorMessage.value = err?.data?.message || 'Telegram login failed'
+    errorMessage.value = err?.data?.message || 'OAuth login failed'
     authStore.resetAuth()
   }
 }
@@ -304,11 +321,11 @@ const handleTelegramToken = async (token: string) => {
 onMounted(async () => {
   if (import.meta.client) {
     const tokenParam = route.query.token
-
-    const telegramToken = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam
-    if (telegramToken) {
-
-      await handleTelegramToken(telegramToken)
+    const customerParam = route.query.customer
+    const oauthToken = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam
+    const oauthCustomer = Array.isArray(customerParam) ? customerParam[0] : customerParam
+    if (oauthToken) {
+      await handleOAuthToken(oauthToken, oauthCustomer)
       return
     }
 
@@ -331,9 +348,7 @@ onMounted(async () => {
 const onGoogleLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${frontendOrigin}/auth/login`
-    const redirectUrl = `${apiOrigin}/auth/google/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
-    window.location.href = redirectUrl
+    await startOAuthLogin('google')
   } catch (e: any) {
     errorMessage.value = e?.message || 'Failed to start Google login'
   }
@@ -342,9 +357,7 @@ const onGoogleLogin = async () => {
 const onFacebookLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${frontendOrigin}/auth/login`
-    const redirectUrl = `${apiOrigin}/auth/facebook/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
-    window.location.href = redirectUrl
+    await startOAuthLogin('facebook')
   } catch (e: any) {
     errorMessage.value = e?.message || 'Failed to start Facebook login'
   }
@@ -353,9 +366,7 @@ const onFacebookLogin = async () => {
 const onGithubLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${frontendOrigin}/auth/login`
-    const redirectUrl = `${apiOrigin}/auth/github/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
-    window.location.href = redirectUrl
+    await startOAuthLogin('github')
   } catch (e: any) {
     errorMessage.value = e?.message || 'Failed to start GitHub login'
   }
@@ -364,12 +375,16 @@ const onGithubLogin = async () => {
 const onTelegramLogin = async () => {
   errorMessage.value = ''
   try {
-    const frontendRedirect = `${frontendOrigin}/auth/login`
-    const redirectUrl = `https://nonofficial-xzavier-paradoxically.ngrok-free.dev/auth/telegram/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
-    window.location.href = redirectUrl
+    await startOAuthLogin('telegram')
   } catch (e: any) {
     errorMessage.value = e?.message || 'Failed to start Telegram login'
   }
+}
+
+const startOAuthLogin = async (provider: 'google' | 'facebook' | 'github' | 'telegram') => {
+  const frontendRedirect = `${frontendOrigin}/auth/login`
+  const redirectUrl = `${apiOrigin}/auth/${provider}/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
+  window.location.href = redirectUrl
 }
 
 

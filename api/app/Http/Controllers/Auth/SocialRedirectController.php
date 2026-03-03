@@ -57,10 +57,16 @@ class SocialRedirectController extends Controller
         $customer = $this->findOrCreateCustomer($provider, $socialUser);
 
         $token = auth('customer')->login($customer);
-        Log::info($token);
+        session([
+            'oauth_customer' => $this->buildFrontendCustomerPayload($customer),
+            'oauth_provider' => $provider,
+        ]);
+
         $redirect = $this->extractRedirectFromState($request->query('state'));
-        $frontendToken = $provider === 'telegram' ? $token : null;
-        return redirect($this->buildFrontendRedirect($frontendToken, null, $redirect, true))
+        $frontendToken = $token;
+        $frontendCustomer = $provider === 'telegram' ? null : $this->encodeState($this->buildFrontendCustomerPayload($customer));
+
+        return redirect($this->buildFrontendRedirect($frontendToken, null, $redirect, true, $frontendCustomer))
             ->withCookie($this->buildAccessTokenCookie($token));
     }
 
@@ -138,7 +144,13 @@ class SocialRedirectController extends Controller
         return $phone;
     }
 
-    private function buildFrontendRedirect(?string $token, ?string $error = null, ?string $redirect = null, bool $success = false): string
+    private function buildFrontendRedirect(
+        ?string $token,
+        ?string $error = null,
+        ?string $redirect = null,
+        bool $success = false,
+        ?string $customer = null
+    ): string
     {
         $frontendBase = rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/');
         $target = $redirect ?: $frontendBase . '/auth/login';
@@ -153,6 +165,9 @@ class SocialRedirectController extends Controller
         if ($success) {
             $params['success'] = 1;
         }
+        if ($customer) {
+            $params['customer'] = $customer;
+        }
 
         if (!$params) {
             return $target;
@@ -160,6 +175,21 @@ class SocialRedirectController extends Controller
 
         $separator = str_contains($target, '?') ? '&' : '?';
         return $target . $separator . http_build_query($params);
+    }
+
+    private function buildFrontendCustomerPayload($customer): array
+    {
+        return [
+            'id' => $customer->id,
+            'full_name' => $customer->full_name,
+            'user_name' => $customer->user_name,
+            'email' => $customer->email,
+            'phone' => $customer->phone,
+            'avatar_url' => $customer->avatar_url,
+            'gender' => $customer->gender,
+            'dob' => $customer->dob,
+            'address' => $customer->address,
+        ];
     }
 
     private function buildAccessTokenCookie(string $token)

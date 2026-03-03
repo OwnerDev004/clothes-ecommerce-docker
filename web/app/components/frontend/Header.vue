@@ -75,31 +75,71 @@
             <span
               class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">1</span>
           </NuxtLink>
-          {{ isAuthenticated }}
-
           <!-- Account -->
           <div class="relative hidden sm:block account-menu-root">
-            <NuxtLink v-if="!isAuthenticated" to="/auth/login" class="block">
-              <Icon name="mdi:user"
-                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
+            <NuxtLink v-if="!isAuthenticated" to="/auth/login"
+              class="group flex h-10 w-10 items-center justify-center rounded-full border border-transparent bg-gray-100 text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-200 hover:bg-white hover:shadow-md">
+              <Icon name="mdi:user" class="text-xl transition-colors group-hover:text-black" />
             </NuxtLink>
-            <button v-else type="button" class="block" @click.stop="toggleAccountMenu">
-              <Icon name="mdi:user"
-                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
+
+            <button v-else type="button"
+              class="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              @click.stop="toggleAccountMenu">
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
+                {{ userInitials }}
+              </div>
+              <span class="max-w-[120px] truncate text-sm font-medium text-gray-700 group-hover:text-black">
+                {{ userDisplayName }}
+              </span>
+              <Icon name="mdi:chevron-down"
+                class="text-lg text-gray-500 transition-transform duration-200 group-hover:text-black"
+                :class="accountMenuOpen ? 'rotate-180' : ''" />
             </button>
 
-            <div v-if="isAuthenticated && accountMenuOpen"
-              class="absolute right-0 mt-3 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-xl z-50">
-              {{ userProfile }}
-              <button type="button" class="w-full rounded-lg px-3 py-2 text-left text-sm transition-colors"
-                :class="telegramLinked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'"
-                :disabled="telegramLinked || connectingTelegram" @click="connectTelegram">
-                {{ telegramLinked ? 'Telegram Linked' : (connectingTelegram ? 'Connecting...' : 'Connect Telegram') }}
-              </button>
-              <p v-if="telegramStatusMessage" class="mt-2 text-xs text-gray-600">
-                {{ telegramStatusMessage }}
-              </p>
-            </div>
+            <Transition enter-active-class="transition duration-200 ease-out"
+              enter-from-class="opacity-0 -translate-y-2 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 -translate-y-2 scale-95">
+              <div v-if="isAuthenticated && accountMenuOpen"
+                class="absolute right-0 mt-3 w-72 origin-top-right rounded-2xl border border-gray-200 bg-white p-3 shadow-xl z-50">
+                <div class="mb-3 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 px-3 py-2 text-white">
+                  <p class="text-xs text-white/80">Signed in as</p>
+                  <p class="truncate text-sm font-semibold">{{ userDisplayName }}</p>
+                </div>
+
+                <button type="button" :class="accountActionClass" @click="openProfileModal">
+                  <span class="flex items-center gap-2">
+                    <Icon name="mdi:account-circle-outline" class="text-base" />
+                    Profile
+                  </span>
+                  <Icon name="mdi:chevron-right" class="text-base opacity-60" />
+                </button>
+
+                <button type="button" :class="accountActionClass" :disabled="telegramLinked || connectingTelegram"
+                  @click="connectTelegram">
+                  <span class="flex items-center gap-2">
+                    <Icon name="mdi:telegram" class="text-base" />
+                    {{ telegramLinked ? 'Telegram Linked' : (connectingTelegram ? 'Connecting...' : 'Connect Telegram')
+                    }}
+                  </span>
+                  <Icon v-if="!telegramLinked" name="mdi:chevron-right" class="text-base opacity-60" />
+                  <Icon v-else name="mdi:check-circle" class="text-base text-emerald-600" />
+                </button>
+
+                <button type="button" :class="accountActionClass" @click="logout">
+                  <span class="flex items-center gap-2">
+                    <Icon name="mdi:logout-variant" class="text-base" />
+                    Logout
+                  </span>
+                  <Icon name="mdi:chevron-right" class="text-base opacity-60" />
+                </button>
+
+                <p v-if="telegramStatusMessage" class="mt-2 text-xs text-gray-600">
+                  {{ telegramStatusMessage }}
+                </p>
+              </div>
+            </Transition>
           </div>
         </div>
       </div>
@@ -410,12 +450,135 @@
     <!-- Backdrop for mobile menu -->
     <div v-if="isMenuOpen || showMobileSearch" class="fixed inset-0 bg-black bg-opacity-50 z-30 desktop:hidden"
       @click="closeAll"></div>
+
+    <el-dialog
+      v-model="profileDialogOpen"
+      width="680px"
+      :close-on-click-modal="false"
+      title="Edit Profile"
+      class="profile-dialog"
+      @closed="onProfileDialogClosed"
+    >
+      <div class="space-y-4">
+        <el-alert
+          title="Username and password updates are not available in the current API yet."
+          type="info"
+          :closable="false"
+          show-icon
+        />
+
+        <el-alert
+          v-if="profileFormMessage"
+          :title="profileFormMessage"
+          :type="profileFormMessageType"
+          :closable="false"
+          show-icon
+        />
+
+        <div class="flex items-center gap-4 rounded-xl bg-gray-50 p-4">
+          <div class="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-white">
+            <img
+              v-if="avatarPreview"
+              :src="avatarPreview"
+              alt="Profile avatar"
+              class="h-full w-full object-cover"
+            >
+            <div v-else class="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-gray-500">
+              {{ userInitials }}
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <el-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              :on-change="onAvatarPicked"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+            >
+              <el-button type="primary" plain>Select image</el-button>
+            </el-upload>
+            <el-button
+              type="danger"
+              plain
+              :disabled="!avatarPreview && !selectedAvatarFile"
+              @click="removeAvatar"
+            >
+              Remove
+            </el-button>
+          </div>
+        </div>
+
+        <el-form
+          ref="profileFormRef"
+          :model="profileForm"
+          :rules="profileRules"
+          label-position="top"
+          class="grid grid-cols-1 gap-3 md:grid-cols-2"
+        >
+          <el-form-item label="Username">
+            <el-input v-model="profileForm.user_name" disabled />
+          </el-form-item>
+
+          <el-form-item label="Full Name" prop="full_name">
+            <el-input v-model="profileForm.full_name" placeholder="Enter full name" />
+          </el-form-item>
+
+          <el-form-item label="Email" prop="email">
+            <el-input v-model="profileForm.email" placeholder="Enter email" />
+          </el-form-item>
+
+          <el-form-item label="Phone" prop="phone">
+            <el-input v-model="profileForm.phone" placeholder="Enter phone number" />
+          </el-form-item>
+
+          <el-form-item label="Gender" prop="gender">
+            <el-select v-model="profileForm.gender" placeholder="Select gender" clearable class="w-full">
+              <el-option label="Male" value="male" />
+              <el-option label="Female" value="female" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="Date of Birth" prop="dob">
+            <el-date-picker
+              v-model="profileForm.dob"
+              type="date"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
+              placeholder="Select date"
+              class="w-full"
+            />
+          </el-form-item>
+
+          <el-form-item label="Address" prop="address" class="md:col-span-2">
+            <el-input
+              v-model="profileForm.address"
+              type="textarea"
+              :rows="3"
+              placeholder="Enter your address"
+            />
+          </el-form-item>
+
+          <el-form-item label="Password" class="md:col-span-2">
+            <el-input disabled placeholder="Password change API is not available yet" />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <el-button @click="profileDialogOpen = false">Cancel</el-button>
+          <el-button type="primary" :loading="savingProfile" @click="submitProfileUpdate">
+            Save changes
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </header>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import type { FormInstance, FormRules, UploadProps } from 'element-plus'
 import { useAuthStore } from '~/stores/authStore'
 
 const authStore = useAuthStore()
@@ -433,6 +596,110 @@ const accountMenuOpen = ref(false)
 const connectingTelegram = ref(false)
 const telegramLinked = ref(false)
 const telegramStatusMessage = ref('')
+const profileDialogOpen = ref(false)
+const savingProfile = ref(false)
+const profileFormRef = ref<FormInstance>()
+const profileFormMessage = ref('')
+const profileFormMessageType = ref<'success' | 'warning' | 'error' | 'info'>('info')
+const selectedAvatarFile = ref<File | null>(null)
+const avatarPreview = ref('')
+const shouldDeleteAvatar = ref(false)
+const router = useRouter()
+
+type ProfileForm = {
+  user_name: string
+  full_name: string
+  email: string
+  phone: string
+  gender: '' | 'male' | 'female'
+  dob: string
+  address: string
+}
+
+const profileForm = reactive<ProfileForm>({
+  user_name: '',
+  full_name: '',
+  email: '',
+  phone: '',
+  gender: '',
+  dob: '',
+  address: '',
+})
+
+const profileRules: FormRules<ProfileForm> = {
+  full_name: [
+    { max: 255, message: 'Full name is too long', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: 'Email is invalid', trigger: 'blur' }
+  ],
+  phone: [
+    { max: 20, message: 'Phone number is too long', trigger: 'blur' }
+  ],
+  address: [
+    { max: 500, message: 'Address is too long', trigger: 'blur' }
+  ],
+  gender: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!value || value === 'male' || value === 'female') {
+          callback()
+          return
+        }
+        callback(new Error('Gender must be male or female'))
+      },
+      trigger: 'change'
+    }
+  ]
+}
+
+const userDisplayName = computed(() => {
+  const profile = userProfile.value || {}
+  return (
+    (profile.full_name as string | undefined) ||
+    (profile.name as string | undefined) ||
+    (profile.email as string | undefined) ||
+    'Account'
+  )
+})
+
+const userInitials = computed(() => {
+  const normalized = userDisplayName.value.trim()
+  if (!normalized) {
+    return 'AC'
+  }
+
+  const parts = normalized.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+})
+
+const accountActionClass = computed(() => [
+  'group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200',
+  'bg-gray-50 text-gray-700 hover:bg-black hover:text-white',
+  'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100 disabled:hover:text-gray-400',
+])
+
+const getAuthHeaders = () => {
+  return accessToken.value
+    ? { Authorization: `Bearer ${accessToken.value}` }
+    : undefined
+}
+
+const fillProfileFormFromStore = () => {
+  const profile = (userProfile.value || {}) as Record<string, any>
+  profileForm.user_name = String(profile.user_name || '')
+  profileForm.full_name = String(profile.full_name || profile.name || '')
+  profileForm.email = String(profile.email || '')
+  profileForm.phone = String(profile.phone || '')
+  profileForm.gender = (profile.gender === 'male' || profile.gender === 'female') ? profile.gender : ''
+  profileForm.dob = String(profile.dob || '')
+  profileForm.address = String(profile.address || '')
+  avatarPreview.value = String(profile.avatar_url || '')
+}
 
 // Toggle mobile menu
 const toggleMenu = () => {
@@ -511,6 +778,15 @@ const toggleAccountMenu = () => {
   accountMenuOpen.value = !accountMenuOpen.value
 }
 
+const openProfileModal = () => {
+  accountMenuOpen.value = false
+  profileFormMessage.value = ''
+  shouldDeleteAvatar.value = false
+  selectedAvatarFile.value = null
+  fillProfileFormFromStore()
+  profileDialogOpen.value = true
+}
+
 const hydrateProfile = async () => {
   if (!accessToken.value && !isAuthenticated.value) {
     return
@@ -563,6 +839,107 @@ const connectTelegram = async () => {
   } finally {
     connectingTelegram.value = false
   }
+}
+
+const onAvatarPicked: UploadProps['onChange'] = (uploadFile) => {
+  const raw = uploadFile.raw
+  if (!raw) {
+    return
+  }
+
+  selectedAvatarFile.value = raw
+  shouldDeleteAvatar.value = false
+
+  const reader = new FileReader()
+  reader.onload = () => {
+    avatarPreview.value = String(reader.result || '')
+  }
+  reader.readAsDataURL(raw)
+}
+
+const removeAvatar = () => {
+  selectedAvatarFile.value = null
+  avatarPreview.value = ''
+  shouldDeleteAvatar.value = true
+}
+
+const onProfileDialogClosed = () => {
+  selectedAvatarFile.value = null
+  shouldDeleteAvatar.value = false
+  savingProfile.value = false
+  profileFormMessage.value = ''
+}
+
+const submitProfileUpdate = async () => {
+  if (!profileFormRef.value) {
+    return
+  }
+
+  const valid = await profileFormRef.value.validate().catch(() => false)
+  if (!valid) {
+    return
+  }
+
+  savingProfile.value = true
+  profileFormMessage.value = ''
+
+  try {
+    const headers = getAuthHeaders()
+    const profilePayload = {
+      full_name: profileForm.full_name || null,
+      email: profileForm.email || null,
+      phone: profileForm.phone || null,
+      gender: profileForm.gender || null,
+      dob: profileForm.dob || null,
+      address: profileForm.address || null,
+    }
+
+    await $fetch(`${apiBase}/profile`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers,
+      body: profilePayload
+    })
+
+    if (shouldDeleteAvatar.value) {
+      await $fetch(`${apiBase}/delete_avatar`, {
+        method: 'POST',
+        credentials: 'include',
+        headers
+      })
+    }
+
+    if (selectedAvatarFile.value) {
+      const avatarFormData = new FormData()
+      avatarFormData.append('avatar', selectedAvatarFile.value)
+      await $fetch(`${apiBase}/change_avatar`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: avatarFormData
+      })
+    }
+
+    await hydrateProfile()
+    fillProfileFormFromStore()
+    profileFormMessageType.value = 'success'
+    profileFormMessage.value = 'Profile updated successfully.'
+    shouldDeleteAvatar.value = false
+    selectedAvatarFile.value = null
+  } catch (err: any) {
+    profileFormMessageType.value = 'error'
+    profileFormMessage.value = err?.data?.message || 'Failed to update profile.'
+  } finally {
+    savingProfile.value = false
+  }
+}
+
+const logout = async () => {
+  authStore.resetAuth()
+  accountMenuOpen.value = false
+  telegramLinked.value = false
+  telegramStatusMessage.value = ''
+  await router.push('/auth/login')
 }
 
 // Set up event listeners

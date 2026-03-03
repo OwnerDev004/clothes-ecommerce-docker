@@ -27,7 +27,9 @@ Route::prefix('auth')->group(function () {
     Route::post("/register", [CustomerAuthController::class, 'register']);
     Route::post('/forgot_password', [CustomerAuthController::class, 'forgotPassword']);
     Route::post('/reset_password', [CustomerAuthController::class, 'resetPassword']);
-    Route::post('/oauth/{provider}', [CustomerAuthController::class, 'oauthLogin']);
+    Route::post('/oauth/cookie', [CustomerAuthController::class, 'storeAccessTokenCookie']);
+    Route::post('/oauth/{provider}', [CustomerAuthController::class, 'oauthLogin'])
+        ->whereIn('provider', ['google', 'facebook', 'github', 'telegram']);
     Route::get('/telegram/redirect', [SocialRedirectController::class, 'redirect'])
         ->defaults('provider', 'telegram');
     Route::get('/telegram/callback', [SocialRedirectController::class, 'callback'])
