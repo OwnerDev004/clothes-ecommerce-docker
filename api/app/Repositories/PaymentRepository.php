@@ -376,11 +376,23 @@ class PaymentRepository
         $customEndpoint = trim((string) (config('payment.providers.khrqr.check_payment_endpoint') ?? ''));
 
         try {
+            $isOfficialMd5Endpoint = str_contains(strtolower($customEndpoint), 'check_transaction_by_md5');
             if ($customEndpoint !== '') {
-                $response = Http::withHeaders($this->buildKhrqrHeaders())
+                $token = $this->resolveKhrqrToken();
+                $headers = $this->buildKhrqrHeaders();
+                if ($token !== '') {
+                    $headers['Authorization'] = 'Bearer ' . $token;
+                }
+
+                $customPayload = $payload;
+                if ($isOfficialMd5Endpoint) {
+                    $customPayload = ['md5' => $transaction->khqr_md5];
+                }
+
+                $response = Http::withHeaders($headers)
                     ->timeout($timeout)
                     ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
-                    ->post($customEndpoint, $payload);
+                    ->post($customEndpoint, $customPayload);
             } else {
                 $token = $this->resolveKhrqrToken();
                 if ($token === '') {
@@ -399,7 +411,6 @@ class PaymentRepository
                     ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
                     ->post($endpoint, [
                         'md5' => $transaction->khqr_md5,
-                        'bakong_id' => $this->resolveKhrqrMerchantConfig()['account_id'],
                     ]);
 
                 if (!$response->successful()) {
@@ -419,8 +430,10 @@ class PaymentRepository
             }
 
             if (!$response->successful()) {
+                $responseBody = trim((string) $response->body());
                 throw ValidationException::withMessages([
                     'provider' => ['KHQR check endpoint returned an unexpected status'],
+                    'provider_response' => [$responseBody !== '' ? $responseBody : 'No response body'],
                 ]);
             }
 
@@ -429,6 +442,10 @@ class PaymentRepository
                 throw ValidationException::withMessages([
                     'provider' => ['Malformed KHQR check response'],
                 ]);
+            }
+
+            if ($customEndpoint !== '' && $isOfficialMd5Endpoint) {
+                return $this->normalizeOfficialKhrqrResponse($result, $transaction);
             }
 
             return $result + [

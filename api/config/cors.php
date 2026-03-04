@@ -5,9 +5,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_unique(array_filter([
         env('FRONTEND_URL', 'http://localhost:3000'),
-    ],
+        env('FRONTEND_URL_ALT', 'http://127.0.0.1:3000'),
+    ]))),
 
     'allowed_origins_patterns' => [],
 

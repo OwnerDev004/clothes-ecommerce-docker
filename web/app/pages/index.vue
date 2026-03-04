@@ -1,48 +1,43 @@
 <script setup lang="ts">
-   import { useRouter } from 'nuxt/app'
-    const router = useRouter()
-    // items
-    const items = reactive([
-    {
-      id: 1,
-      title: "T-SHIRT WITH TAPE DETAILS",
-      price: 4.5,
-      img: "/img/products/product1.png",
-      discount_amount: 20,
-      discount_type: 1,
-      stars_num: 1,
-      rating_amount: 4,
-    },
-    {
-      id: 2,
-      title: "SKINNY FIT JEANS",
-      price: 4.5,
-      img: "/img/products/product2.png",
-      discount_amount: 5,
-      stars_num: 3,
-      rating_amount: 23,
-    },
-    {
-      id: 3,
-      title: "CHECKERED SHIRT",
-      price: 4.5,
-      img: "/img/products/product3.png",
-      discount_amount: 1,
-      discount_type: 2,
-      stars_num: 4,
-      rating_amount: 26,
-    },
-    {
-      id: 4,
-      title: "SLEEVE STRIPED T-SHIRT",
-      price: 4.5,
-      img: "/img/products/product4.png",
-      discount_amount: 20,
-      discount_type: 1,
-      stars_num: 2,
-      rating_amount: 10,
-    },
-    ]);
+import { useRouter } from 'nuxt/app'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+
+const router = useRouter()
+const config = useRuntimeConfig()
+const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
+
+type ProductImage = {
+  image_url?: string
+}
+
+type ProductApi = {
+  id: number | string
+  name?: string
+  price?: number | string
+  thumbnail?: ProductImage | null
+  images?: ProductImage[]
+}
+
+type ProductCard = {
+  id: number | string
+  title: string
+  price: number
+  img: string
+  discount_amount: number
+  discount_type: number | undefined
+  stars_num: number
+  rating_amount: number
+}
+
+const products = ref<ProductCard[]>([])
+const isLoadingProducts = ref(false)
+const productError = ref('')
+const currentPage = ref(1)
+const hasMoreProducts = ref(true)
+const perPage = 8
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 const brands = reactive([
   {
@@ -90,12 +85,119 @@ const onSlideChange = (swiper: any) => {
   }
 };
 
+const topSellingProducts = computed(() => products.value.slice(0, 4))
+
+const resolveImageUrl = (input?: string) => {
+  if (!input) {
+    return '/img/products/product1.png'
+  }
+  if (/^https?:\/\//i.test(input)) {
+    return input
+  }
+  if (input.startsWith('/')) {
+    return `${backendOrigin}${input}`
+  }
+  return `${backendOrigin}/${input}`
+}
+
+const mapProductToCard = (item: ProductApi): ProductCard => {
+  const thumbnail = item.thumbnail?.image_url || item.images?.[0]?.image_url || ''
+  const price = Number(item.price || 0)
+  return {
+    id: item.id,
+    title: String(item.name || 'Untitled product'),
+    price: Number.isFinite(price) ? price : 0,
+    img: resolveImageUrl(thumbnail),
+    discount_amount: 0,
+    discount_type: undefined,
+    stars_num: 5,
+    rating_amount: 0,
+  }
+}
+
+const fetchProducts = async (reset = false) => {
+  if (isLoadingProducts.value) {
+    return
+  }
+  if (!hasMoreProducts.value && !reset) {
+    return
+  }
+
+  if (reset) {
+    currentPage.value = 1
+    hasMoreProducts.value = true
+    products.value = []
+  }
+
+  isLoadingProducts.value = true
+  productError.value = ''
+
+  try {
+    const response: any = await $fetch(`${apiBase}/products`, {
+      method: 'GET',
+      query: {
+        page: currentPage.value,
+        per_page: perPage,
+      }
+    })
+
+    const rows = Array.isArray(response?.data) ? response.data : []
+    const mapped = rows.map((row: ProductApi) => mapProductToCard(row))
+    products.value.push(...mapped)
+
+    const current = Number(response?.meta?.current_page || currentPage.value)
+    const last = Number(response?.meta?.last_page || current)
+    hasMoreProducts.value = current < last
+    currentPage.value = current + 1
+  } catch (error: any) {
+    productError.value = error?.data?.message || 'Failed to load products.'
+  } finally {
+    isLoadingProducts.value = false
+  }
+}
+
+const setupScrollObserver = () => {
+  if (!import.meta.client) {
+    return
+  }
+
+  if (observer) {
+    observer.disconnect()
+  }
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      const first = entries[0]
+      if (first?.isIntersecting) {
+        fetchProducts()
+      }
+    },
+    { rootMargin: '200px 0px' }
+  )
+
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+}
+
 const viewProduct = (id:number | string) =>{
   router.push('/frontend/product_detail/'+id);
 }
 const viewCategory = (id:number | string) =>{
   router.push('/frontend/categories/'+id);
 }
+
+onMounted(async () => {
+  await fetchProducts(true)
+  setupScrollObserver()
+})
+
+onBeforeUnmount(() => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+})
 </script>
 <template>
   <main>
@@ -172,19 +274,19 @@ const viewCategory = (id:number | string) =>{
       </Swiper>
     </section>
 
-    <!-- NEW ARRIVALS -->
+    <!-- ALL PRODUCTS -->
     <section class="px-5 desktop:container py-10">
       <h1
         class="font-Poppins text-4xl md:text-6xl leading-tight text-center py-4 font-extrabold"
       >
-        NEW ARRIVALS
+        ALL PRODUCTS
       </h1>
 
       <!-- card -->
       <div
         class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4"
       >
-        <template v-for="item in items">
+        <template v-for="item in products" :key="item.id">
           <FrontendCardProduct
             :title="item.title"
             :price="item.price"
@@ -197,13 +299,28 @@ const viewCategory = (id:number | string) =>{
           />
         </template>
       </div>
-      <div class="flex justify-center mt-5">
+
+      <div v-if="!products.length && !isLoadingProducts" class="mt-8 text-center text-gray-500">
+        No products found.
+      </div>
+
+      <div class="mt-6 flex justify-center">
         <button
-          class="border rounded-[64px] p-4 w-full md:w-1/4 xl:w-1/6 outline-none bg-transparent text-black hover:bg-black hover:text-white"
+          v-if="productError"
+          class="border rounded-[64px] px-5 py-2 outline-none bg-transparent text-black hover:bg-black hover:text-white"
+          @click="fetchProducts()"
         >
-          View All
+          Retry Loading
         </button>
       </div>
+
+      <div class="mt-6 text-center text-sm text-gray-500">
+        <p v-if="isLoadingProducts">Loading more products...</p>
+        <p v-else-if="!hasMoreProducts && products.length">You reached the end.</p>
+      </div>
+
+      <div ref="loadMoreTrigger" class="h-4"></div>
+
       <div class="border-b border-zinc-300 mt-10"></div>
     </section>
 
@@ -219,7 +336,7 @@ const viewCategory = (id:number | string) =>{
       <div
         class="grid gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
-        <template v-for="item in items">
+        <template v-for="item in topSellingProducts" :key="`top-${item.id}`">
           <FrontendCardProduct
             :title="item.title"
             :price="item.price"

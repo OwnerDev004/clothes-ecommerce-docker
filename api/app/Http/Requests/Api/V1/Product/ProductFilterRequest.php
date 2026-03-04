@@ -19,7 +19,9 @@ class ProductFilterRequest extends FormRequest
             "price" => "nullable|numeric",
             "color" => "nullable|string",
             "size" => "nullable|string",
-            "dress_style" => "nullable|string"
+            "dress_style" => "nullable|string",
+            "page" => "nullable|integer|min:1",
+            "per_page" => "nullable|integer|min:1|max:50",
         ];
     }
 

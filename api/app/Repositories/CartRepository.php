@@ -122,6 +122,7 @@ class CartRepository extends BaseRepository
     {
         $cart->load([
             'items.variant.product:id,name,slug',
+            'items.variant.product.thumbnail:id,product_id,image_url,image_type,sort_order',
             'items.variant.color:id,name,hex_code',
             'items.variant.size:id,name',
         ]);
@@ -146,6 +147,7 @@ class CartRepository extends BaseRepository
                 'product_id' => $variant->product_id,
                 'product_name' => optional($variant->product)->name,
                 'product_slug' => optional($variant->product)->slug,
+                'product_image' => optional(optional($variant->product)->thumbnail)->image_url,
                 'color' => optional($variant->color)->name,
                 'size' => optional($variant->size)->name,
                 'stock_quantity' => (int) $variant->stock_quantity,

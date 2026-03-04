@@ -3,9 +3,9 @@
         class="order-history-dialog" @closed="onDialogClosed">
         <div class="space-y-4">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <el-select v-model="statusFilter" class="w-full sm:w-52" placeholder="Filter by status" clearable
+                <el-select v-model="statusFilter" class="w-full sm:w-52" placeholder="Lifecycle status" clearable
                     @change="onFilterChanged">
-                    <el-option label="All Statuses" value="" />
+                    <el-option label="All Lifecycle Statuses" value="" />
                     <el-option label="Pending" value="pending" />
                     <el-option label="Paid" value="paid" />
                     <el-option label="Processing" value="processing" />
@@ -13,6 +13,27 @@
                     <el-option label="Completed" value="completed" />
                     <el-option label="Cancelled" value="cancelled" />
                     <el-option label="Refunded" value="refunded" />
+                </el-select>
+
+                <el-select v-model="paymentStateFilter" class="w-full sm:w-52" placeholder="Payment status" clearable
+                    @change="onFilterChanged">
+                    <el-option label="All Payment Statuses" value="" />
+                    <el-option label="Pending" value="pending" />
+                    <el-option label="Paid" value="paid" />
+                    <el-option label="Failed" value="failed" />
+                    <el-option label="Expired" value="expired" />
+                    <el-option label="Canceled" value="canceled" />
+                    <el-option label="Refunded" value="refunded" />
+                </el-select>
+
+                <el-select v-model="orderStatusFilter" class="w-full sm:w-52" placeholder="Shipping/Order status"
+                    clearable @change="onFilterChanged">
+                    <el-option label="All Shipping/Order Statuses" value="" />
+                    <el-option label="Pending" value="pending" />
+                    <el-option label="Processing" value="processing" />
+                    <el-option label="Shipped" value="shipped" />
+                    <el-option label="Delivered" value="delivered" />
+                    <el-option label="Cancelled" value="cancelled" />
                 </el-select>
 
                 <el-button :loading="loadingOrders" plain @click="fetchOrders">
@@ -43,6 +64,12 @@
                             <div class="flex items-center gap-2">
                                 <el-tag size="small" :type="statusTagType(order.status)">
                                     {{ order.status || 'unknown' }}
+                                </el-tag>
+                                <el-tag size="small" :type="paymentTagType(order.payment_state || order.payment_status)">
+                                    Payment: {{ order.payment_state || order.payment_status || 'unknown' }}
+                                </el-tag>
+                                <el-tag size="small" :type="orderTagType(order.order_status)">
+                                    Shipping: {{ order.order_status || 'unknown' }}
                                 </el-tag>
                                 <span class="text-sm font-semibold text-gray-900">
                                     ${{ formatMoney(order.total_price) }}
@@ -105,6 +132,9 @@ type OrderItem = {
 type OrderRecord = {
     id: number | string
     status?: string
+    payment_state?: string
+    payment_status?: string
+    order_status?: string
     order_date?: string
     created_at?: string
     payment_method?: string
@@ -135,6 +165,8 @@ const errorMessage = ref('')
 const orders = ref<OrderRecord[]>([])
 const page = ref(1)
 const statusFilter = ref('')
+const paymentStateFilter = ref('')
+const orderStatusFilter = ref('')
 const meta = ref({
     current_page: 1,
     last_page: 1,
@@ -167,6 +199,8 @@ const fetchOrders = async () => {
                 page: page.value,
                 per_page: meta.value.per_page,
                 status: statusFilter.value || undefined,
+                payment_state: paymentStateFilter.value || undefined,
+                order_status: orderStatusFilter.value || undefined,
             },
         })
 
@@ -243,6 +277,38 @@ const statusTagType = (status?: string) => {
             return 'warning'
         case 'paid':
             return 'primary'
+        default:
+            return 'info'
+    }
+}
+
+const paymentTagType = (status?: string) => {
+    switch ((status || '').toLowerCase()) {
+        case 'paid':
+            return 'success'
+        case 'pending':
+            return 'warning'
+        case 'failed':
+        case 'expired':
+        case 'canceled':
+        case 'cancelled':
+        case 'refunded':
+            return 'danger'
+        default:
+            return 'info'
+    }
+}
+
+const orderTagType = (status?: string) => {
+    switch ((status || '').toLowerCase()) {
+        case 'delivered':
+        case 'completed':
+            return 'success'
+        case 'processing':
+        case 'shipped':
+            return 'warning'
+        case 'cancelled':
+            return 'danger'
         default:
             return 'info'
     }

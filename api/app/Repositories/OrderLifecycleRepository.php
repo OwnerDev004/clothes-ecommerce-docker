@@ -17,6 +17,15 @@ class OrderLifecycleRepository
             ->when(isset($filters['status']) && $filters['status'] !== '', function ($q) use ($filters) {
                 $q->where('status', $filters['status']);
             })
+            ->when(isset($filters['payment_state']) && $filters['payment_state'] !== '', function ($q) use ($filters) {
+                $q->where('payment_state', $filters['payment_state']);
+            })
+            ->when(isset($filters['payment_status']) && $filters['payment_status'] !== '', function ($q) use ($filters) {
+                $q->where('payment_status', $filters['payment_status']);
+            })
+            ->when(isset($filters['order_status']) && $filters['order_status'] !== '', function ($q) use ($filters) {
+                $q->where('order_status', $filters['order_status']);
+            })
             ->with(['items.variant.product:id,name,slug', 'voucher:id,code,name'])
             ->orderByDesc('id')
             ->paginate((int) ($filters['per_page'] ?? 15));
@@ -27,6 +36,15 @@ class OrderLifecycleRepository
         return Order::query()
             ->when(isset($filters['status']) && $filters['status'] !== '', function ($q) use ($filters) {
                 $q->where('status', $filters['status']);
+            })
+            ->when(isset($filters['payment_state']) && $filters['payment_state'] !== '', function ($q) use ($filters) {
+                $q->where('payment_state', $filters['payment_state']);
+            })
+            ->when(isset($filters['payment_status']) && $filters['payment_status'] !== '', function ($q) use ($filters) {
+                $q->where('payment_status', $filters['payment_status']);
+            })
+            ->when(isset($filters['order_status']) && $filters['order_status'] !== '', function ($q) use ($filters) {
+                $q->where('order_status', $filters['order_status']);
             })
             ->when(isset($filters['customer_id']) && $filters['customer_id'] !== '', function ($q) use ($filters) {
                 $q->where('customer_id', (int) $filters['customer_id']);

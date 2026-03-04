@@ -1,123 +1,481 @@
 <template>
-   <div class="px-5 desktop:container ">
+  <div class="px-5 desktop:container">
     <BaseBreadcrumb :icon="ArrowRight">
-    <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
-    <el-breadcrumb-item>Cart</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
+      <el-breadcrumb-item>Cart</el-breadcrumb-item>
     </BaseBreadcrumb>
-  <div class="flex flex-col desktop:flex-row gap-3">
-   <div class="w-full desktop:w-[65%] border border-gray rounded-2xl">
-    <template v-for="(item, index) in items" :key="item.id">
-        <FrontendCartProduct :name="item.name" :color="item.color" :price="item.price" :size="item.size" :img="item.img" @remove="removeProduct(index)"/>
-    </template>
-   </div>
-   <div class="flex flex-col gap-5 border border-gray rounded-2xl w-full desktop:w-[35%] h-[80%] p-5 ">
-         <h1 class="text-2xl font-semibold mb-3">Order Summary</h1>
-         <div class="flex justify-between">
-            <p class="text-slate-500">Subtotal</p>
-            <p>$565</p>
-         </div>
-         <div class="flex justify-between">
-            <p class="text-slate-500">Discount (-20%)</p>
-            <p class="text-red">-$113</p>
-         </div>
-         <div class="flex justify-between">
-            <p class="text-slate-500">Delivery Fee</p>
-            <p>$15</p>
-         </div>
-         <hr class="text-gray">
-         <div class="flex justify-between">
-            <p>Total</p>
-            <h2 class="text-xl font-semibold">$467</h2>
-         </div>
 
-         <div class="flex flex-col desktop:flex-row gap-3 mt-4 w-full">
-            <div class="relative">
-    <!-- Search Icon -->
-    <Icon  name="ic:baseline-discount" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
+    <div class="flex flex-col desktop:flex-row gap-3">
+      <div class="w-full desktop:w-[65%] border border-gray rounded-2xl">
+        <div v-if="loadingCart" class="p-8 text-center text-gray-500">Loading cart...</div>
+        <div v-else-if="!cartItems.length" class="p-8 text-center text-gray-500">Your cart is empty.</div>
 
-    <!-- Input Field -->
-    <input
-      type="text"
-      class="rounded-[62px] bg-gray px-10 outline-none py-3 w-full text-sm desktop:text-lg"
-      placeholder="Add Promo Code"
-    />
+        <template v-for="item in cartItems" :key="item.variant_id">
+          <FrontendCartProduct :variant-id="item.variant_id" :name="item.product_name || 'Product'"
+            :color="item.color || 'N/A'" :price="item.unit_price" :size="item.size || 'N/A'" :quantity="item.quantity"
+            :img="item.product_image || 'product1.png'" @remove="removeProduct" @update-quantity="updateQuantity" />
+        </template>
+      </div>
 
+      <div class="flex flex-col gap-5 border border-gray rounded-2xl w-full desktop:w-[35%] h-[80%] p-5">
+        <h1 class="text-2xl font-semibold mb-3">Order Summary</h1>
+        <div class="flex justify-between">
+          <p class="text-slate-500">Subtotal</p>
+          <p>${{ subtotal.toFixed(2) }}</p>
         </div>
-        <button class="bg-black rounded-3xl text-white p-3 lg:w-[100px]">
-               Apply
-             </button>
+        <div class="flex justify-between">
+          <p class="text-slate-500">Discount</p>
+          <p class="text-red">-${{ discountAmount.toFixed(2) }}</p>
         </div>
-             <!-- <div class="bg-gray rounded-3xl px-2 text-slate-500 flex  items-center py-2 w-">
-                <Icon name="ic:baseline-discount" />
-                <input type="text" class="bg-gray rounded-3xl focus:outline-none px-3  text-lg text-slate-500" placeholder="Add Promo Code">
-             </div>
-             <button class="bg-black rounded-3xl text-white lg:w-[100px]">
-               Apply
-             </button>
-         </div> -->
-         <button class="bg-black rounded-3xl text-white w-full p-3 mt-4">
-               Go to Checkout <Icon name="humbleicons:arrow-right" />
-             </button>
-   </div>
-  </div>
+        <div class="flex justify-between">
+          <p class="text-slate-500">Delivery Fee</p>
+          <p>${{ shippingFee.toFixed(2) }}</p>
+        </div>
+        <hr class="text-gray">
+        <div class="flex justify-between">
+          <p>Total</p>
+          <h2 class="text-xl font-semibold">${{ grandTotal.toFixed(2) }}</h2>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm text-slate-600">Shipping Province</label>
+          <input v-model="shippingProvince" type="text"
+            class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm" placeholder="e.g. Phnom Penh" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm text-slate-600">Shipping Address (Optional)</label>
+          <input v-model="shippingAddress" type="text"
+            class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm" placeholder="Street / house" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm text-slate-600">Phone (Optional)</label>
+          <input v-model="shippingPhone" type="text"
+            class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm" placeholder="Phone number" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm text-slate-600">Payment Method</label>
+          <select v-model="paymentMethod" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
+            <option value="cash_on_delivery">Cash On Delivery</option>
+            <option value="aba">Online QR Payment</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col desktop:flex-row gap-3 mt-2 w-full">
+          <div class="relative flex-1">
+            <Icon name="ic:baseline-discount"
+              class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg" />
+            <input v-model="promoCode" type="text"
+              class="rounded-[62px] bg-gray px-10 outline-none py-3 w-full text-sm desktop:text-lg"
+              placeholder="Add Promo Code" />
+          </div>
+          <button class="bg-black rounded-3xl text-white p-3 lg:w-[110px]" :disabled="applyingCoupon"
+            @click="applyCoupon">
+            {{ applyingCoupon ? 'Applying...' : 'Apply' }}
+          </button>
+        </div>
+        <p v-if="appliedVoucherCode" class="text-xs text-emerald-600">
+          Applied coupon: {{ appliedVoucherCode }}
+        </p>
+
+        <button class="bg-black rounded-3xl text-white w-full p-3 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="checkingOut || loadingCart || !cartItems.length" @click="checkout">
+          {{ checkingOut ? 'Processing...' : 'Go to Checkout' }}
+          <Icon name="humbleicons:arrow-right" />
+        </button>
+      </div>
     </div>
+
+    <el-dialog v-model="paymentDialogOpen" width="420px" :close-on-click-modal="false" title="Scan QR to Pay"
+      @closed="stopPolling">
+      <div class="space-y-3">
+        <div v-if="qrImageUrl" class="rounded-xl border p-4 flex justify-center">
+          <img :src="qrImageUrl" alt="Payment QR" class="h-[240px] w-[240px] object-contain">
+        </div>
+        <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash || '-'
+          }}
+        </p>
+        <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
+        <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
+
+        <a v-if="checkoutUrl" :href="checkoutUrl" target="_blank" rel="noopener noreferrer"
+          class="block text-center text-sm text-blue-600 underline">
+          Open checkout page
+        </a>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <el-button @click="pollPaymentOnce" :loading="pollingNow">Check Now</el-button>
+          <el-button @click="paymentDialogOpen = false">Close</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
+import { storeToRefs } from 'pinia'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
+import { useAuthStore } from '~/stores/authStore'
 
-
-const items = reactive([
-    {
-        id:1,
-        name: 'Gradient Graphic T-shirt',
-        size: 'XL',
-        color: 'White',
-        price: '100',
-        img: 'product1.png'
-    },
-    {
-        id:2,
-        name: 'CHECKERED SHIRT',
-        size: 'XL',
-        color: 'Red',
-        price: '180',
-        img: 'product2.png'
-    },
-    {
-        id:3,
-        name: 'SKINNY FIT JEANS',
-        size: 'XL',
-        color: 'White',
-        price: '240',
-         img: 'product3.png'
-    },
-    {
-        id:4,
-        name: 'Gradient Graphic T-shirt',
-        size: 'XL',
-        color: 'White',
-        price: '100',
-         img: 'product4.png'
-    },
-    {
-        id:5,
-        name: 'Gradient Graphic T-shirt',
-        size: 'XL',
-        color: 'White',
-        price: '100',
-         img: 'product3.png'
-    },
-])
-
-
-const removeProduct = (index:number) =>{
-         items.splice(index, 1)
+type CartItem = {
+  variant_id: number
+  product_id: number
+  product_name?: string
+  color?: string
+  size?: string
+  stock_quantity: number
+  quantity: number
+  unit_price: number
+  line_total: number
+  product_image?: string
 }
 
+const config = useRuntimeConfig()
+const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+const authStore = useAuthStore()
+const { accessToken, isAuthenticated } = storeToRefs(authStore)
+const router = useRouter()
+
+const loadingCart = ref(false)
+const checkingOut = ref(false)
+const applyingCoupon = ref(false)
+const cartItems = ref<CartItem[]>([])
+const subtotal = ref(0)
+const shippingFee = ref(0)
+const discountAmount = ref(0)
+const promoCode = ref('')
+const appliedVoucherCode = ref('')
+
+const shippingProvince = ref('Phnom Penh')
+const shippingAddress = ref('')
+const shippingPhone = ref('')
+const paymentMethod = ref<'cash_on_delivery' | 'aba'>('aba')
+
+const paymentDialogOpen = ref(false)
+const qrString = ref('')
+const pollHash = ref('')
+const checkoutUrl = ref('')
+const currentOrderId = ref<number | null>(null)
+const pollStatus = ref('pending')
+const pollingNow = ref(false)
+const pollDeadlineAt = ref<number | null>(null)
+const timeLeftSeconds = ref(60)
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+const grandTotal = computed(() => {
+  return Math.max(0, subtotal.value - discountAmount.value + shippingFee.value)
+})
+
+const qrImageUrl = computed(() => {
+  if (!qrString.value) {
+    return ''
+  }
+  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrString.value)}`
+})
+
+const timeLeftLabel = computed(() => {
+  const total = Math.max(0, timeLeftSeconds.value)
+  const mm = Math.floor(total / 60).toString().padStart(2, '0')
+  const ss = (total % 60).toString().padStart(2, '0')
+  return `${mm}:${ss}`
+})
+
+const getAuthHeaders = () => {
+  return accessToken.value ? { Authorization: `Bearer ${accessToken.value}` } : undefined
+}
+
+const mapCartPayload = (payload: any) => {
+  subtotal.value = Number(payload?.subtotal || 0)
+  cartItems.value = (payload?.items || []).map((row: any) => ({
+    ...row,
+    unit_price: Number(row?.unit_price || 0),
+    line_total: Number(row?.line_total || 0),
+  }))
+}
+
+const ensureAuth = async () => {
+  if (!isAuthenticated.value && !accessToken.value) {
+    ElMessage.warning('Please login first.')
+    await router.push('/auth/login')
+    return false
+  }
+  return true
+}
+
+const fetchCart = async () => {
+  if (!(await ensureAuth())) {
+    return
+  }
+  loadingCart.value = true
+  try {
+    const response: any = await $fetch(`${apiBase}/cart`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+    })
+    mapCartPayload(response?.data || {})
+  } catch (error: any) {
+    const statusCode = error?.statusCode ?? error?.status
+    if (statusCode === 401 || statusCode === 403) {
+      authStore.resetAuth()
+      await router.push('/auth/login')
+      return
+    }
+    ElMessage.error(error?.data?.message || 'Failed to fetch cart.')
+  } finally {
+    loadingCart.value = false
+  }
+}
+
+const removeProduct = async (variantId: number) => {
+  try {
+    const response: any = await $fetch(`${apiBase}/cart/items/${variantId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+    })
+    mapCartPayload(response?.data || {})
+    ElMessage.success('Item removed.')
+  } catch (error: any) {
+    ElMessage.error(error?.data?.message || 'Failed to remove item.')
+  }
+}
+
+const updateQuantity = async ({ variantId, quantity }: { variantId: number; quantity: number }) => {
+  try {
+    const response: any = await $fetch(`${apiBase}/cart/items/${variantId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: { quantity }
+    })
+    mapCartPayload(response?.data || {})
+  } catch (error: any) {
+    ElMessage.error(error?.data?.message || 'Failed to update quantity.')
+    await fetchCart()
+  }
+}
+
+const applyCoupon = async () => {
+  if (!promoCode.value.trim()) {
+    ElMessage.warning('Please enter promo code.')
+    return
+  }
+  applyingCoupon.value = true
+  try {
+    const response: any = await $fetch(`${apiBase}/vouchers/apply`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: { code: promoCode.value.trim() }
+    })
+    discountAmount.value = Number(response?.data?.discount || 0)
+    appliedVoucherCode.value = String(response?.data?.voucher?.code || promoCode.value.trim())
+    ElMessage.success('Coupon applied.')
+  } catch (error: any) {
+    appliedVoucherCode.value = ''
+    discountAmount.value = 0
+    ElMessage.error(error?.data?.message || 'Invalid coupon.')
+  } finally {
+    applyingCoupon.value = false
+  }
+}
+
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+  pollingNow.value = false
+}
+
+const pollPaymentOnce = async () => {
+  if (!pollHash.value) {
+    return
+  }
+  pollingNow.value = true
+  try {
+    const response: any = await $fetch(`${apiBase}/payments/khrqr/check/${pollHash.value}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+    })
+    const data = response?.data || {}
+    const paymentState = String(data?.payment_state || '').toLowerCase()
+    pollStatus.value = paymentState || String(data?.status || 'pending')
+
+    if (paymentState === 'paid') {
+      stopPolling()
+      paymentDialogOpen.value = false
+      ElMessage.success('Payment successful.')
+      await fetchCart()
+      return
+    }
+
+    if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentState)) {
+      stopPolling()
+      ElMessage.error(`Payment ${paymentState}.`)
+    }
+  } catch (error: any) {
+    ElMessage.error(error?.data?.message || 'Failed to check payment status.')
+  } finally {
+    pollingNow.value = false
+  }
+}
+
+const startPolling = () => {
+  stopPolling()
+  pollDeadlineAt.value = Date.now() + 60_000
+  timeLeftSeconds.value = 60
+
+  countdownTimer = setInterval(() => {
+    if (!pollDeadlineAt.value) {
+      return
+    }
+    const remaining = Math.max(0, Math.ceil((pollDeadlineAt.value - Date.now()) / 1000))
+    timeLeftSeconds.value = remaining
+    if (remaining <= 0) {
+      stopPolling()
+      pollStatus.value = 'expired'
+      ElMessage.warning('Payment session expired after 1 minute.')
+    }
+  }, 1000)
+
+  pollTimer = setInterval(() => {
+    if (timeLeftSeconds.value <= 0) {
+      return
+    }
+    pollPaymentOnce()
+  }, 3000)
+}
+
+const extractApiErrorDetails = (error: any) => {
+  const rootMessage = String(error?.data?.message || error?.message || 'Request failed')
+  const errors = error?.data?.errors
+  if (!errors || typeof errors !== 'object') {
+    return rootMessage
+  }
+
+  const lines: string[] = []
+  Object.values(errors).forEach((value: any) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => lines.push(String(item)))
+      return
+    }
+    lines.push(String(value))
+  })
+
+  if (!lines.length) {
+    return rootMessage
+  }
+
+  return `${rootMessage}: ${lines.join(', ')}`
+}
+
+const createPaymentIntent = async (orderId: number) => {
+  let response: any
+  try {
+    response = await $fetch(`${apiBase}/payments/intent`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: {
+        order_id: orderId,
+        provider: 'khrqr',
+        currency: 'KHR',
+      }
+    })
+  } catch (error: any) {
+    throw new Error(extractApiErrorDetails(error))
+  }
+
+  qrString.value = String(response?.data?.qr_string || '')
+  pollHash.value = String(response?.data?.poll_hash || '')
+  checkoutUrl.value = String(response?.data?.checkout_url || '')
+  pollStatus.value = 'pending'
+  timeLeftSeconds.value = 60
+
+  paymentDialogOpen.value = true
+  if (pollHash.value) {
+    startPolling()
+  } else {
+    ElMessage.warning('Poll hash missing. Use checkout link and manual check.')
+  }
+}
+
+const checkout = async () => {
+  if (!cartItems.value.length) {
+    ElMessage.warning('Cart is empty.')
+    return
+  }
+  if (!shippingProvince.value.trim()) {
+    ElMessage.warning('Shipping province is required.')
+    return
+  }
+
+  checkingOut.value = true
+  try {
+    const checkoutResponse: any = await $fetch(`${apiBase}/checkout`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: {
+        shipping_province: shippingProvince.value.trim(),
+        shipping_address: shippingAddress.value.trim() || undefined,
+        shipping_phone: shippingPhone.value.trim() || undefined,
+        payment_method: paymentMethod.value,
+        voucher_code: appliedVoucherCode.value || undefined,
+      }
+    })
+
+    const summary = checkoutResponse?.data?.summary || {}
+    shippingFee.value = Number(summary?.shipping_fee || 0)
+    discountAmount.value = Number(summary?.discount || discountAmount.value)
+
+    const orderId = Number(checkoutResponse?.data?.order?.id || 0)
+    currentOrderId.value = orderId || null
+    if (!orderId) {
+      throw new Error('Invalid order id.')
+    }
+
+    if (paymentMethod.value === 'cash_on_delivery') {
+      ElMessage.success('Checkout successful. Order placed with Cash on Delivery.')
+      discountAmount.value = 0
+      appliedVoucherCode.value = ''
+      promoCode.value = ''
+      await fetchCart()
+      return
+    }
+
+    await createPaymentIntent(orderId)
+    ElMessage.success('Payment intent created. Please scan QR.')
+    await fetchCart()
+  } catch (error: any) {
+    ElMessage.error(extractApiErrorDetails(error))
+  } finally {
+    checkingOut.value = false
+  }
+}
+
+onMounted(() => {
+  fetchCart()
+})
+
+onBeforeUnmount(() => {
+  stopPolling()
+})
 </script>
 
-<style scoped>
-
-</style>a
+<style scoped></style>

@@ -75,6 +75,8 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
 // Products
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
+    Route::get('/filters', [ProductController::class, 'filters']);
+    Route::get('/{id}', [ProductController::class, 'show']);
 });
 
 Route::prefix('vouchers')->group(function () {

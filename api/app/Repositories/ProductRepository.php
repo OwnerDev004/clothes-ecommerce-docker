@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use App\Repositories\BaseRepository;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,7 +16,7 @@ class ProductRepository extends BaseRepository
         $this->model = $model;
     }
 
-    public function getAll(array $filters = []): Collection
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
         $normalized = array_filter($filters, function ($value) {
             return $value !== null && $value !== '';
@@ -119,7 +119,37 @@ class ProductRepository extends BaseRepository
                 $query->where('products.price', '<=', (float) $price);
             }
 
-            return $query->orderByDesc('products.id')->get();
+            $perPage = (int) ($filters['per_page'] ?? 12);
+            if ($perPage < 1) {
+                $perPage = 12;
+            }
+            if ($perPage > 50) {
+                $perPage = 50;
+            }
+
+            return $query->orderByDesc('products.id')->paginate($perPage);
         });
+    }
+
+    public function findById(int $id): ?Product
+    {
+        return $this->model->newQuery()
+            ->with([
+                'category:id,name,slug',
+                'dressType:id,name,slug',
+                'thumbnail:id,product_id,image_url,image_type,sort_order',
+                'images' => function ($q) {
+                    $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
+                        ->orderBy('sort_order');
+                },
+                'variants' => function ($q) {
+                    $q->select('id', 'product_id', 'color_id', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
+                        ->with([
+                            'color:id,name,hex_code',
+                            'size:id,name,sort_order',
+                        ]);
+                },
+            ])
+            ->find($id);
     }
 }

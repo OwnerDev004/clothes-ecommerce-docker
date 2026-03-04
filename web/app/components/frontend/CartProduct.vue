@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+
 const props = defineProps({
+   variantId: {
+    type: Number,
+    required: true
+   },
    name:{
      type:String,
     default: ''
@@ -13,8 +19,12 @@ const props = defineProps({
     default: ''
    },
    price:{
-     type:String,
-     default: ''
+     type: Number,
+     default: 0
+   },
+   quantity: {
+    type: Number,
+    default: 1
    },
    img:{
     type: String,
@@ -26,27 +36,42 @@ const qtyAmount = ref(1);
 // increment
 const increment = () => {
   qtyAmount.value += 1;
+  emit('update-quantity', { variantId: props.variantId, quantity: qtyAmount.value });
 };
 // decrement
 const decrement = () => {
-  if (qtyAmount.value > 0) {
+  if (qtyAmount.value > 1) {
     qtyAmount.value -= 1;
+    emit('update-quantity', { variantId: props.variantId, quantity: qtyAmount.value });
   }
-  emit('remove');
 };
 
-const emit = defineEmits(['remove'])
+const emit = defineEmits(['remove', 'update-quantity'])
 
 function removeProduct() {
   // Emit a 'remove' event to the parent
-  emit('remove')
+  emit('remove', props.variantId)
 }
+
+const displayImg = computed(() => {
+  if (!props.img) {
+    return '/img/products/product1.png'
+  }
+  if (props.img.startsWith('http://') || props.img.startsWith('https://') || props.img.startsWith('/')) {
+    return props.img
+  }
+  return `/img/products/${props.img}`
+})
+
+watch(() => props.quantity, (value) => {
+  qtyAmount.value = value > 0 ? value : 1
+}, { immediate: true })
 </script>
 <template>
   <div class="p-4 border-b border-b-gray">
     <div class="flex gap-4">
       <NuxtImg
-        :src="'/img/products/'+img"
+        :src="displayImg"
         class="max-w-[80px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[150px] h-auto rounded-2xl"
       />
       <section class="flex-1">
@@ -64,7 +89,7 @@ function removeProduct() {
       <Icon name="ep:delete-filled" class="text-red ml-auto cursor-pointer "  @click="removeProduct"/>
       </div>
       <div class="flex justify-between">
-        <h3 class="text-xl font-semibold">${{ price }}</h3>
+        <h3 class="text-xl font-semibold">${{ price.toFixed(2) }}</h3>
 
       <div class="flex gap-3 items-center bg-gray rounded-2xl">
         <button
