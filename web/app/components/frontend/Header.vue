@@ -110,11 +110,20 @@
                   <p class="text-xs text-black/80">Signed in as</p>
                   <p class="truncate text-sm font-semibold">{{ userDisplayName }}</p>
                 </div>
-
+                <!-- Profile Modal -->
                 <button type="button" :class="accountActionClass" @click="openProfileModal">
                   <span class="flex items-center gap-2">
                     <Icon name="mdi:account-circle-outline" class="text-base" />
                     Profile
+                  </span>
+                  <Icon name="mdi:chevron-right" class="text-base opacity-60" />
+                </button>
+
+                <!-- Order_history -->
+                <button type="button" :class="accountActionClass" @click="openOrderHistoryModal">
+                  <span class="flex items-center gap-2">
+                    <Icon name="mdi:clipboard-text-clock-outline" class="text-base" />
+                    Order History
                   </span>
                   <Icon name="mdi:chevron-right" class="text-base opacity-60" />
                 </button>
@@ -450,95 +459,23 @@
       </div>
     </div>
 
+    <ProfileDialog v-model="profileDialogOpen" />
+    <OrderHistoryDialog v-model="orderHistoryDialogOpen" />
+
     <!-- Backdrop for mobile menu -->
     <div v-if="isMenuOpen || showMobileSearch" class="fixed inset-0 bg-black bg-opacity-50 z-30 desktop:hidden"
       @click="closeAll"></div>
 
-    <el-dialog v-model="profileDialogOpen" width="680px" :close-on-click-modal="false" title="Edit Profile"
-      class="profile-dialog" @closed="onProfileDialogClosed">
-      <div class="space-y-4">
-        <el-alert title="Username and password updates are not available in the current API yet." type="info"
-          :closable="false" show-icon />
 
-        <el-alert v-if="profileFormMessage" :title="profileFormMessage" :type="profileFormMessageType" :closable="false"
-          show-icon />
-
-        <div class="flex items-center gap-4 rounded-xl bg-gray-50 p-4">
-          <div class="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-white">
-            <img v-if="avatarPreview" :src="avatarPreview" alt="Profile avatar" class="h-full w-full object-cover">
-            <div v-else
-              class="flex h-full w-full items-center justify-center bg-gray-100 text-lg font-semibold text-gray-500">
-              {{ userInitials }}
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <el-upload :auto-upload="false" :show-file-list="false" :on-change="onAvatarPicked"
-              accept="image/jpeg,image/png,image/webp,image/gif">
-              <el-button type="primary" plain>Select image</el-button>
-            </el-upload>
-            <el-button type="danger" plain :disabled="!avatarPreview && !selectedAvatarFile" @click="removeAvatar">
-              Remove
-            </el-button>
-          </div>
-        </div>
-
-        <el-form ref="profileFormRef" :model="profileForm" :rules="profileRules" label-position="top"
-          class="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <el-form-item label="Username">
-            <el-input v-model="profileForm.user_name" disabled />
-          </el-form-item>
-
-          <el-form-item label="Full Name" prop="full_name">
-            <el-input v-model="profileForm.full_name" placeholder="Enter full name" />
-          </el-form-item>
-
-          <el-form-item label="Email" prop="email">
-            <el-input v-model="profileForm.email" placeholder="Enter email" />
-          </el-form-item>
-
-          <el-form-item label="Phone" prop="phone">
-            <el-input v-model="profileForm.phone" placeholder="Enter phone number" />
-          </el-form-item>
-
-          <el-form-item label="Gender" prop="gender">
-            <el-select v-model="profileForm.gender" placeholder="Select gender" clearable class="w-full">
-              <el-option label="Male" value="male" />
-              <el-option label="Female" value="female" />
-            </el-select>
-          </el-form-item>
-
-          <el-form-item label="Date of Birth" prop="dob">
-            <el-date-picker v-model="profileForm.dob" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
-              placeholder="Select date" class="w-full" />
-          </el-form-item>
-
-          <el-form-item label="Address" prop="address" class="md:col-span-2">
-            <el-input v-model="profileForm.address" type="textarea" :rows="3" placeholder="Enter your address" />
-          </el-form-item>
-
-          <el-form-item label="Password" class="md:col-span-2">
-            <el-input disabled placeholder="Password change API is not available yet" />
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <el-button @click="profileDialogOpen = false">Cancel</el-button>
-          <el-button type="primary" :loading="savingProfile" @click="submitProfileUpdate">
-            Save changes
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
   </header>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
-import type { FormInstance, FormRules, UploadProps } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useAuthStore } from '~/stores/authStore'
+import ProfileDialog from './Modal/ProfileDialog.vue'
+import OrderHistoryDialog from './Modal/OrderHistoryDialog.vue'
 
 const authStore = useAuthStore()
 const { isAuthenticated, accessToken, userProfile } = storeToRefs(authStore)
@@ -556,61 +493,8 @@ const connectingTelegram = ref(false)
 const telegramLinked = ref(false)
 const telegramStatusMessage = ref('')
 const profileDialogOpen = ref(false)
-const savingProfile = ref(false)
-const profileFormRef = ref<FormInstance>()
-const profileFormMessage = ref('')
-const profileFormMessageType = ref<'success' | 'warning' | 'error' | 'info'>('info')
-const selectedAvatarFile = ref<File | null>(null)
-const avatarPreview = ref('')
-const shouldDeleteAvatar = ref(false)
+const orderHistoryDialogOpen = ref(false)
 const router = useRouter()
-
-type ProfileForm = {
-  user_name: string
-  full_name: string
-  email: string
-  phone: string
-  gender: '' | 'male' | 'female'
-  dob: string
-  address: string
-}
-
-const profileForm = reactive<ProfileForm>({
-  user_name: '',
-  full_name: '',
-  email: '',
-  phone: '',
-  gender: '',
-  dob: '',
-  address: '',
-})
-
-const profileRules: FormRules<ProfileForm> = {
-  full_name: [
-    { max: 255, message: 'Full name is too long', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: 'Email is invalid', trigger: 'blur' }
-  ],
-  phone: [
-    { max: 20, message: 'Phone number is too long', trigger: 'blur' }
-  ],
-  address: [
-    { max: 500, message: 'Address is too long', trigger: 'blur' }
-  ],
-  gender: [
-    {
-      validator: (_rule, value, callback) => {
-        if (!value || value === 'male' || value === 'female') {
-          callback()
-          return
-        }
-        callback(new Error('Gender must be male or female'))
-      },
-      trigger: 'change'
-    }
-  ]
-}
 
 const userDisplayName = computed(() => {
   const profile = userProfile.value || {}
@@ -630,10 +514,10 @@ const userInitials = computed(() => {
 
   const parts = normalized.split(/\s+/).filter(Boolean)
   if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
+    return parts[0]?.slice(0, 2).toUpperCase()
   }
 
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  return `${parts?.[0]?.[0]}${parts?.[1]?.[0]}`.toUpperCase()
 })
 
 const accountActionClass = computed(() => [
@@ -645,24 +529,6 @@ const userAvatarUrl = computed(() => {
   const profile = (userProfile.value || {}) as Record<string, any>
   return String(profile.avatar_url || '')
 })
-
-const getAuthHeaders = () => {
-  return accessToken.value
-    ? { Authorization: `Bearer ${accessToken.value}` }
-    : undefined
-}
-
-const fillProfileFormFromStore = () => {
-  const profile = (userProfile.value || {}) as Record<string, any>
-  profileForm.user_name = String(profile.user_name || '')
-  profileForm.full_name = String(profile.full_name || profile.name || '')
-  profileForm.email = String(profile.email || '')
-  profileForm.phone = String(profile.phone || '')
-  profileForm.gender = (profile.gender === 'male' || profile.gender === 'female') ? profile.gender : ''
-  profileForm.dob = String(profile.dob || '')
-  profileForm.address = String(profile.address || '')
-  avatarPreview.value = String(profile.avatar_url || '')
-}
 
 // Toggle mobile menu
 const toggleMenu = () => {
@@ -741,14 +607,14 @@ const toggleAccountMenu = () => {
   accountMenuOpen.value = !accountMenuOpen.value
 }
 
-const openProfileModal = async () => {
+const openProfileModal = () => {
   accountMenuOpen.value = false
-  profileFormMessage.value = ''
-  shouldDeleteAvatar.value = false
-  selectedAvatarFile.value = null
-  await hydrateProfile()
-  fillProfileFormFromStore()
   profileDialogOpen.value = true
+}
+
+const openOrderHistoryModal = () => {
+  accountMenuOpen.value = false
+  orderHistoryDialogOpen.value = true
 }
 
 const hydrateProfile = async () => {
@@ -805,109 +671,6 @@ const connectTelegram = async () => {
   }
 }
 
-const onAvatarPicked: UploadProps['onChange'] = (uploadFile) => {
-  const raw = uploadFile.raw
-  if (!raw) {
-    return
-  }
-
-  selectedAvatarFile.value = raw
-  shouldDeleteAvatar.value = false
-
-  const reader = new FileReader()
-  reader.onload = () => {
-    avatarPreview.value = String(reader.result || '')
-  }
-  reader.readAsDataURL(raw)
-}
-
-const removeAvatar = () => {
-  selectedAvatarFile.value = null
-  avatarPreview.value = ''
-  shouldDeleteAvatar.value = true
-}
-
-const onProfileDialogClosed = () => {
-  selectedAvatarFile.value = null
-  shouldDeleteAvatar.value = false
-  savingProfile.value = false
-  profileFormMessage.value = ''
-}
-
-const submitProfileUpdate = async () => {
-  if (!profileFormRef.value) {
-    return
-  }
-
-  const valid = await profileFormRef.value.validate().catch(() => false)
-  if (!valid) {
-    return
-  }
-
-  savingProfile.value = true
-  profileFormMessage.value = ''
-
-  try {
-    const headers = getAuthHeaders()
-    const profilePayload = {
-      full_name: profileForm.full_name || null,
-      email: profileForm.email || null,
-      phone: profileForm.phone || null,
-      gender: profileForm.gender || null,
-      dob: profileForm.dob || null,
-      address: profileForm.address || null,
-    }
-
-    let latestProfile: Record<string, any> | null = null
-
-    const profileResponse: any = await $fetch(`${apiBase}/profile`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers,
-      body: profilePayload
-    })
-    latestProfile = profileResponse?.data || latestProfile
-
-    if (shouldDeleteAvatar.value) {
-      const deleteAvatarResponse: any = await $fetch(`${apiBase}/delete_avatar`, {
-        method: 'POST',
-        credentials: 'include',
-        headers
-      })
-      latestProfile = deleteAvatarResponse?.data || latestProfile
-    }
-
-    if (selectedAvatarFile.value) {
-      const avatarFormData = new FormData()
-      avatarFormData.append('avatar', selectedAvatarFile.value)
-      const avatarResponse: any = await $fetch(`${apiBase}/change_avatar`, {
-        method: 'POST',
-        credentials: 'include',
-        headers,
-        body: avatarFormData
-      })
-      latestProfile = avatarResponse?.data || latestProfile
-    }
-
-    if (latestProfile) {
-      authStore.setUserProfile(latestProfile)
-      avatarPreview.value = String(latestProfile.avatar_url || '')
-    }
-
-    await hydrateProfile()
-    fillProfileFormFromStore()
-    profileFormMessageType.value = 'success'
-    profileFormMessage.value = 'Profile updated successfully.'
-    shouldDeleteAvatar.value = false
-    selectedAvatarFile.value = null
-  } catch (err: any) {
-    profileFormMessageType.value = 'error'
-    profileFormMessage.value = err?.data?.message || 'Failed to update profile.'
-  } finally {
-    savingProfile.value = false
-  }
-}
-
 const logout = async () => {
   authStore.resetAuth()
   accountMenuOpen.value = false
@@ -936,8 +699,6 @@ watch(accessToken, (token) => {
     hydrateProfile()
   }
 })
-
-// Import nextTick for DOM updates
 </script>
 
 <style scoped>
