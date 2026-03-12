@@ -112,4 +112,6 @@ export const useFavoritesStore = defineStore('favorites', () => {
     getFavorite,
     isFavorite,
   }
+}, {
+  persist: true,
 })

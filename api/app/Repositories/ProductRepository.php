@@ -28,7 +28,10 @@ class ProductRepository extends BaseRepository
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
             $searchText = trim((string) ($filters['search_txt'] ?? ''));
             $category = $filters['category'] ?? null;
+            $subCategory = $filters['sub_category'] ?? null;
             $price = $filters['price'] ?? null;
+            $priceMin = $filters['price_min'] ?? null;
+            $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
             $dressStyle = $filters['dress_style'] ?? null;
@@ -39,6 +42,7 @@ class ProductRepository extends BaseRepository
                     $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
                         ->orderBy('sort_order');
                 },
+                'subCategory:id,category_id,name,slug',
             ]);
 
             if ($searchText !== '') {
@@ -58,10 +62,7 @@ class ProductRepository extends BaseRepository
                         $sub->selectRaw('1')
                             ->from('categories')
                             ->whereColumn('categories.id', 'products.category_id')
-                            ->where(function ($w) use ($category) {
-                                $w->where('categories.slug', $category)
-                                    ->orWhere('categories.name', 'like', '%' . $category . '%');
-                            });
+                            ->where('categories.slug', $category);
                     });
                 }
             }
@@ -78,6 +79,19 @@ class ProductRepository extends BaseRepository
                                 $w->where('dress_types.slug', $dressStyle)
                                     ->orWhere('dress_types.name', 'like', '%' . $dressStyle . '%');
                             });
+                    });
+                }
+            }
+
+            if (!is_null($subCategory) && $subCategory !== '') {
+                if (is_numeric($subCategory)) {
+                    $query->where('products.sub_category_id', (int) $subCategory);
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($subCategory) {
+                        $sub->selectRaw('1')
+                            ->from('sub_categories')
+                            ->whereColumn('sub_categories.id', 'products.sub_category_id')
+                            ->where('sub_categories.slug', $subCategory);
                     });
                 }
             }
@@ -119,6 +133,14 @@ class ProductRepository extends BaseRepository
                 $query->where('products.price', '<=', (float) $price);
             }
 
+            if (!is_null($priceMin) && $priceMin !== '') {
+                $query->where('products.price', '>=', (float) $priceMin);
+            }
+
+            if (!is_null($priceMax) && $priceMax !== '') {
+                $query->where('products.price', '<=', (float) $priceMax);
+            }
+
             $perPage = (int) ($filters['per_page'] ?? 12);
             if ($perPage < 1) {
                 $perPage = 12;
@@ -136,6 +158,7 @@ class ProductRepository extends BaseRepository
         return $this->model->newQuery()
             ->with([
                 'category:id,name,slug',
+                'subCategory:id,category_id,name,slug',
                 'dressType:id,name,slug',
                 'thumbnail:id,product_id,image_url,image_type,sort_order',
                 'images' => function ($q) {

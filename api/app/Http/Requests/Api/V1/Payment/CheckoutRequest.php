@@ -17,7 +17,7 @@ class CheckoutRequest extends FormRequest
             'shipping_province' => ['required', 'string', 'max:100'],
             'shipping_address' => ['nullable', 'string', 'max:255'],
             'shipping_phone' => ['nullable', 'string', 'max:30'],
-            'payment_method' => ['nullable', 'in:aba,acelida,cash_on_delivery'],
+            'payment_method' => ['nullable', 'in:khqr,cash_on_delivery'],
             'voucher_code' => ['nullable', 'string', 'max:100'],
         ];
     }

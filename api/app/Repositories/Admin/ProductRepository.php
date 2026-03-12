@@ -36,7 +36,10 @@ class ProductRepository extends BaseRepository
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
             $searchText = trim((string) ($filters['search_txt'] ?? ''));
             $category = $filters['category'] ?? null;
+            $subCategory = $filters['sub_category'] ?? null;
             $price = $filters['price'] ?? null;
+            $priceMin = $filters['price_min'] ?? null;
+            $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
             $dressStyle = $filters['dress_style'] ?? null;
@@ -47,6 +50,7 @@ class ProductRepository extends BaseRepository
                     $q->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
                         ->orderBy('sort_order');
                 },
+                'subCategory:id,category_id,name,slug',
             ]);
 
 
@@ -91,6 +95,19 @@ class ProductRepository extends BaseRepository
                 }
             }
 
+            if (!is_null($subCategory) && $subCategory !== '') {
+                if (is_numeric($subCategory)) {
+                    $query->where('products.sub_category_id', (int) $subCategory);
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($subCategory) {
+                        $sub->selectRaw('1')
+                            ->from('sub_categories')
+                            ->whereColumn('sub_categories.id', 'products.sub_category_id')
+                            ->where('sub_categories.slug', $subCategory);
+                    });
+                }
+            }
+
             if (!is_null($color) && $color !== '') {
                 $query->whereExists(function (Builder $sub) use ($color) {
                     $sub->selectRaw('1')
@@ -126,6 +143,14 @@ class ProductRepository extends BaseRepository
 
             if (!is_null($price) && $price !== '') {
                 $query->where('products.price', '<=', (float) $price);
+            }
+
+            if (!is_null($priceMin) && $priceMin !== '') {
+                $query->where('products.price', '>=', (float) $priceMin);
+            }
+
+            if (!is_null($priceMax) && $priceMax !== '') {
+                $query->where('products.price', '<=', (float) $priceMax);
             }
 
             return $query->orderByDesc('products.id')->get();
@@ -222,7 +247,7 @@ class ProductRepository extends BaseRepository
     public function findById($id)
     {
         $product = $this->product_model
-            ->with(['category', 'dressType', 'images', 'variants'])
+            ->with(['category', 'subCategory', 'dressType', 'images', 'variants'])
             ->find($id);
         return $product;
     }

@@ -80,6 +80,19 @@ export const useCartStore = defineStore('cart', () => {
     items.value = []
   }
 
+  const setFromApi = (payload: any) => {
+    const rows = Array.isArray(payload?.items) ? payload.items : []
+    items.value = rows.map((row: any) => ({
+      id: row?.variant_id ?? row?.id,
+      name: String(row?.product_name || row?.name || 'Product'),
+      price: Number(row?.unit_price || row?.price || 0),
+      image: String(row?.product_image || row?.image || ''),
+      quantity: Number(row?.quantity || 0),
+      size: row?.size || undefined,
+      color: row?.color || undefined,
+    }))
+  }
+
   const getItem = (id: string | number, size?: string, color?: string) => {
     return items.value.find(
       item =>
@@ -92,12 +105,16 @@ export const useCartStore = defineStore('cart', () => {
   return {
     items,
     totalItems,
+    totalQtyItems,
     totalPrice,
     isEmpty,
     addItem,
     removeItem,
     updateQuantity,
     clearCart,
+    setFromApi,
     getItem,
   }
+}, {
+  persist: true,
 })

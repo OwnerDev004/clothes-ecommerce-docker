@@ -59,7 +59,14 @@
           <label class="text-sm text-slate-600">Payment Method</label>
           <select v-model="paymentMethod" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
             <option value="cash_on_delivery">Cash On Delivery</option>
-            <option value="aba">Online QR Payment</option>
+            <option value="khqr">Online QR Payment</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-2" v-if="isPaymentByKhrqr">
+          <label class="text-sm text-slate-600">Payment Currency</label>
+          <select v-model="paymentCurrency" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
+            <option value="USD">USD</option>
+            <option value="KHR">KHR</option>
           </select>
         </div>
 
@@ -89,13 +96,13 @@
     </div>
 
     <el-dialog v-model="paymentDialogOpen" width="420px" :close-on-click-modal="false" title="Scan QR to Pay"
-      @closed="stopPolling">
+      @closed="handlePaymentDialogClosed">
       <div class="space-y-3">
         <div v-if="qrImageUrl" class="rounded-xl border p-4 flex justify-center">
           <img :src="qrImageUrl" alt="Payment QR" class="h-[240px] w-[240px] object-contain">
         </div>
         <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash || '-'
-          }}
+        }}
         </p>
         <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
         <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -119,10 +126,11 @@
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { useAuthStore } from '~/stores/authStore'
+import { useCartStore } from '~/stores/cartStore'
 
 type CartItem = {
   variant_id: number
@@ -140,6 +148,7 @@ type CartItem = {
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 const { accessToken, isAuthenticated } = storeToRefs(authStore)
 const router = useRouter()
 
@@ -156,7 +165,9 @@ const appliedVoucherCode = ref('')
 const shippingProvince = ref('Phnom Penh')
 const shippingAddress = ref('')
 const shippingPhone = ref('')
-const paymentMethod = ref<'cash_on_delivery' | 'aba'>('aba')
+const paymentMethod = ref<'cash_on_delivery' | 'khqr'>('khqr')
+const paymentCurrency = ref<'USD' | 'KHR'>('USD')
+const isPaymentByKhrqr = ref<Boolean>(false)
 
 const paymentDialogOpen = ref(false)
 const qrString = ref('')
@@ -199,6 +210,7 @@ const mapCartPayload = (payload: any) => {
     unit_price: Number(row?.unit_price || 0),
     line_total: Number(row?.line_total || 0),
   }))
+  cartStore.setFromApi(payload || {})
 }
 
 const ensureAuth = async () => {
@@ -301,6 +313,46 @@ const stopPolling = () => {
   pollingNow.value = false
 }
 
+const cancelPendingOrder = async () => {
+  if (!currentOrderId.value) {
+    return
+  }
+  if (paymentMethod.value !== 'khqr') {
+    return
+  }
+  if (pollStatus.value === 'paid') {
+    return
+  }
+
+  try {
+    await $fetch(`${apiBase}/payments/khrqr/cancel`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: { order_id: currentOrderId.value },
+    })
+    currentOrderId.value = null
+    qrString.value = ''
+    pollHash.value = ''
+    checkoutUrl.value = ''
+    pollStatus.value = 'pending'
+    await fetchCart()
+  } catch (error: any) {
+    const statusCode = error?.statusCode ?? error?.status
+    if (statusCode === 401 || statusCode === 403) {
+      authStore.resetAuth()
+      await router.push('/auth/login')
+      return
+    }
+    ElMessage.error(error?.data?.message || 'Failed to cancel payment.')
+  }
+}
+
+const handlePaymentDialogClosed = async () => {
+  stopPolling()
+  await cancelPendingOrder()
+}
+
 const pollPaymentOnce = async () => {
   if (!pollHash.value) {
     return
@@ -327,6 +379,7 @@ const pollPaymentOnce = async () => {
     if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentState)) {
       stopPolling()
       ElMessage.error(`Payment ${paymentState}.`)
+      await cancelPendingOrder()
     }
   } catch (error: any) {
     ElMessage.error(error?.data?.message || 'Failed to check payment status.')
@@ -394,7 +447,7 @@ const createPaymentIntent = async (orderId: number) => {
       body: {
         order_id: orderId,
         provider: 'khrqr',
-        currency: 'KHR',
+        currency: paymentCurrency.value,
       }
     })
   } catch (error: any) {
@@ -468,6 +521,9 @@ const checkout = async () => {
     checkingOut.value = false
   }
 }
+watch(paymentMethod, (value) => {
+  isPaymentByKhrqr.value = value === 'khqr'
+}, { immediate: true })
 
 onMounted(() => {
   fetchCart()

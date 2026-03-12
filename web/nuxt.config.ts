@@ -2,7 +2,11 @@
 const isProduction = process.env.NODE_ENV === 'production'
 
 export default defineNuxtConfig({
+  
   compatibilityDate: '2024-04-03',
+    app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
+  },
   future: {
     compatibilityVersion: 4,
   },

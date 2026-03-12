@@ -17,6 +17,7 @@ class Product extends Model
         "desc",
         "price",
         "category_id",
+        "sub_category_id",
         "dress_type_id"
     ];
 
@@ -42,6 +43,11 @@ class Product extends Model
     public function dressType()
     {
         return $this->belongsTo(DressType::class);
+    }
+
+    public function subCategory()
+    {
+        return $this->belongsTo(SubCategory::class);
     }
 
     public function images()

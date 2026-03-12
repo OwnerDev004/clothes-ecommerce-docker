@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\VoucherController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\Auth\CustomerAuthController;
@@ -58,6 +60,7 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
     Route::post('/checkout', [PaymentController::class, 'checkout']);
     Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
     Route::get('/payments/khrqr/check/{hash}', [PaymentController::class, 'checkKhrqrStatus']);
+    Route::post('/payments/khrqr/cancel', [PaymentController::class, 'cancelKhrqrIntent']);
     Route::post('/telegram/connect-link', [TelegramLinkController::class, 'createLink']);
 
     Route::prefix('orders')->group(function () {
@@ -77,6 +80,15 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/filters', [ProductController::class, 'filters']);
     Route::get('/{id}', [ProductController::class, 'show']);
+});
+
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::get('/{category:slug}', [CategoryController::class, 'show']);
+});
+
+Route::prefix('sub-categories')->group(function () {
+    Route::get('/', [SubCategoryController::class, 'index']);
 });
 
 Route::prefix('vouchers')->group(function () {
@@ -132,6 +144,12 @@ Route::prefix('admin')->group(function () {
         Route::post('/', [AdminVoucherController::class, 'store']);
         Route::put('/{id}', [AdminVoucherController::class, 'update']);
         Route::delete('/{id}', [AdminVoucherController::class, 'destroy']);
+    });
+
+    Route::prefix('categories')->middleware(['auth:admin'])->group(function () {
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{category:slug}', [CategoryController::class, 'update']);
+        Route::delete('/{category:slug}', [CategoryController::class, 'destroy']);
     });
 
 

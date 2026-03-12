@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -20,7 +19,7 @@ return new class extends Migration
             $table->decimal('shipping_fee', 10, 2);
             $table->string('shipping_address')->nullable();
             $table->string('shipping_phone')->nullable();
-            $table->enum('payment_method', ['aba', 'acelida', 'cash_on_delivery'])->nullable();
+            $table->enum('payment_method', ['khqr', 'cash_on_delivery'])->nullable();
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
             $table->enum('order_status', ['pending', 'processing', 'shipped', 'delivered'])->default('pending');
             $table->timestamps();

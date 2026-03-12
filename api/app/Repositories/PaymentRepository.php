@@ -45,7 +45,10 @@ class PaymentRepository
             ]);
         }
 
-        if (in_array($order->status, ['cancelled', 'refunded', 'completed'], true)) {
+        $isRetryableFailedPayment = $order->status === 'cancelled'
+            && in_array((string) $order->payment_state, ['failed', 'expired', 'canceled', 'cancelled'], true);
+
+        if (in_array($order->status, ['cancelled', 'refunded', 'completed'], true) && !$isRetryableFailedPayment) {
             throw ValidationException::withMessages([
                 'order_id' => ['Order is not payable'],
             ]);
@@ -65,27 +68,32 @@ class PaymentRepository
         $expiresAt = now()->addMinutes((int) config('payment.intent_ttl_minutes', 30));
 
         $pollHash = $this->buildPollHashForProvider($provider, $order->id, $providerPaymentId);
+        $transaction = DB::transaction(function () use ($order, $provider, $providerPaymentId, $currency, $clientToken, $checkoutUrl, $expiresAt, $pollHash, $qrString, $khqrMd5) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-        $transaction = PaymentTransaction::updateOrCreate(
-            ['order_id' => $order->id, 'provider' => $provider],
-            [
-                'provider_payment_id' => $providerPaymentId,
-                'status' => 'pending',
-                'amount' => (float) $order->total_price,
-                'currency' => strtoupper($currency),
-                'client_token' => $clientToken,
-                'checkout_url' => $checkoutUrl,
-                'expires_at' => $expiresAt,
-                'poll_hash' => $pollHash,
-                'qr_string' => $qrString,
-                'khqr_md5' => $khqrMd5,
-            ]
-        );
+            $tx = PaymentTransaction::updateOrCreate(
+                ['order_id' => $lockedOrder->id, 'provider' => $provider],
+                [
+                    'provider_payment_id' => $providerPaymentId,
+                    'status' => 'pending',
+                    'amount' => (float) $lockedOrder->total_price,
+                    'currency' => strtoupper($currency),
+                    'client_token' => $clientToken,
+                    'checkout_url' => $checkoutUrl,
+                    'expires_at' => $expiresAt,
+                    'poll_hash' => $pollHash,
+                    'qr_string' => $qrString,
+                    'khqr_md5' => $khqrMd5,
+                ]
+            );
 
-        $order->payment_provider = $provider;
-        $order->payment_reference = $providerPaymentId;
-        $order->payment_expires_at = $expiresAt;
-        $order->save();
+            $lockedOrder->payment_provider = $provider;
+            $lockedOrder->payment_reference = $providerPaymentId;
+            $lockedOrder->payment_expires_at = $expiresAt;
+            $lockedOrder->save();
+
+            return $tx;
+        });
 
         return [
             'order_id' => $order->id,
@@ -222,29 +230,42 @@ class PaymentRepository
                 ]);
             }
 
+            $normalizedType = strtolower($eventType);
+            $isFailedEvent = in_array($normalizedType, ['payment.failed', 'payment.expired', 'payment.canceled'], true);
             $providerPaymentId = (string) ($data['provider_payment_id'] ?? '');
+            $paymentTx = PaymentTransaction::where('order_id', $order->id)
+                ->where('provider', $provider)
+                ->lockForUpdate()
+                ->first();
 
-            $paymentTx = PaymentTransaction::updateOrCreate(
-                ['order_id' => $order->id, 'provider' => $provider],
-                [
+            if (!$paymentTx && !$isFailedEvent) {
+                $paymentTx = PaymentTransaction::create([
+                    'order_id' => $order->id,
+                    'provider' => $provider,
                     'provider_payment_id' => $providerPaymentId !== '' ? $providerPaymentId : ($order->payment_reference ?: null),
+                    'status' => 'pending',
                     'amount' => (float) $order->total_price,
                     'currency' => (string) ($data['currency'] ?? 'USD'),
                     'poll_hash' => $this->buildPollHashForProvider($provider, $order->id, $providerPaymentId),
-                ]
-            );
+                ]);
+            }
 
-            $normalizedType = strtolower($eventType);
+            if ($paymentTx && $providerPaymentId !== '' && $paymentTx->provider_payment_id !== $providerPaymentId) {
+                $paymentTx->provider_payment_id = $providerPaymentId;
+            }
+
             if (in_array($normalizedType, ['payment.succeeded', 'payment.paid'], true)) {
                 $this->markPaid($order, $paymentTx);
-            } elseif (in_array($normalizedType, ['payment.failed', 'payment.expired', 'payment.canceled'], true)) {
+            } elseif ($isFailedEvent) {
                 $this->markFailedOrExpired($order, $paymentTx, $normalizedType);
             } elseif (in_array($normalizedType, ['payment.refunded'], true)) {
                 $this->markRefunded($order, $paymentTx);
             }
 
-            $paymentTx->last_event_at = now();
-            $paymentTx->save();
+            if ($paymentTx && $paymentTx->exists) {
+                $paymentTx->last_event_at = now();
+                $paymentTx->save();
+            }
 
             $event->processed_at = now();
             $event->save();
@@ -546,9 +567,11 @@ class PaymentRepository
         ];
     }
 
-    private function markPaid(Order $order, PaymentTransaction $paymentTx): void
+    private function markPaid(Order $order, ?PaymentTransaction $paymentTx): void
     {
-        $paymentTx->status = 'paid';
+        if ($paymentTx) {
+            $paymentTx->status = 'paid';
+        }
 
         if ($order->payment_state === 'paid') {
             return;
@@ -561,19 +584,29 @@ class PaymentRepository
         $order->paid_at = $order->paid_at ?? now();
         $order->save();
 
+        if ($order->payment_method === 'khqr') {
+            $cart = $order->customer?->cart;
+            if ($cart) {
+                $cart->items()->delete();
+            }
+        }
+
         SendingInvoiceTelegramJob::dispatch($order->id)->afterCommit();
     }
 
-    private function markFailedOrExpired(Order $order, PaymentTransaction $paymentTx, string $eventType): void
+    private function markFailedOrExpired(Order $order, ?PaymentTransaction $paymentTx, string $eventType): void
     {
         if (in_array($order->payment_state, ['refunded', 'cancelled', 'expired'], true)) {
             return;
         }
 
-        $paymentTx->status = str_contains($eventType, 'expired') ? 'expired' : (str_contains($eventType, 'canceled') ? 'canceled' : 'failed');
+        $failedStatus = str_contains($eventType, 'expired') ? 'expired' : (str_contains($eventType, 'canceled') ? 'canceled' : 'failed');
+        if ($paymentTx) {
+            $paymentTx->status = $failedStatus;
+        }
 
         if ($order->payment_state !== 'paid') {
-            $order->payment_state = $paymentTx->status;
+            $order->payment_state = $failedStatus;
             $order->payment_status = 'failed';
             $order->status = 'cancelled';
             $order->order_status = 'pending';
@@ -581,11 +614,23 @@ class PaymentRepository
             $order->save();
             $this->orderLifecycleRepository->restoreStockIfNeeded($order);
         }
+
+        // Requirement: do not keep payment transaction rows for failed/expired/canceled payments.
+        if ($paymentTx && $paymentTx->exists) {
+            $paymentTx->delete();
+        }
+
+        // Remove KHQR orders after failure so customers can re-checkout from cart.
+        if ($order->payment_method === 'khqr' && $order->payment_state !== 'paid') {
+            $order->delete();
+        }
     }
 
-    private function markRefunded(Order $order, PaymentTransaction $paymentTx): void
+    private function markRefunded(Order $order, ?PaymentTransaction $paymentTx): void
     {
-        $paymentTx->status = 'refunded';
+        if ($paymentTx) {
+            $paymentTx->status = 'refunded';
+        }
         $order->payment_state = 'refunded';
         $order->payment_status = 'failed';
         $order->status = 'refunded';
@@ -623,5 +668,57 @@ class PaymentRepository
                 'signature' => ['Invalid signature'],
             ]);
         }
+    }
+
+    public function cleanupFailedKhqrOrder(int $orderId): void
+    {
+        DB::transaction(function () use ($orderId) {
+            $order = Order::whereKey($orderId)->lockForUpdate()->first();
+            if (!$order) {
+                return;
+            }
+
+            if ($order->payment_method !== 'khqr') {
+                return;
+            }
+
+            if ($order->payment_state === 'paid') {
+                return;
+            }
+
+            $this->orderLifecycleRepository->restoreStockIfNeeded($order);
+            $order->delete();
+        });
+    }
+
+    public function cancelPendingKhqrOrder(int $orderId, int $customerId): void
+    {
+        DB::transaction(function () use ($orderId, $customerId) {
+            $order = Order::whereKey($orderId)
+                ->where('customer_id', $customerId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$order) {
+                throw ValidationException::withMessages([
+                    'order_id' => ['Order not found'],
+                ]);
+            }
+
+            if ($order->payment_method !== 'khqr') {
+                throw ValidationException::withMessages([
+                    'order_id' => ['Order is not a KHQR payment'],
+                ]);
+            }
+
+            if ($order->payment_state === 'paid') {
+                throw ValidationException::withMessages([
+                    'order_id' => ['Order already paid'],
+                ]);
+            }
+
+            $this->orderLifecycleRepository->restoreStockIfNeeded($order);
+            $order->delete();
+        });
     }
 }

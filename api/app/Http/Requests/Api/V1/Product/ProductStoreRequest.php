@@ -21,6 +21,7 @@ class ProductStoreRequest extends FormRequest
             "desc" => "nullable|string",
             "price" => "required|numeric|min:0",
             "category_id" => "required|integer|exists:categories,id",
+            "sub_category_id" => "nullable|integer|exists:sub_categories,id",
             "dress_type_id" => "required|integer|exists:dress_types,id",
             "images" => "nullable|array",
             "images.*.file" => "required|image|mimes:jpeg,png,jpg,gif,webp|max:5120",

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '~/stores/authStore'
+import { useCartStore } from '~/stores/cartStore'
 
 type ProductImage = {
   image_url?: string
@@ -53,6 +54,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { accessToken, isAuthenticated } = storeToRefs(authStore)
+const cartStore = useCartStore()
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
@@ -211,6 +213,14 @@ const addToCart = async () => {
         quantity: qtyAmount.value,
       }
     })
+    cartStore.addItem({
+      id: selectedVariant.value.id,
+      name: String(product.value?.name || 'Product'),
+      price: Number(displayPrice.value || 0),
+      image: selectedImage.value || '',
+      size: selectedVariant.value?.size?.name,
+      color: selectedVariant.value?.color?.name,
+    }, qtyAmount.value)
     ElMessage.success('Added to cart.')
     await router.push('/frontend/cart')
   } catch (error: any) {
@@ -316,12 +326,9 @@ watch(() => route.params.id, () => {
     <div v-else-if="product" class="flex items-center gap-16 flex-col desktop:flex-row mb-10">
       <div class="flex gap-14 flex-col-reverse desktop:flex-row items-center">
         <div class="grid grid-cols-3 desktop:grid-cols-1 gap-3">
-          <button
-            v-for="(image, imageIndex) in imageList"
-            :key="imageIndex"
+          <button v-for="(image, imageIndex) in imageList" :key="imageIndex"
             class="focus:opacity-60 w-full desktop:w-[152px] h-full desktop:h-[167px] rounded-2lg"
-            @click="selectedImage = image"
-          >
+            @click="selectedImage = image">
             <NuxtImg class="rounded-md hover:opacity-70 w-full h-full object-cover" :src="image" />
           </button>
         </div>
@@ -335,12 +342,8 @@ watch(() => route.params.id, () => {
         <section class="border-b py-4 border-b-black">
           <h1 class="text-4xl font-extrabold">{{ product.name }}</h1>
           <SharesRating :rating-amount="0" :stars-num="5" />
-          <SharesDiscount
-            :discount-amount="0"
-            :price="displayPrice"
-            class="!text-3xl font-extrabold"
-            :discountPercentage="'text-xl'"
-          />
+          <SharesDiscount :discount-amount="0" :price="displayPrice" class="!text-3xl font-extrabold"
+            :discountPercentage="'text-xl'" />
           <p>{{ product.desc || 'No description.' }}</p>
           <p class="mt-2 text-sm text-gray-500">{{ stockLabel }}</p>
         </section>
@@ -348,17 +351,12 @@ watch(() => route.params.id, () => {
         <section class="border-b py-4 border-b-black">
           <h2 class="pb-2">Select Colors</h2>
           <div class="flex gap-4">
-            <button
-              v-for="color in colorOptions"
-              :key="color.id"
+            <button v-for="color in colorOptions" :key="color.id"
               :style="{ backgroundColor: color.hex_code || '#9ca3af' }"
               class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 relative"
-              @click="chooseColor(color.id)"
-            >
-              <span
-                v-if="selectedColorId === color.id"
-                class="text-white font-bold absolute inset-0 flex items-center justify-center"
-              >
+              @click="chooseColor(color.id)">
+              <span v-if="selectedColorId === color.id"
+                class="text-white font-bold absolute inset-0 flex items-center justify-center">
                 ✓
               </span>
             </button>
@@ -369,13 +367,9 @@ watch(() => route.params.id, () => {
           <h2 class="pb-2">Choose Size</h2>
           <div class="flex overflow-auto gap-2 hide-scrollbar">
             <div class="grid grid-flow-col gap-4 overflow-x-visible whitespace-nowrap">
-              <button
-                v-for="size in sizeOptions"
-                :key="size.id"
-                class="w-[100px] p-3 rounded-3xl cursor-pointer"
+              <button v-for="size in sizeOptions" :key="size.id" class="w-[100px] p-3 rounded-3xl cursor-pointer"
                 :class="selectedSizeId === size.id ? 'bg-black text-white' : 'bg-gray hover:bg-black hover:text-white'"
-                @click="chooseSize(size.id)"
-              >
+                @click="chooseSize(size.id)">
                 {{ size.name }}
               </button>
             </div>
@@ -385,19 +379,19 @@ watch(() => route.params.id, () => {
         <section class="border-b py-4 border-black">
           <div class="flex overflow-auto gap-2 hide-scrollbar">
             <div class="flex gap-3 items-center bg-gray rounded-2xl">
-              <button class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-l-2xl" @click="decrement">
+              <button class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-l-2xl"
+                @click="decrement">
                 <Icon name="ic:baseline-minus" class="text-base" />
               </button>
               <p class="mx-2">{{ qtyAmount }}</p>
-              <button class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-r-2xl" @click="increment">
+              <button class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-r-2xl"
+                @click="increment">
                 <Icon name="ic:round-plus" class="text-base" />
               </button>
             </div>
             <button
               class="p-3 border bg-black hover:bg-white text-white hover:text-black rounded-2xl w-full disabled:cursor-not-allowed disabled:opacity-50"
-              :disabled="!canAddToCart"
-              @click="addToCart"
-            >
+              :disabled="!canAddToCart" @click="addToCart">
               Add to Cart
             </button>
           </div>
@@ -406,14 +400,8 @@ watch(() => route.params.id, () => {
     </div>
 
     <div role="tablist" class="tabs tabs-bordered mt-6">
-      <a
-        v-for="(tab, index) in tablists"
-        :key="tab.id"
-        role="tab"
-        class="tab"
-        :class="tabIndex === index ? 'tab-active' : ''"
-        @click="tabClick(index)"
-      >
+      <a v-for="(tab, index) in tablists" :key="tab.id" role="tab" class="tab"
+        :class="tabIndex === index ? 'tab-active' : ''" @click="tabClick(index)">
         <h1>{{ tab.name }}</h1>
       </a>
     </div>
@@ -447,16 +435,9 @@ watch(() => route.params.id, () => {
       </h1>
       <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
         <template v-for="item in relatedProducts" :key="item.id">
-          <FrontendCardProduct
-            :title="item.title"
-            :price="item.price"
-            :img="item.img"
-            :discount-amount="item.discount_amount"
-            :discount-type="item.discount_type"
-            :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount"
-            @click="viewProduct(item.id)"
-          />
+          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
+            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
         </template>
       </div>
       <div class="border-b border-zinc-300 mt-10"></div>

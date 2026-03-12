@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'nuxt/app'
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useInfiniteScroll } from '@vueuse/core'
+import { Loading } from '@element-plus/icons-vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -37,7 +39,6 @@ const currentPage = ref(1)
 const hasMoreProducts = ref(true)
 const perPage = 8
 const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
 
 const brands = reactive([
   {
@@ -86,6 +87,7 @@ const onSlideChange = (swiper: any) => {
 };
 
 const topSellingProducts = computed(() => products.value.slice(0, 4))
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const resolveImageUrl = (input?: string) => {
   if (!input) {
@@ -133,6 +135,11 @@ const fetchProducts = async (reset = false) => {
   productError.value = ''
 
   try {
+    // Keep loading visible briefly during infinite-scroll fetches.
+    if (!reset) {
+      await sleep(500)
+    }
+
     const response: any = await $fetch(`${apiBase}/products`, {
       method: 'GET',
       query: {
@@ -156,69 +163,41 @@ const fetchProducts = async (reset = false) => {
   }
 }
 
-const setupScrollObserver = () => {
-  if (!import.meta.client) {
-    return
+useInfiniteScroll(
+  loadMoreTrigger,
+  () => {
+    fetchProducts()
+  },
+  {
+    distance: 200,
+    canLoadMore: () => hasMoreProducts.value && !isLoadingProducts.value,
   }
+)
 
-  if (observer) {
-    observer.disconnect()
-  }
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      const first = entries[0]
-      if (first?.isIntersecting) {
-        fetchProducts()
-      }
-    },
-    { rootMargin: '200px 0px' }
-  )
-
-  if (loadMoreTrigger.value) {
-    observer.observe(loadMoreTrigger.value)
-  }
+const viewProduct = (id: number | string) => {
+  router.push('/frontend/product_detail/' + id);
 }
-
-const viewProduct = (id:number | string) =>{
-  router.push('/frontend/product_detail/'+id);
-}
-const viewCategory = (id:number | string) =>{
-  router.push('/frontend/categories/'+id);
+const viewCategory = (slug: string) => {
+  router.push('/frontend/categories/' + slug);
 }
 
 onMounted(async () => {
   await fetchProducts(true)
-  setupScrollObserver()
-})
-
-onBeforeUnmount(() => {
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
 })
 </script>
 <template>
   <main>
     <!-- Slide Section -->
     <section class="">
-      <Swiper
-        :modules="[SwiperAutoplay]"
-        :space-between="1"
-        :loop="true"
-        :autoplay="{
-          delay: 5000,
-          disableOnInteraction: false,
-        }"
-      >
+      <Swiper :modules="[SwiperAutoplay]" :space-between="1" :loop="true" :autoplay="{
+        delay: 5000,
+        disableOnInteraction: false,
+      }">
         <SwiperSlide v-for="slide in 10" :key="slide" class="bg-gray">
           <div class="px-5  desktop:container flex flex-col lg:flex-row items-center gap-4 sm:gap-6 pt-5">
             <!-- Text Section -->
             <div class="w-full lg:w-1/2 xl:w-2/5 flex flex-col justify-center">
-              <p
-                class="font-Poppins text-5xl md:text-5xl font-bold leading-tight"
-              >
+              <p class="font-Poppins text-5xl md:text-5xl font-bold leading-tight">
                 FIND CLOTHES THAT MATCH YOUR STYLE
               </p>
               <p class="font-Lato font-thin mt-2">
@@ -226,22 +205,15 @@ onBeforeUnmount(() => {
                 garments, designed to bring out your individuality and cater to
                 your sense of style.
               </p>
-              <button
-                class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]"
-              >
+              <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]">
                 Shop Now
               </button>
             </div>
 
             <!-- Image Section -->
             <div class="w-full desktop:w-1/2 flex justify-center ml-auto">
-              <NuxtImg
-                sizes="sm:100vw md:400px lg:650px"
-                src="/img/slide-1.png"
-                format="webp"
-                densities="x1"
-                alt="Fashion Clothing"
-              />
+              <NuxtImg sizes="sm:100vw md:400px lg:650px" src="/img/slide-1.png" format="webp" densities="x1"
+                alt="Fashion Clothing" />
             </div>
           </div>
         </SwiperSlide>
@@ -250,25 +222,13 @@ onBeforeUnmount(() => {
 
     <!-- Brand Section -->
     <section class="py-10 bg-black">
-      <Swiper
-        :modules="[SwiperAutoplay]"
-        :slides-per-view="4"
-        :space-between="1"
-        :loop="true"
-        :autoplay="{
-          delay: 5000,
-          disableOnInteraction: false,
-        }"
-      >
+      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4" :space-between="1" :loop="true" :autoplay="{
+        delay: 5000,
+        disableOnInteraction: false,
+      }">
         <SwiperSlide v-for="slide in brands" :key="slide.id">
           <div class="p-4 bg-gray-200 flex justify-center">
-            <NuxtImg
-              :src="slide.img"
-              :alt="slide.name"
-              class="w-[100px] md:w-[150px]"
-              format="webp"
-              densities="x1"
-            />
+            <NuxtImg :src="slide.img" :alt="slide.name" class="w-[100px] md:w-[150px]" format="webp" densities="x1" />
           </div>
         </SwiperSlide>
       </Swiper>
@@ -276,27 +236,16 @@ onBeforeUnmount(() => {
 
     <!-- ALL PRODUCTS -->
     <section class="px-5 desktop:container py-10">
-      <h1
-        class="font-Poppins text-4xl md:text-6xl leading-tight text-center py-4 font-extrabold"
-      >
+      <h1 class="font-Poppins text-4xl md:text-6xl leading-tight text-center py-4 font-extrabold">
         ALL PRODUCTS
       </h1>
 
       <!-- card -->
-      <div
-        class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4"
-      >
+      <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
         <template v-for="item in products" :key="item.id">
-          <FrontendCardProduct
-            :title="item.title"
-            :price="item.price"
-            :img="item.img"
-            :discount-amount="item.discount_amount"
-            :discount-type="item.discount_type"
-            :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount"
-           @click="viewProduct(item.id)"
-          />
+          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
+            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
         </template>
       </div>
 
@@ -305,17 +254,20 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="mt-6 flex justify-center">
-        <button
-          v-if="productError"
+        <button v-if="productError"
           class="border rounded-[64px] px-5 py-2 outline-none bg-transparent text-black hover:bg-black hover:text-white"
-          @click="fetchProducts()"
-        >
+          @click="fetchProducts()">
           Retry Loading
         </button>
       </div>
 
       <div class="mt-6 text-center text-sm text-gray-500">
-        <p v-if="isLoadingProducts">Loading more products...</p>
+        <div v-if="isLoadingProducts" class="flex items-center justify-center gap-2">
+          <el-icon class="is-loading text-lg">
+            <Loading />
+          </el-icon>
+          <span>Loading more products...</span>
+        </div>
         <p v-else-if="!hasMoreProducts && products.length">You reached the end.</p>
       </div>
 
@@ -326,127 +278,76 @@ onBeforeUnmount(() => {
 
     <!-- TOP SELLING -->
     <section class="px-5 desktop:container py-10 border-b-gray">
-      <h1
-        class="font-Poppins text-4xl md:text-6xl leading-tight text-center py-4 font-extrabold"
-      >
+      <h1 class="font-Poppins text-4xl md:text-6xl leading-tight text-center py-4 font-extrabold">
         TOP SELLING
       </h1>
 
       <!-- card -->
-      <div
-        class="grid gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
+      <div class="grid gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <template v-for="item in topSellingProducts" :key="`top-${item.id}`">
-          <FrontendCardProduct
-            :title="item.title"
-            :price="item.price"
-            :img="item.img"
-            :discount-amount="item.discount_amount"
-            :discount-type="item.discount_type"
-            :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount"
-            @click="viewProduct(item.id)"
-          />
+          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
+            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
         </template>
       </div>
       <div class="flex justify-center mt-5">
         <button
-          class="border rounded-[64px] p-4 w-full md:w-1/4 xl:w-1/6 outline-none bg-transparent text-black hover:bg-black hover:text-white"
-        >
+          class="border rounded-[64px] p-4 w-full md:w-1/4 xl:w-1/6 outline-none bg-transparent text-black hover:bg-black hover:text-white">
           View All
         </button>
       </div>
     </section>
 
-    <!-- Dress Styles -->
-
-    <section class="px-5 desktop:container  py-10">
+    <!-- Shop by Category -->
+    <section class="px-5 desktop:container py-10">
       <div class="bg-gray rounded-3xl text-center py-10">
-        <h1
-          class="font-Poppins text-4xl md:text-5xl leading-tight text-center py-4 font-extrabold"
-        >
-          BROWSE BY DRESS STYLE
+        <h1 class="font-Poppins text-4xl md:text-5xl leading-tight text-center py-4 font-extrabold">
+          SHOP BY CATEGORY
         </h1>
 
         <div class="grid gap-5 grid-cols-1 md:grid-cols-3 px-6 md:px-20 py-10">
-          <!-- Casual Style Card -->
+          <!-- Men's Clothing -->
           <div
             class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center rounded-2xl relative h-[190px]"
-             @click="viewCategory(1)"
-            >
-            <h1
-              class="text-xl font-semibold mb-4 absolute top-10 text-black left-10"
-            >
-              Casual
+            @click="viewCategory('mens-clothing')">
+            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
+              Men's Clothing
             </h1>
-            <NuxtImg
-              sizes="sm:100vw md:669px"
-              src="/img/dress_styles/style1.png"
-              format="webp"
-              densities="x1"
-              alt="Casual Style Image"
-              class="w-full h-auto"
-            />
+            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style1.png" format="webp" densities="x1"
+              alt="Men's Clothing" class="w-full h-auto" />
           </div>
 
-          <!-- Formal Style Card (Spans 2 columns) -->
+          <!-- Women's Clothing -->
           <div
             class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center col-span-1 md:col-span-2 rounded-2xl relative h-[190px]"
-            @click="viewCategory(2)"
-            >
-            <h1
-              class="text-xl font-semibold mb-4 absolute top-10 text-black left-10"
-            >
-              Formal
+            @click="viewCategory('womens-clothing')">
+            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
+              Women's Clothing
             </h1>
-            <NuxtImg
-              sizes="sm:100vw md:669px"
-              src="/img/dress_styles/style2.png"
-              format="webp"
-              densities="x1"
-              alt="Casual Style Image"
-              class="w-full h-auto"
-            />
+            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style2.png" format="webp" densities="x1"
+              alt="Women's Clothing" class="w-full h-auto" />
           </div>
 
-          <!-- Casual Style Card (Spans 2 columns) -->
+          <!-- Accessories -->
           <div
             class="overflow-hidden bg-[#FFFFFF] flex items-center justify-center col-span-1 md:col-span-2 rounded-2xl p-4 relative h-[190px]"
-          @click="viewCategory(3)"
-            >
-            <h1
-              class="text-xl font-semibold mb-4 absolute top-10 text-black left-10"
-            >
-              Casual
+            @click="viewCategory('accessories')">
+            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
+              Accessories
             </h1>
-            <NuxtImg
-              sizes="sm:100vw md:669px"
-              src="/img/dress_styles/style3.png"
-              format="webp"
-              densities="x1"
-              alt="Casual Style Image"
-              class="w-full h-auto"
-            />
+            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style3.png" format="webp" densities="x1"
+              alt="Accessories" class="w-full h-auto" />
           </div>
 
-          <!-- Formal Style Card -->
+          <!-- Shoes -->
           <div
             class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center rounded-2xl relative h-[190px]"
-          @click="viewCategory(4)"
-            >
-            <h1
-              class="text-xl font-semibold mb-4 absolute top-10 text-black left-10"
-            >
-              Gym
+            @click="viewCategory('shoes')">
+            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
+              Shoes
             </h1>
-            <NuxtImg
-              sizes="sm:100vw md:669px"
-              src="/img/dress_styles/style4.png"
-              format="webp"
-              densities="x1"
-              alt="Casual Style Image"
-              class="w-full h-auto"
-            />
+            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style4.png" format="webp" densities="x1"
+              alt="Shoes" class="w-full h-auto" />
           </div>
         </div>
       </div>
@@ -455,32 +356,22 @@ onBeforeUnmount(() => {
     <!-- customer reviews -->
     <section class="py-10">
       <h1
-        class="px-2 desktop:container text-center font-Poppins text-[2rem] md:text-5xl leading-tight py-4 font-extrabold desktop:"
-      >
+        class="px-2 desktop:container text-center font-Poppins text-[2rem] md:text-5xl leading-tight py-4 font-extrabold desktop:">
         OUR HAPPY CUSTOMERS
       </h1>
-      <Swiper
-        :modules="[SwiperAutoplay]"
-        :slides-per-view="4.1"
-        :space-between="20"
-        :breakpoints="{
-          '0':{
-            slidesPerView: 1,
-          },
-          '375': {
-            slidesPerView: 1.5,
-            spaceBetween: 20,
-          },
-          '992': {
-            slidesPerView: 4.1,
-            spaceBetween: 20,
-          },
-        }"
-        :loop="true"
-        :centered-slides="true"
-        @slideChange="onSlideChange"
-        autoplay
-      >
+      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
+        '0': {
+          slidesPerView: 1,
+        },
+        '375': {
+          slidesPerView: 1.5,
+          spaceBetween: 20,
+        },
+        '992': {
+          slidesPerView: 4.1,
+          spaceBetween: 20,
+        },
+      }" :loop="true" :centered-slides="true" @slideChange="onSlideChange" autoplay>
         <SwiperSlide v-for="(slide, index) in 10" :key="index">
           <div class="p-4 bg-gray flex justify-center flex-col">
             <SharesRating :stars-num="5" :rating-amount="0" />

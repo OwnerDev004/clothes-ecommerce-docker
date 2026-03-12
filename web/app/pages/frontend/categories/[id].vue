@@ -1,6 +1,13 @@
 <template>
-  <div v-loading.fullscreen.lock="isFetching" element-loading-text="Loading data..."
-    element-loading-background="rgba(255, 255, 255, 0.75)">
+  <div>
+    <div v-if="isFetching" class="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+      <el-icon class="is-loading text-3xl text-black">
+        <Loading />
+      </el-icon>
+      <p class="text-sm text-gray-500">Loading category data...</p>
+    </div>
+
+    <div v-else>
     <div class="px-5 desktop:container relative">
       <BaseBreadcrumb :icon="ArrowRight">
         <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
@@ -69,6 +76,19 @@
                 :class="{ 'bg-gray': dressStyleFilter === (style.slug || String(style.id)) }"
                 @click="selectDressStyle(style.slug || String(style.id))">
                 <p>{{ style.name }}</p>
+                <Icon name="weui:arrow-filled" />
+              </li>
+            </ul>
+          </section>
+
+          <section class="border-b border-b-gray py-3">
+            <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
+            <ul class="leading-10">
+              <li v-for="sub in subCategories" :key="sub.id"
+                class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                :class="{ 'bg-gray': subCategoryFilter === (sub.slug || String(sub.id)) }"
+                @click="selectSubCategory(sub.slug || String(sub.id))">
+                <p>{{ sub.name }}</p>
                 <Icon name="weui:arrow-filled" />
               </li>
             </ul>
@@ -195,6 +215,19 @@
             </li>
           </ul>
         </section>
+
+        <section class="border-b border-b-gray py-3">
+          <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
+          <ul class="leading-10">
+            <li v-for="sub in subCategories" :key="sub.id"
+              class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+              :class="{ 'bg-gray': subCategoryFilter === (sub.slug || String(sub.id)) }"
+              @click="selectSubCategory(sub.slug || String(sub.id))">
+              <p>{{ sub.name }}</p>
+              <Icon name="weui:arrow-filled" />
+            </li>
+          </ul>
+        </section>
       </div>
 
       <template #footer>
@@ -206,11 +239,13 @@
         </div>
       </template>
     </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
+import { Loading } from '@element-plus/icons-vue'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 
 const route = useRoute()
@@ -221,6 +256,7 @@ const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
 
 type CategoryOption = { id: number | string; name: string; slug?: string }
+type SubCategoryOption = { id: number | string; name: string; slug?: string; category_id?: number | string }
 type ColorOption = { id: number | string; name: string; hex_code?: string }
 type SizeOption = { id: number | string; name: string }
 type DressTypeOption = { id: number | string; name: string; slug?: string }
@@ -238,6 +274,7 @@ type ProductCard = {
 }
 
 const categories = ref<CategoryOption[]>([])
+const subCategories = ref<SubCategoryOption[]>([])
 const colors = ref<ColorOption[]>([])
 const sizes = ref<SizeOption[]>([])
 const dressTypes = ref<DressTypeOption[]>([])
@@ -250,23 +287,42 @@ const searchText = ref('')
 const priceRange = ref<[number, number]>([0, 200])
 const colorFilter = ref('')
 const sizeFilter = ref('')
+const subCategoryFilter = ref('')
 const dressStyleFilter = ref('')
 const sortBy = ref<'newest' | 'price_asc' | 'price_desc' | 'name_asc'>('newest')
 
 const page = ref(1)
 const meta = ref({ current_page: 1, last_page: 1, per_page: 12, total: 0 })
 
+const isLoadingCategories = ref(false)
 const isLoadingFilters = ref(false)
 const isLoadingProducts = ref(false)
 const errorMessage = ref('')
 const isToggleFilter = ref(false)
 
-const maxPrice = computed(() => priceRange.value[1] || undefined)
-const isFetching = computed(() => isLoadingFilters.value || isLoadingProducts.value)
+const isFetching = computed(() => isLoadingCategories.value || isLoadingFilters.value || isLoadingProducts.value)
 
 const categoryParam = computed(() => {
   const raw = route.params.id
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+})
+const dressStyleParam = computed(() => {
+  const raw = route.query.dress_style
+  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+})
+const subCategoryParam = computed(() => {
+  const raw = route.query.sub_category
+  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+})
+const priceMinParam = computed(() => {
+  const raw = route.query.price_min
+  const value = Array.isArray(raw) ? Number(raw[0]) : Number(raw)
+  return Number.isFinite(value) ? value : 0
+})
+const priceMaxParam = computed(() => {
+  const raw = route.query.price_max
+  const value = Array.isArray(raw) ? Number(raw[0]) : Number(raw)
+  return Number.isFinite(value) ? value : 200
 })
 
 const currentCategoryLabel = computed(() => {
@@ -305,6 +361,19 @@ const sortProducts = () => {
   displayProducts.value = rows
 }
 
+const fetchCategories = async () => {
+  if (isLoadingCategories.value) return
+  isLoadingCategories.value = true
+  try {
+    const response: any = await $fetch(`${apiBase}/categories`, {
+      method: 'GET',
+    })
+    categories.value = Array.isArray(response?.data) ? response.data : []
+  } finally {
+    isLoadingCategories.value = false
+  }
+}
+
 const fetchFilterOptions = async () => {
   if (isLoadingFilters.value) return
   isLoadingFilters.value = true
@@ -313,12 +382,14 @@ const fetchFilterOptions = async () => {
       method: 'GET',
       query: {
         category: selectedCategory.value || undefined,
+        sub_category: subCategoryFilter.value || undefined,
         dress_style: dressStyleFilter.value || undefined,
         search_txt: searchText.value || undefined,
-        price: maxPrice.value,
+        price_min: priceRange.value[0] > 0 ? priceRange.value[0] : undefined,
+        price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
       },
     })
-    categories.value = Array.isArray(response?.data?.categories) ? response.data.categories : []
+    subCategories.value = Array.isArray(response?.data?.sub_categories) ? response.data.sub_categories : []
     colors.value = Array.isArray(response?.data?.colors) ? response.data.colors : []
     sizes.value = Array.isArray(response?.data?.sizes) ? response.data.sizes : []
     dressTypes.value = Array.isArray(response?.data?.dress_types) ? response.data.dress_types : []
@@ -329,6 +400,9 @@ const fetchFilterOptions = async () => {
     }
     if (sizeFilter.value && !sizes.value.some((row) => String(row.id) === sizeFilter.value)) {
       sizeFilter.value = ''
+    }
+    if (subCategoryFilter.value && !subCategories.value.some((row) => (row.slug || String(row.id)) === subCategoryFilter.value)) {
+      subCategoryFilter.value = ''
     }
   } catch (error: any) {
     errorMessage.value = error?.data?.message || 'Unable to load category filters.'
@@ -349,8 +423,10 @@ const fetchProducts = async () => {
         page: page.value,
         per_page: meta.value.per_page,
         category: selectedCategory.value || undefined,
+        sub_category: subCategoryFilter.value || undefined,
         search_txt: searchText.value || undefined,
-        price: maxPrice.value,
+        price_min: priceRange.value[0] > 0 ? priceRange.value[0] : undefined,
+        price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
         color: colorFilter.value || undefined,
         size: sizeFilter.value || undefined,
         dress_style: dressStyleFilter.value || undefined,
@@ -379,9 +455,14 @@ const applyFilters = async (closeDialog = false) => {
   const targetPath = selectedCategory.value
     ? `/frontend/categories/${selectedCategory.value}`
     : '/frontend/categories'
+  const targetQuery: Record<string, string> = {}
+  if (dressStyleFilter.value) targetQuery.dress_style = dressStyleFilter.value
+  if (subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
+  if (priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
+  if (priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
 
-  if (route.path !== targetPath) {
-    await router.push(targetPath)
+  if (route.path !== targetPath || JSON.stringify(route.query) !== JSON.stringify(targetQuery)) {
+    await router.push({ path: targetPath, query: targetQuery })
   } else {
     await fetchFilterOptions()
     await fetchProducts()
@@ -407,6 +488,10 @@ const selectDressStyle = (value: string) => {
   dressStyleFilter.value = dressStyleFilter.value === value ? '' : value
 }
 
+const selectSubCategory = (value: string) => {
+  subCategoryFilter.value = subCategoryFilter.value === value ? '' : value
+}
+
 const toggleFilter = () => {
   isToggleFilter.value = true
 }
@@ -425,15 +510,23 @@ const checkScreenSize = () => {
   if (window.innerWidth >= 720) isToggleFilter.value = false
 }
 
-watch(() => route.params.id, async () => {
+watch(() => route.fullPath, async () => {
   selectedCategory.value = categoryParam.value || ''
+  dressStyleFilter.value = dressStyleParam.value || ''
+  subCategoryFilter.value = subCategoryParam.value || ''
+  priceRange.value = [priceMinParam.value, priceMaxParam.value]
   page.value = 1
+  await fetchCategories()
   await fetchFilterOptions()
   await fetchProducts()
 })
 
 onMounted(async () => {
   selectedCategory.value = categoryParam.value || ''
+  dressStyleFilter.value = dressStyleParam.value || ''
+  subCategoryFilter.value = subCategoryParam.value || ''
+  priceRange.value = [priceMinParam.value, priceMaxParam.value]
+  await fetchCategories()
   await fetchFilterOptions()
   await fetchProducts()
   if (import.meta.client) {

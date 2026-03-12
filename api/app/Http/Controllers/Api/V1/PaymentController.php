@@ -56,6 +56,7 @@ class PaymentController extends Controller
                 strtoupper((string) ($payload['currency'] ?? 'USD'))
             );
         } catch (ValidationException $e) {
+            $this->paymentRepository->cleanupFailedKhqrOrder((int) $payload['order_id']);
             return $this->error('Unable to create payment intent', 422, $e->errors());
         }
 
@@ -76,6 +77,26 @@ class PaymentController extends Controller
         }
 
         return $this->success($result, 'KHQR payment status refreshed', 200);
+    }
+
+    public function cancelKhrqrIntent(Request $request)
+    {
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        $payload = $request->validate([
+            'order_id' => ['required', 'integer'],
+        ]);
+
+        try {
+            $this->paymentRepository->cancelPendingKhqrOrder((int) $payload['order_id'], (int) $customer->id);
+        } catch (ValidationException $e) {
+            return $this->error('Unable to cancel payment', 422, $e->errors());
+        }
+
+        return $this->success(['order_id' => (int) $payload['order_id']], 'Payment cancelled', 200);
     }
 
     public function webhook(Request $request, string $provider)

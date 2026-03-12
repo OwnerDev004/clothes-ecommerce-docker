@@ -5,16 +5,15 @@ namespace App\Models;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 
-class Category extends Model
+class SubCategory extends Model
 {
     use Sluggable;
 
     protected $fillable = [
+        'category_id',
         'name',
-        'des',
         'slug',
-        'image_url',
-        'image_public_id',
+        'des',
     ];
 
     public function sluggable(): array
@@ -27,18 +26,14 @@ class Category extends Model
         ];
     }
 
-    public function getRouteKeyName(): string
+    public function category()
     {
-        return 'slug';
+        return $this->belongsTo(Category::class);
     }
 
     public function products()
     {
         return $this->hasMany(Product::class);
     }
-
-    public function subCategories()
-    {
-        return $this->hasMany(SubCategory::class);
-    }
 }
+

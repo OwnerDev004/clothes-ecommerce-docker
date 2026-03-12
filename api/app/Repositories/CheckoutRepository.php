@@ -144,7 +144,10 @@ class CheckoutRepository
                 ]);
             }
 
-            CartItem::where('cart_id', $cart->id)->delete();
+            // Keep cart items for KHQR until payment succeeds.
+            if (($payload['payment_method'] ?? 'cash_on_delivery') !== 'khqr') {
+                CartItem::where('cart_id', $cart->id)->delete();
+            }
 
             $order->load([
                 'items.variant.product:id,name,slug',

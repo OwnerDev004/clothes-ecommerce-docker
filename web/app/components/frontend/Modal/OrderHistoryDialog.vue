@@ -65,7 +65,8 @@
                                 <el-tag size="small" :type="statusTagType(order.status)">
                                     {{ order.status || 'unknown' }}
                                 </el-tag>
-                                <el-tag size="small" :type="paymentTagType(order.payment_state || order.payment_status)">
+                                <el-tag size="small"
+                                    :type="paymentTagType(order.payment_state || order.payment_status)">
                                     Payment: {{ order.payment_state || order.payment_status || 'unknown' }}
                                 </el-tag>
                                 <el-tag size="small" :type="orderTagType(order.order_status)">
@@ -74,6 +75,10 @@
                                 <span class="text-sm font-semibold text-gray-900">
                                     ${{ formatMoney(order.total_price) }}
                                 </span>
+                                <el-button v-if="canRepay(order)" size="small" type="warning" plain
+                                    :loading="repayingOrderId === order.id" @click="repayOrder(order)">
+                                    Repay
+                                </el-button>
                             </div>
                         </div>
 
@@ -134,6 +139,7 @@ type OrderRecord = {
     status?: string
     payment_state?: string
     payment_status?: string
+    payment_provider?: string
     order_status?: string
     order_date?: string
     created_at?: string
@@ -161,6 +167,7 @@ const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 
 const loadingOrders = ref(false)
+const repayingOrderId = ref<number | string | null>(null)
 const errorMessage = ref('')
 const orders = ref<OrderRecord[]>([])
 const page = ref(1)
@@ -222,6 +229,58 @@ const fetchOrders = async () => {
         orders.value = []
     } finally {
         loadingOrders.value = false
+    }
+}
+
+const normalizePaymentState = (order: OrderRecord) => {
+    return String(order.payment_state || order.payment_status || '').toLowerCase()
+}
+
+const canRepay = (order: OrderRecord) => {
+    const paymentState = normalizePaymentState(order)
+    const lifecycle = String(order.status || '').toLowerCase()
+
+    if (['paid', 'refunded'].includes(paymentState)) {
+        return false
+    }
+    if (['completed', 'refunded'].includes(lifecycle)) {
+        return false
+    }
+    return ['failed', 'expired', 'canceled', 'cancelled'].includes(paymentState)
+}
+
+const repayOrder = async (order: OrderRecord) => {
+    if (!canRepay(order)) {
+        return
+    }
+
+    const provider = String(order.payment_provider || 'khrqr').toLowerCase()
+    repayingOrderId.value = order.id
+    errorMessage.value = ''
+
+    try {
+        const response: any = await $fetch(`${apiBase}/payments/intent`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders(),
+            body: {
+                order_id: Number(order.id),
+                provider,
+                currency: 'USD',
+            },
+        })
+
+        const checkoutUrl = response?.data?.checkout_url
+        if (checkoutUrl) {
+            await navigateTo(checkoutUrl, { external: true })
+            return
+        }
+
+        errorMessage.value = 'Unable to start repayment. Missing checkout URL.'
+    } catch (err: any) {
+        errorMessage.value = err?.data?.message || 'Unable to start repayment.'
+    } finally {
+        repayingOrderId.value = null
     }
 }
 

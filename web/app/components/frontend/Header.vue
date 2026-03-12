@@ -65,15 +65,19 @@
           <NuxtLink to="/frontend/favorites" class="relative">
             <Icon name="mdi:heart"
               class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
-            <span
-              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">1</span>
+            <span v-if="favoriteCount > 0"
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {{ favoriteCount }}
+            </span>
           </NuxtLink>
 
           <!-- Cart -->
           <NuxtLink to="/frontend/cart" class="relative">
             <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
-            <span
-              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">1</span>
+            <span v-if="cartCount > 0"
+              class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {{ cartCount }}
+            </span>
           </NuxtLink>
           <!-- Account -->
           <div class="relative hidden sm:block account-menu-root">
@@ -170,34 +174,13 @@
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Category</h3>
           <ul class="space-y-3">
-            <li>
-              <NuxtLink to="/frontend/categories/mens-clothing"
+            <li v-for="category in categories" :key="category.id">
+              <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
                 class="text-gray-600 hover:text-black transition-colors flex items-center group">
                 <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Men's Clothing
+                {{ category.name }}
                 <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
               </NuxtLink>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Women's Clothing
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Accessories
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Shoes
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
             </li>
           </ul>
         </div>
@@ -206,33 +189,13 @@
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Collection</h3>
           <ul class="space-y-3">
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
+            <li v-for="collection in collectionItems" :key="`desktop-collection-${collection.id}`">
+              <NuxtLink :to="{ path: '/frontend/categories', query: { dress_style: collection.slug } }"
+                class="text-gray-600 hover:text-black transition-colors flex items-center group">
                 <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Summer Collection
+                {{ collection.name }}
                 <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Winter Collection
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Spring Essentials
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Fall Fashion
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
+              </NuxtLink>
             </li>
           </ul>
         </div>
@@ -241,33 +204,13 @@
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Price</h3>
           <ul class="space-y-3">
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
+            <li v-for="range in priceRanges" :key="`desktop-price-${range.slug}`">
+              <NuxtLink :to="{ path: '/frontend/categories', query: range.query }"
+                class="text-gray-600 hover:text-black transition-colors flex items-center group">
                 <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Under $50
+                {{ range.label }}
                 <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                $50 - $100
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                $100 - $200
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                Over $200
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </a>
+              </NuxtLink>
             </li>
           </ul>
         </div>
@@ -315,37 +258,15 @@
             <div>
               <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Category</h3>
               <ul class="space-y-3">
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
+                <li v-for="category in categories" :key="`mobile-${category.id}`">
+                  <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
+                    class="text-gray-600 hover:text-black transition-colors flex items-center group"
+                    @click="toggleMenu">
                     <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Men's Clothing
+                    {{ category.name }}
                     <Icon name="mdi:chevron-right"
                       class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Women's Clothing
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Accessories
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Shoes
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
+                  </NuxtLink>
                 </li>
               </ul>
             </div>
@@ -355,37 +276,15 @@
             <div>
               <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Collection</h3>
               <ul class="space-y-3">
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
+                <li v-for="collection in collectionItems" :key="`mobile-collection-${collection.id}`">
+                  <NuxtLink :to="{ path: '/frontend/categories', query: { dress_style: collection.slug } }"
+                    class="text-gray-600 hover:text-black transition-colors flex items-center group"
+                    @click="toggleMenu">
                     <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Summer Collection
+                    {{ collection.name }}
                     <Icon name="mdi:chevron-right"
                       class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Winter Collection
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Spring Essentials
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Fall Fashion
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
+                  </NuxtLink>
                 </li>
               </ul>
             </div>
@@ -394,37 +293,15 @@
             <div>
               <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Price</h3>
               <ul class="space-y-3">
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
+                <li v-for="range in priceRanges" :key="`mobile-price-${range.slug}`">
+                  <NuxtLink :to="{ path: '/frontend/categories', query: range.query }"
+                    class="text-gray-600 hover:text-black transition-colors flex items-center group"
+                    @click="toggleMenu">
                     <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Under $50
+                    {{ range.label }}
                     <Icon name="mdi:chevron-right"
                       class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    $50 - $100
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    $100 - $200
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    Over $200
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </a>
+                  </NuxtLink>
                 </li>
               </ul>
             </div>
@@ -474,11 +351,17 @@
 import { storeToRefs } from 'pinia'
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useAuthStore } from '~/stores/authStore'
+import { useFavoritesStore } from '~/stores/favoritesStore'
+import { useCartStore } from '~/stores/cartStore'
 import ProfileDialog from './Modal/ProfileDialog.vue'
 import OrderHistoryDialog from './Modal/OrderHistoryDialog.vue'
 
 const authStore = useAuthStore()
 const { isAuthenticated, accessToken, userProfile } = storeToRefs(authStore)
+const favoritesStore = useFavoritesStore()
+const { totalItems: favoriteCount } = storeToRefs(favoritesStore)
+const cartStore = useCartStore()
+const { totalItems } = storeToRefs(cartStore)
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 
@@ -495,6 +378,17 @@ const telegramStatusMessage = ref('')
 const profileDialogOpen = ref(false)
 const orderHistoryDialogOpen = ref(false)
 const router = useRouter()
+type CategoryOption = { id: number | string; name: string; slug?: string }
+type DressTypeOption = { id: number | string; name: string; slug?: string }
+const cartCount = computed(() => totalItems.value || 0)
+const categories = ref<CategoryOption[]>([])
+const collectionItems = ref<DressTypeOption[]>([])
+const priceRanges = [
+  { slug: 'under-50', label: 'Under $50', query: { price_min: 0, price_max: 50 } },
+  { slug: '50-100', label: '$50 - $100', query: { price_min: 50, price_max: 100 } },
+  { slug: '100-200', label: '$100 - $200', query: { price_min: 100, price_max: 200 } },
+  { slug: 'over-200', label: 'Over $200', query: { price_min: 200 } },
+]
 
 const userDisplayName = computed(() => {
   const profile = userProfile.value || {}
@@ -529,6 +423,10 @@ const userAvatarUrl = computed(() => {
   const profile = (userProfile.value || {}) as Record<string, any>
   return String(profile.avatar_url || '')
 })
+
+const getAuthHeaders = () => {
+  return accessToken.value ? { Authorization: `Bearer ${accessToken.value}` } : undefined
+}
 
 // Toggle mobile menu
 const toggleMenu = () => {
@@ -647,6 +545,37 @@ const hydrateProfile = async () => {
   }
 }
 
+const fetchCategories = async () => {
+  try {
+    const [categoryResponse, filterResponse]: any = await Promise.all([
+      $fetch(`${apiBase}/categories`, {
+        method: 'GET',
+        credentials: 'include'
+      }),
+      $fetch(`${apiBase}/products/filters`, {
+        method: 'GET',
+        credentials: 'include'
+      }),
+    ])
+    categories.value = categoryResponse?.data || []
+    collectionItems.value = filterResponse?.data?.dress_types || []
+
+    if (accessToken.value || isAuthenticated.value) {
+      const cartResponse: any = await $fetch(`${apiBase}/cart`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      })
+      cartStore.setFromApi(cartResponse?.data || {})
+    } else {
+      cartStore.clearCart()
+    }
+  }
+  catch (err: any) {
+    console.error('Failed to fetch header menu data:', err)
+  }
+}
+
 const connectTelegram = async () => {
   telegramStatusMessage.value = ''
   connectingTelegram.value = true
@@ -682,6 +611,7 @@ const logout = async () => {
 // Set up event listeners
 onMounted(() => {
   hydrateProfile()
+  fetchCategories()
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('scroll', handleScroll)
   document.addEventListener('click', handleClickOutside)

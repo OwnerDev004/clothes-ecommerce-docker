@@ -62,7 +62,7 @@ class CommerceFlowTest extends TestCase
 
         $response = $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
             'voucher_code' => $voucher->code,
         ], $headers)->assertStatus(201);
 
@@ -90,7 +90,7 @@ class CommerceFlowTest extends TestCase
 
         $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headersOne)->assertStatus(201);
 
         $existingCartId = DB::table('carts')->where('customer_id', $customerTwo->id)->value('id');
@@ -113,7 +113,7 @@ class CommerceFlowTest extends TestCase
 
         $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headersTwo)->assertStatus(422);
     }
 
@@ -131,7 +131,7 @@ class CommerceFlowTest extends TestCase
 
         $checkout = $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headers)->assertStatus(201);
 
         $orderId = $checkout->json('data.order.id');
@@ -180,7 +180,7 @@ class CommerceFlowTest extends TestCase
 
         $checkout = $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headers)->assertStatus(201);
 
         $orderId = $checkout->json('data.order.id');
@@ -232,7 +232,7 @@ class CommerceFlowTest extends TestCase
 
         $checkout = $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headers)->assertStatus(201);
 
         $orderId = $checkout->json('data.order.id');
@@ -283,7 +283,7 @@ class CommerceFlowTest extends TestCase
 
         $checkout = $this->postJson('/api/v1/checkout', [
             'shipping_province' => 'Phnom Penh',
-            'payment_method' => 'aba',
+            'payment_method' => 'khqr',
         ], $headers)->assertStatus(201);
 
         $orderId = $checkout->json('data.order.id');
