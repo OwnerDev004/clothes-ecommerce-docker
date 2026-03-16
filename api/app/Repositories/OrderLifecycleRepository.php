@@ -59,7 +59,7 @@ class OrderLifecycleRepository
         return Order::query()
             ->whereKey($orderId)
             ->where('customer_id', $customerId)
-            ->with(['items.variant.product:id,name,slug', 'voucher:id,code,name'])
+            ->with(['items.variant.product.images', 'voucher:id,code,name'])
             ->first();
     }
 

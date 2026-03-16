@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\CustomerTelegramLinkToken;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -115,6 +116,7 @@ class TelegramLinkController extends Controller
             $customer->telegram_user_id = $telegramUserId;
             $customer->telegram_chat_id = $telegramChatId;
             $customer->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
+            $customer->enable_telegram_alerts = true;
             $customer->save();
 
             $linkToken->consumed_at = now();
@@ -127,6 +129,122 @@ class TelegramLinkController extends Controller
         });
 
         return $this->success(['processed' => true], 'Webhook processed');
+    }
+
+    public function pollLink(Request $request)
+    {
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        if ($customer->telegram_chat_id || $customer->telegram_user_id) {
+            return $this->success(['linked' => true], 'Telegram already linked');
+        }
+
+        $botToken = trim((string) config('services.telegram-bot-api.token', ''));
+        if ($botToken === '') {
+            return $this->error('Telegram bot token is not configured', 422);
+        }
+
+        $baseUri = rtrim((string) config('services.telegram-bot-api.base_uri', 'https://api.telegram.org'), '/');
+        $lastUpdateId = Cache::get('telegram:bot:last_update_id');
+        $query = [
+            'limit' => 50,
+            'timeout' => 1,
+        ];
+        if (is_numeric($lastUpdateId)) {
+            $query['offset'] = (int) $lastUpdateId + 1;
+        }
+
+        $response = Http::timeout(10)->get("{$baseUri}/bot{$botToken}/getUpdates", $query);
+        if (!$response->successful()) {
+            return $this->error('Failed to poll Telegram updates', 502);
+        }
+
+        $body = $response->json();
+        if (!is_array($body) || empty($body['ok'])) {
+            return $this->error('Invalid Telegram response', 502);
+        }
+
+        $updates = is_array($body['result'] ?? null) ? $body['result'] : [];
+        $maxUpdateId = null;
+        $linked = false;
+
+        foreach ($updates as $update) {
+            $updateId = $update['update_id'] ?? null;
+            if (is_numeric($updateId)) {
+                $maxUpdateId = $maxUpdateId === null ? (int) $updateId : max($maxUpdateId, (int) $updateId);
+            }
+
+            $message = $update['message'] ?? $update['edited_message'] ?? null;
+            if (!is_array($message)) {
+                continue;
+            }
+
+            $text = trim((string) ($message['text'] ?? ''));
+            if ($text === '' || !str_starts_with($text, '/start')) {
+                continue;
+            }
+
+            if (!preg_match('/^\/start(?:@\w+)?\s+([A-Za-z0-9_-]{10,64})$/', $text, $matches)) {
+                continue;
+            }
+
+            $token = $matches[1];
+            $telegramUserId = (string) data_get($message, 'from.id', '');
+            $telegramChatId = (string) data_get($message, 'chat.id', '');
+            $telegramUsername = data_get($message, 'from.username');
+
+            if ($telegramUserId === '' || $telegramChatId === '') {
+                continue;
+            }
+
+            DB::transaction(function () use ($token, $customer, $telegramUserId, $telegramChatId, $telegramUsername, &$linked) {
+                $linkToken = CustomerTelegramLinkToken::where('token', $token)
+                    ->where('customer_id', $customer->id)
+                    ->whereNull('consumed_at')
+                    ->where('expires_at', '>', now())
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$linkToken) {
+                    return;
+                }
+
+                $alreadyLinked = Customer::where('telegram_user_id', $telegramUserId)
+                    ->where('id', '!=', $customer->id)
+                    ->exists();
+
+                if ($alreadyLinked) {
+                    return;
+                }
+
+                $customer->telegram_user_id = $telegramUserId;
+                $customer->telegram_chat_id = $telegramChatId;
+                $customer->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
+                $customer->enable_telegram_alerts = true;
+                $customer->save();
+
+                $linkToken->consumed_at = now();
+                $linkToken->telegram_user_id = $telegramUserId;
+                $linkToken->telegram_chat_id = $telegramChatId;
+                $linkToken->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
+                $linkToken->save();
+
+                $linked = true;
+            });
+
+            if ($linked) {
+                break;
+            }
+        }
+
+        if ($maxUpdateId !== null) {
+            Cache::put('telegram:bot:last_update_id', $maxUpdateId, now()->addDay());
+        }
+
+        return $this->success(['linked' => $linked], $linked ? 'Telegram linked' : 'No link update found');
     }
 
     private function generateToken(): string

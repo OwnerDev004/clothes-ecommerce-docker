@@ -25,8 +25,7 @@ class CustomerOrderPaidTelegramNotification extends Notification
     public function toTelegram(object $notifiable): TelegramMessage
     {
         $frontendBase = rtrim((string) config('app.frontend_url', config('app.url')), '/');
-        $viewUrl = $frontendBase . '/orders/' . $this->order->id . '/invoice';
-        $downloadUrl = $frontendBase . '/orders/' . $this->order->id . '/invoice/download';
+        $viewUrl = $frontendBase . '/orders/invoices/' . $this->order->id;
         $customerName = (string) ($this->order->customer?->full_name ?: $this->order->customer?->user_name ?: 'Customer');
         $telegramUserId = (string) ($this->order->customer?->telegram_user_id ?? '-');
         $telegramUsername = (string) ($this->order->customer?->telegram_username ?? '-');
@@ -42,7 +41,6 @@ class CustomerOrderPaidTelegramNotification extends Notification
             ->line("Telegram Username: {$telegramUsername}")
             ->line('Total: $' . number_format((float) $this->order->total_price, 2))
             ->line('Payment status: *PAID*')
-            ->button('View Invoice', $viewUrl)
-            ->button('Download Invoice', $downloadUrl);
+            ->button('View Invoice', $viewUrl);
     }
 }

@@ -108,7 +108,7 @@ class ProductController extends Controller
         $applyProductFilters($productIdsQuery);
 
         $categories = DB::table('categories as c')
-            ->select('c.id', 'c.name', 'c.slug')
+            ->select('c.id', 'c.name', 'c.slug', 'c.image_url')
             ->whereExists(function ($sub) {
                 $sub->selectRaw('1')
                     ->from('products as p')
@@ -135,7 +135,7 @@ class ProductController extends Controller
             ->get();
 
         $dressTypes = DB::table('dress_types as d')
-            ->select('d.id', 'd.name', 'd.slug', 'd.sort_order')
+            ->select('d.id', 'd.name', 'd.slug', 'd.sort_order', 'd.image_url')
             ->whereExists(function ($sub) {
                 $sub->selectRaw('1')
                     ->from('products as p')

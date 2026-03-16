@@ -97,20 +97,59 @@
 
     <el-dialog v-model="paymentDialogOpen" width="420px" :close-on-click-modal="false" title="Scan QR to Pay"
       @closed="handlePaymentDialogClosed">
-      <div class="space-y-3">
-        <div v-if="qrImageUrl" class="rounded-xl border p-4 flex justify-center">
-          <img :src="qrImageUrl" alt="Payment QR" class="h-[240px] w-[240px] object-contain">
+      <div class="space-y-4">
+        <div class="grid place-items-center rounded-3xl bg-[#F5F5F5] p-5">
+          <div v-if="qrImageUrl" class="w-full max-w-[300px]">
+            <div class="overflow-hidden rounded-2xl bg-white shadow-md">
+              <div class="relative h-14 bg-[#D8141F]">
+                <div
+                  class="absolute inset-0 flex items-center justify-center text-lg font-bold tracking-[0.2em] text-white">
+                  KHQR
+                </div>
+                <div
+                  class="absolute right-0 top-0 h-0 w-0 border-l-[24px] border-l-transparent border-t-[24px] border-t-white">
+                </div>
+              </div>
+              <div class="space-y-3 p-4">
+                <div class="space-y-1">
+                  <p class="text-xs font-semibold text-gray-800">
+                    {{ merchantName || 'Merchant' }}
+                  </p>
+                  <div class="flex items-end gap-2 text-gray-900">
+                    <span class="text-2xl font-extrabold">
+                      {{ subtotal.toFixed(2) }}
+                    </span>
+                    <span class="text-sm font-semibold uppercase text-gray-600">
+                      {{ paymentCurrency }}
+                    </span>
+                  </div>
+                </div>
+                <div class="border-t border-dashed border-gray-300"></div>
+                <div class="relative grid place-items-center">
+                  <img :src="qrImageUrl" alt="Payment QR" class="h-[230px] w-[230px] object-contain">
+                  <div
+                    class="absolute flex h-9 w-9 items-center justify-center rounded-full bg-[#D8141F] border-2 border-white text-[10px] font-bold text-white p-1">
+                    <img
+                      src="https://res.cloudinary.com/dqjh71k90/image/upload/v1773660871/clothes_ecommerce/bakong_logo_kaqnsd.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash || '-'
-        }}
-        </p>
-        <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
-        <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
+        <div class="flex flex-col">
+          <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
+            '-'
+          }}
+          </p>
+          <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
+          <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
 
-        <a v-if="checkoutUrl" :href="checkoutUrl" target="_blank" rel="noopener noreferrer"
-          class="block text-center text-sm text-blue-600 underline">
-          Open checkout page
-        </a>
+          <a v-if="checkoutUrl" :href="checkoutUrl" target="_blank" rel="noopener noreferrer"
+            class="block text-center text-sm text-blue-600 underline">
+            Open checkout page
+          </a>
+        </div>
       </div>
 
       <template #footer>
@@ -131,6 +170,7 @@ import { ElMessage } from 'element-plus'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
+import { da } from 'element-plus/es/locale/index.mjs'
 
 type CartItem = {
   variant_id: number
@@ -173,6 +213,7 @@ const paymentDialogOpen = ref(false)
 const qrString = ref('')
 const pollHash = ref('')
 const checkoutUrl = ref('')
+const merchantName = ref('')
 const currentOrderId = ref<number | null>(null)
 const pollStatus = ref('pending')
 const pollingNow = ref(false)
@@ -453,10 +494,14 @@ const createPaymentIntent = async (orderId: number) => {
   } catch (error: any) {
     throw new Error(extractApiErrorDetails(error))
   }
+  console.log(response?.data);
+
 
   qrString.value = String(response?.data?.qr_string || '')
   pollHash.value = String(response?.data?.poll_hash || '')
   checkoutUrl.value = String(response?.data?.checkout_url || '')
+  merchantName.value = String(response?.data.mechant_name || '')
+
   pollStatus.value = 'pending'
   timeLeftSeconds.value = 60
 

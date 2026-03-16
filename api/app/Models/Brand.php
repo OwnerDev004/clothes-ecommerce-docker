@@ -5,16 +5,14 @@ namespace App\Models;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 
-class DressType extends Model
+class Brand extends Model
 {
     use Sluggable;
 
     protected $fillable = [
         'name',
-        'desc',
-        'sort_order',
         'slug',
-        'img',
+        'sort_order',
         'image_url',
         'image_public_id',
     ];

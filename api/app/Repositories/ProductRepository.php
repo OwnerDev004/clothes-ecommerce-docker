@@ -42,6 +42,7 @@ class ProductRepository extends BaseRepository
                     $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
                         ->orderBy('sort_order');
                 },
+                'brand:id,name,slug,image_url',
                 'subCategory:id,category_id,name,slug',
             ]);
 
@@ -160,6 +161,7 @@ class ProductRepository extends BaseRepository
                 'category:id,name,slug',
                 'subCategory:id,category_id,name,slug',
                 'dressType:id,name,slug',
+                'brand:id,name,slug,image_url',
                 'thumbnail:id,product_id,image_url,image_type,sort_order',
                 'images' => function ($q) {
                     $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')

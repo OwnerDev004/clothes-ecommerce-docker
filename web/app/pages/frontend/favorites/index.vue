@@ -9,15 +9,10 @@
       <div class="w-full desktop:w-[65%] border border-gray rounded-2xl">
         <div v-if="isEmpty" class="p-8 text-center text-gray-500">No favorites yet.</div>
         <div v-else class="divide-y divide-gray-100">
-          <div
-            v-for="item in items"
-            :key="`${item.id}-${item.size || ''}-${item.color || ''}`"
-            class="p-4 flex gap-4 items-start"
-          >
-            <NuxtImg
-              :src="item.image || '/img/products/product1.png'"
-              class="max-w-[80px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[150px] h-auto rounded-2xl"
-            />
+          <div v-for="item in items" :key="`${item.id}-${item.size || ''}-${item.color || ''}`"
+            class="p-4 flex gap-4 items-start">
+            <NuxtImg :src="item.image || '/img/products/default_image.webp'"
+              class="max-w-[80px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[150px] h-auto rounded-2xl" />
             <div class="flex-1">
               <div class="flex items-start justify-between">
                 <div>
@@ -48,7 +43,8 @@
           <button class="bg-black rounded-3xl text-white p-3 w-full" :disabled="isEmpty" @click="addAllToCart">
             Add All to Cart
           </button>
-          <button class="border border-gray rounded-3xl text-black p-3 w-full" :disabled="isEmpty" @click="clearFavorites">
+          <button class="border border-gray rounded-3xl text-black p-3 w-full" :disabled="isEmpty"
+            @click="clearFavorites">
             Clear Favorites
           </button>
         </div>

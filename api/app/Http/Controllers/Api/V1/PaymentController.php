@@ -116,4 +116,24 @@ class PaymentController extends Controller
 
         return $this->success($result, 'Webhook processed', 200);
     }
+
+    public function simulatePaid(Request $request)
+    {
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        $payload = $request->validate([
+            'order_id' => ['required', 'integer'],
+        ]);
+
+        try {
+            $result = $this->paymentRepository->simulatePaidForCustomer($customer->id, (int) $payload['order_id']);
+        } catch (ValidationException $e) {
+            return $this->error('Unable to simulate payment', 422, $e->errors());
+        }
+
+        return $this->success($result, 'Payment simulated', 200);
+    }
 }

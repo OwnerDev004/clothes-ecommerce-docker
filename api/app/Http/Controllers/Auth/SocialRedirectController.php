@@ -189,6 +189,9 @@ class SocialRedirectController extends Controller
             'gender' => $customer->gender,
             'dob' => $customer->dob,
             'address' => $customer->address,
+            'telegram_username' => $customer->telegram_username,
+            'enable_telegram_alerts' => (bool) $customer->enable_telegram_alerts,
+            'requires_profile_completion' => $customer->requiresProfileCompletion(),
         ];
     }
 

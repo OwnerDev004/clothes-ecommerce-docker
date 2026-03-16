@@ -87,7 +87,7 @@ const tabClick = (index: number) => {
 
 const resolveImageUrl = (input?: string) => {
   if (!input) {
-    return '/img/products/product1.png'
+    return '/img/products/default_image.webp'
   }
   if (/^https?:\/\//i.test(input)) {
     return input
@@ -280,7 +280,7 @@ const fetchProduct = async () => {
     product.value = (response?.data || null) as ProductDetail | null
 
     const images = imageList.value
-    selectedImage.value = images[0] || '/img/products/product1.png'
+    selectedImage.value = images[0] || '/img/products/default_image.webp'
 
     selectedColorId.value = colorOptions.value[0]?.id || null
     selectedSizeId.value = sizeOptions.value[0]?.id || null

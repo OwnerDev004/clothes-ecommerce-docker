@@ -25,6 +25,14 @@ class CustomerUpdateRequest extends FormRequest
 
 
         return [
+            'user_name' => [
+                'sometimes',
+                'required',
+                'string',
+                'min:1',
+                'max:255',
+                'unique:customers,user_name,' . $customerId
+            ],
             'full_name' => 'sometimes|nullable|string|max:255',
             'gender' => 'sometimes|nullable|in:male,female',
             'dob' => 'sometimes|nullable|date|before:today',
@@ -42,7 +50,10 @@ class CustomerUpdateRequest extends FormRequest
                 'max:20',
                 'unique:customers,phone,' . $customerId
             ],
-            'address' => 'sometimes|nullable|string|max:500'
+            'address' => 'sometimes|nullable|string|max:500',
+            'password' => 'sometimes|nullable|string|min:8|confirmed',
+            'telegram_username' => 'sometimes|nullable|string|max:255',
+            'enable_telegram_alerts' => 'sometimes|nullable|boolean'
         ];
     }
 }

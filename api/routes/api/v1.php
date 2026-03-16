@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\CategoryController;
+use App\Http\Controllers\Api\V1\BrandController;
+use App\Http\Controllers\Api\V1\DressTypeController;
 use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\VoucherController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +51,9 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
     Route::post('/change_avatar', [CustomerController::class, 'editAvatar']);
     Route::post('/delete_avatar', [CustomerController::class, 'deleteAvatar']);
 
+    // Add route for Telegram alerts
+    Route::post('/telegram/alerts', [CustomerController::class, 'updateTelegramAlerts']);
+
     Route::prefix('cart')->group(function () {
         Route::get('/', [CartController::class, 'index']);
         Route::post('/items', [CartController::class, 'addItem']);
@@ -61,7 +66,9 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
     Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
     Route::get('/payments/khrqr/check/{hash}', [PaymentController::class, 'checkKhrqrStatus']);
     Route::post('/payments/khrqr/cancel', [PaymentController::class, 'cancelKhrqrIntent']);
+    Route::post('/payments/simulate-paid', [PaymentController::class, 'simulatePaid']);
     Route::post('/telegram/connect-link', [TelegramLinkController::class, 'createLink']);
+    Route::post('/telegram/poll-link', [TelegramLinkController::class, 'pollLink']);
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);
@@ -80,6 +87,14 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/filters', [ProductController::class, 'filters']);
     Route::get('/{id}', [ProductController::class, 'show']);
+});
+
+Route::prefix('brands')->group(function () {
+    Route::get('/', [BrandController::class, 'index']);
+});
+
+Route::prefix('dress-types')->group(function () {
+    Route::get('/', [DressTypeController::class, 'index']);
 });
 
 Route::prefix('categories')->group(function () {
@@ -150,6 +165,18 @@ Route::prefix('admin')->group(function () {
         Route::post('/', [CategoryController::class, 'store']);
         Route::put('/{category:slug}', [CategoryController::class, 'update']);
         Route::delete('/{category:slug}', [CategoryController::class, 'destroy']);
+    });
+
+    Route::prefix('brands')->middleware(['auth:admin'])->group(function () {
+        Route::post('/', [BrandController::class, 'store']);
+        Route::put('/{brand}', [BrandController::class, 'update']);
+        Route::delete('/{brand}', [BrandController::class, 'destroy']);
+    });
+
+    Route::prefix('dress-types')->middleware(['auth:admin'])->group(function () {
+        Route::post('/', [DressTypeController::class, 'store']);
+        Route::put('/{dressType}', [DressTypeController::class, 'update']);
+        Route::delete('/{dressType}', [DressTypeController::class, 'destroy']);
     });
 
 

@@ -8,27 +8,163 @@
     </div>
 
     <div v-else>
-    <div class="px-5 desktop:container relative">
-      <BaseBreadcrumb :icon="ArrowRight">
-        <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
-        <el-breadcrumb-item>Categories</el-breadcrumb-item>
-      </BaseBreadcrumb>
+      <div class="px-5 desktop:container relative">
+        <BaseBreadcrumb :icon="ArrowRight">
+          <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
+          <el-breadcrumb-item>Categories</el-breadcrumb-item>
+        </BaseBreadcrumb>
 
-      <section class="flex gap-6">
-        <div class="border rounded-2xl w-[28%] p-6 hidden lg:block">
-          <section class="flex justify-between items-center border-b border-b-gray">
-            <h1 class="text-lg font-bold font-Poppins">Filters</h1>
-            <button class="bg-gray-800 w-12 h-12 rounded-full text-2xl p-3 flex items-center justify-center">
-              <Icon name="lets-icons:filter" />
-            </button>
-          </section>
+        <section class="flex gap-6">
+          <div class="border rounded-2xl w-[28%] p-6 hidden lg:block">
+            <section class="flex justify-between items-center border-b border-b-gray">
+              <h1 class="text-lg font-bold font-Poppins">Filters</h1>
+              <button class="bg-gray-800 w-12 h-12 rounded-full text-2xl p-3 flex items-center justify-center">
+                <Icon name="lets-icons:filter" />
+              </button>
+            </section>
 
-          <section class="flex justify-between items-center border-b border-b-gray py-2">
+            <section class="flex justify-between items-center border-b border-b-gray py-2">
+              <ul class="leading-10 w-full">
+                <li v-for="category in categories" :key="category.id"
+                  class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                  :class="{ 'bg-gray': selectedCategory === (category.slug || String(category.id)) }"
+                  @click="changeCategory(category.slug || String(category.id))">
+                  <p>{{ category.name }}</p>
+                  <Icon name="weui:arrow-filled" />
+                </li>
+              </ul>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Price</h1>
+              <div class="card flex flex-col">
+                <el-slider v-model="priceRange" range placement="bottom" style="--el-slider-main-bg-color: black" />
+                <p class="pt-4">{{ priceRange[0] }}$ - {{ priceRange[1] }}$</p>
+              </div>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Colors</h1>
+              <div class="flex flex-wrap gap-3">
+                <button v-for="color in colors" :key="color.id"
+                  :style="{ backgroundColor: color.hex_code || '#d1d5db' }" @click="selectColor(String(color.id))"
+                  :aria-label="`Select color ${color.name}`"
+                  class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 relative">
+                  <span v-if="colorFilter === String(color.id)"
+                    class="text-white text-xs font-bold absolute inset-0 flex items-center justify-center">✓</span>
+                </button>
+              </div>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Sizes</h1>
+              <div class="grid grid-cols-2 gap-3">
+                <button v-for="size in sizes" :key="size.id" @click="selectSize(String(size.id))" :class="[
+                  'p-3 rounded-3xl cursor-pointer text-sm',
+                  sizeFilter === String(size.id) ? 'bg-black text-white' : 'bg-gray',
+                  'hover:bg-black hover:text-white',
+                ]">
+                  {{ size.name }}
+                </button>
+              </div>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Dress Style</h1>
+              <ul class="leading-10">
+                <li v-for="style in dressTypes" :key="style.id"
+                  class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                  :class="{ 'bg-gray': dressStyleFilter === (style.slug || String(style.id)) }"
+                  @click="selectDressStyle(style.slug || String(style.id))">
+                  <p>{{ style.name }}</p>
+                  <Icon name="weui:arrow-filled" />
+                </li>
+              </ul>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
+              <ul class="leading-10">
+                <li v-for="sub in subCategories" :key="sub.id"
+                  class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                  :class="{ 'bg-gray': subCategoryFilter === (sub.slug || String(sub.id)) }"
+                  @click="selectSubCategory(sub.slug || String(sub.id))">
+                  <p>{{ sub.name }}</p>
+                  <Icon name="weui:arrow-filled" />
+                </li>
+              </ul>
+            </section>
+
+            <el-button
+              class="border rounded-[64px] p-4 w-full outline-none bg-transparent text-black hover:bg-black hover:text-white mt-4"
+              :disabled="isLoadingProducts" @click="applyFilters">
+              Apply Filter
+            </el-button>
+          </div>
+
+          <div class="w-full rounded-lg">
+            <div class="flex justify-between pb-5 items-center">
+              <div>
+                <h2 class="text-black text-3xl font-semibold">{{ currentCategoryLabel }}</h2>
+                <p class="text-sm text-zinc-400">{{ meta.total }} products</p>
+              </div>
+
+              <button class="w-12 h-12 rounded-full text-2xl p-3 flex items-center justify-center lg:hidden bg-gray"
+                @click="toggleFilter">
+                <Icon name="lets-icons:filter" />
+              </button>
+
+              <div class="hidden lg:block">
+                <span class="font-Poppins text-zinc-400">Sort By:</span>
+                <ClientOnly>
+                  <el-select v-model="sortBy" placeholder="Select" size="large" style="width: 240px"
+                    @change="sortProducts">
+                    <el-option label="Newest" value="newest" />
+                    <el-option label="Price (Low to High)" value="price_asc" />
+                    <el-option label="Price (High to Low)" value="price_desc" />
+                    <el-option label="Name (A-Z)" value="name_asc" />
+                  </el-select>
+                </ClientOnly>
+              </div>
+            </div>
+
+            <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="mb-4" />
+
+            <div v-loading="isLoadingProducts" class="min-h-[220px]">
+              <div v-if="!isLoadingProducts && displayProducts.length === 0"
+                class="rounded-xl border border-dashed border-gray-300 p-8">
+                <el-empty description="No products found." />
+              </div>
+
+              <div v-else class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
+                <template v-for="item in displayProducts" :key="item.id">
+                  <div class="cursor-pointer" @click="viewProduct(item.id)">
+                    <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
+                      :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+                      :stars-num="item.stars_num" :rating-amount="item.rating_amount" />
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="flex justify-center mt-6">
+              <el-pagination v-if="meta.total > meta.per_page" :pager-count="5" layout="prev, pager, next"
+                prev-text="⬅ Previous" next-text="Next ➞" :total="meta.total" :current-page="page"
+                :page-size="meta.per_page" @current-change="onPageChanged" />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <el-dialog v-model="isToggleFilter" title="Filters" width="auto" class="!rounded-t-3xl !-bottom-[100px] !pt-5">
+        <div>
+          <section class="border-b border-b-gray py-2">
+            <h1 class="text-lg font-bold font-Poppins">Categories</h1>
             <ul class="leading-10 w-full">
               <li v-for="category in categories" :key="category.id"
                 class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
                 :class="{ 'bg-gray': selectedCategory === (category.slug || String(category.id)) }"
-                @click="changeCategory(category.slug || String(category.id))">
+                @click="changeCategory(category.slug || String(category.id), true)">
                 <p>{{ category.name }}</p>
                 <Icon name="weui:arrow-filled" />
               </li>
@@ -47,8 +183,8 @@
             <h1 class="text-lg font-bold font-Poppins">Colors</h1>
             <div class="flex flex-wrap gap-3">
               <button v-for="color in colors" :key="color.id" :style="{ backgroundColor: color.hex_code || '#d1d5db' }"
-                @click="selectColor(String(color.id))" :aria-label="`Select color ${color.name}`"
-                class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 relative">
+                @click="selectColor(String(color.id))"
+                class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer relative">
                 <span v-if="colorFilter === String(color.id)"
                   class="text-white text-xs font-bold absolute inset-0 flex items-center justify-center">✓</span>
               </button>
@@ -57,7 +193,7 @@
 
           <section class="border-b border-b-gray py-3">
             <h1 class="text-lg font-bold font-Poppins">Sizes</h1>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-3 gap-3">
               <button v-for="size in sizes" :key="size.id" @click="selectSize(String(size.id))" :class="[
                 'p-3 rounded-3xl cursor-pointer text-sm',
                 sizeFilter === String(size.id) ? 'bg-black text-white' : 'bg-gray',
@@ -93,152 +229,17 @@
               </li>
             </ul>
           </section>
-
-          <el-button
-            class="border rounded-[64px] p-4 w-full outline-none bg-transparent text-black hover:bg-black hover:text-white mt-4"
-            :disabled="isLoadingProducts" @click="applyFilters">
-            Apply Filter
-          </el-button>
         </div>
 
-        <div class="w-full rounded-lg">
-          <div class="flex justify-between pb-5 items-center">
-            <div>
-              <h2 class="text-black text-3xl font-semibold">{{ currentCategoryLabel }}</h2>
-              <p class="text-sm text-zinc-400">{{ meta.total }} products</p>
-            </div>
-
-            <button class="w-12 h-12 rounded-full text-2xl p-3 flex items-center justify-center lg:hidden bg-gray"
-              @click="toggleFilter">
-              <Icon name="lets-icons:filter" />
-            </button>
-
-            <div class="hidden lg:block">
-              <span class="font-Poppins text-zinc-400">Sort By:</span>
-              <ClientOnly>
-                <el-select v-model="sortBy" placeholder="Select" size="large" style="width: 240px"
-                  @change="sortProducts">
-                  <el-option label="Newest" value="newest" />
-                  <el-option label="Price (Low to High)" value="price_asc" />
-                  <el-option label="Price (High to Low)" value="price_desc" />
-                  <el-option label="Name (A-Z)" value="name_asc" />
-                </el-select>
-              </ClientOnly>
-            </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="applyFilters(true)"
+              class="border rounded-[64px] p-4 w-full outline-none bg-transparent text-black hover:bg-black hover:text-white">
+              Apply Filter
+            </el-button>
           </div>
-
-          <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="mb-4" />
-
-          <div v-loading="isLoadingProducts" class="min-h-[220px]">
-            <div v-if="!isLoadingProducts && displayProducts.length === 0"
-              class="rounded-xl border border-dashed border-gray-300 p-8">
-              <el-empty description="No products found." />
-            </div>
-
-            <div v-else class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
-              <template v-for="item in displayProducts" :key="item.id">
-                <div class="cursor-pointer" @click="viewProduct(item.id)">
-                  <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-                    :discount-amount="item.discount_amount" :discount-type="item.discount_type"
-                    :stars-num="item.stars_num" :rating-amount="item.rating_amount" />
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <div class="flex justify-center mt-6">
-            <el-pagination v-if="meta.total > meta.per_page" :pager-count="5" layout="prev, pager, next"
-              prev-text="⬅ Previous" next-text="Next ➞" :total="meta.total" :current-page="page"
-              :page-size="meta.per_page" @current-change="onPageChanged" />
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <el-dialog v-model="isToggleFilter" title="Filters" width="auto" class="!rounded-t-3xl !-bottom-[100px] !pt-5">
-      <div>
-        <section class="border-b border-b-gray py-2">
-          <h1 class="text-lg font-bold font-Poppins">Categories</h1>
-          <ul class="leading-10 w-full">
-            <li v-for="category in categories" :key="category.id"
-              class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
-              :class="{ 'bg-gray': selectedCategory === (category.slug || String(category.id)) }"
-              @click="changeCategory(category.slug || String(category.id), true)">
-              <p>{{ category.name }}</p>
-              <Icon name="weui:arrow-filled" />
-            </li>
-          </ul>
-        </section>
-
-        <section class="border-b border-b-gray py-3">
-          <h1 class="text-lg font-bold font-Poppins">Price</h1>
-          <div class="card flex flex-col">
-            <el-slider v-model="priceRange" range placement="bottom" style="--el-slider-main-bg-color: black" />
-            <p class="pt-4">{{ priceRange[0] }}$ - {{ priceRange[1] }}$</p>
-          </div>
-        </section>
-
-        <section class="border-b border-b-gray py-3">
-          <h1 class="text-lg font-bold font-Poppins">Colors</h1>
-          <div class="flex flex-wrap gap-3">
-            <button v-for="color in colors" :key="color.id" :style="{ backgroundColor: color.hex_code || '#d1d5db' }"
-              @click="selectColor(String(color.id))"
-              class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer relative">
-              <span v-if="colorFilter === String(color.id)"
-                class="text-white text-xs font-bold absolute inset-0 flex items-center justify-center">✓</span>
-            </button>
-          </div>
-        </section>
-
-        <section class="border-b border-b-gray py-3">
-          <h1 class="text-lg font-bold font-Poppins">Sizes</h1>
-          <div class="grid grid-cols-3 gap-3">
-            <button v-for="size in sizes" :key="size.id" @click="selectSize(String(size.id))" :class="[
-              'p-3 rounded-3xl cursor-pointer text-sm',
-              sizeFilter === String(size.id) ? 'bg-black text-white' : 'bg-gray',
-              'hover:bg-black hover:text-white',
-            ]">
-              {{ size.name }}
-            </button>
-          </div>
-        </section>
-
-        <section class="border-b border-b-gray py-3">
-          <h1 class="text-lg font-bold font-Poppins">Dress Style</h1>
-          <ul class="leading-10">
-            <li v-for="style in dressTypes" :key="style.id"
-              class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
-              :class="{ 'bg-gray': dressStyleFilter === (style.slug || String(style.id)) }"
-              @click="selectDressStyle(style.slug || String(style.id))">
-              <p>{{ style.name }}</p>
-              <Icon name="weui:arrow-filled" />
-            </li>
-          </ul>
-        </section>
-
-        <section class="border-b border-b-gray py-3">
-          <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
-          <ul class="leading-10">
-            <li v-for="sub in subCategories" :key="sub.id"
-              class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
-              :class="{ 'bg-gray': subCategoryFilter === (sub.slug || String(sub.id)) }"
-              @click="selectSubCategory(sub.slug || String(sub.id))">
-              <p>{{ sub.name }}</p>
-              <Icon name="weui:arrow-filled" />
-            </li>
-          </ul>
-        </section>
-      </div>
-
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="applyFilters(true)"
-            class="border rounded-[64px] p-4 w-full outline-none bg-transparent text-black hover:bg-black hover:text-white">
-            Apply Filter
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -332,7 +333,7 @@ const currentCategoryLabel = computed(() => {
 })
 
 const resolveImageUrl = (input?: string) => {
-  if (!input) return '/img/products/product1.png'
+  if (!input) return '/img/products/default_image.webp'
   if (/^https?:\/\//i.test(input)) return input
   if (input.startsWith('/')) return `${backendOrigin}${input}`
   return `${backendOrigin}/${input}`

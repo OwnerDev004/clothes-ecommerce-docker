@@ -204,10 +204,12 @@
         </div>
       </div>
     </div>
+    <CompleteAuthDialog v-model="authCompleteDialogOpen" />
   </div>
 </template>
 
 <script setup lang="ts">
+import CompleteAuthDialog from '~/components/frontend/Modal/CompleteAuthDialog.vue'
 import { useAuthStore } from '~/stores/authStore'
 
 declare global {
@@ -247,6 +249,7 @@ const userName = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
+const authCompleteDialogOpen = ref(false)
 
 const applyAuthFromResponse = (response: any) => {
   const token = response?.data?.access_token ?? null
@@ -255,6 +258,10 @@ const applyAuthFromResponse = (response: any) => {
   authStore.setAccessToken(token)
   authStore.setAuthenticated(Boolean(token) || Boolean(profile))
   authStore.setUserProfile(profile)
+}
+
+const shouldCompleteProfile = (profile: any) => {
+  return Boolean(profile?.requires_profile_completion)
 }
 
 const submitLogin = async () => {
@@ -274,6 +281,11 @@ const submitLogin = async () => {
       }
     })
     applyAuthFromResponse(response)
+    const profile = response?.data?.customer ?? response?.data?.user ?? null
+    if (shouldCompleteProfile(profile) || response?.data?.requires_profile_completion) {
+      authCompleteDialogOpen.value = true
+      return
+    }
     await router.replace('/')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Login failed. Please try again.'
@@ -310,6 +322,21 @@ const handleOAuthToken = async (token: string, encodedCustomer?: string | null) 
     authStore.setAuthenticated(Boolean(token) || Boolean(customer))
     if (customer) {
       authStore.setUserProfile(customer)
+    }
+
+    const profileResponse: any = await $fetch(`${apiBase}/profile`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    const profile = profileResponse?.data || customer
+    if (profile) {
+      authStore.setUserProfile(profile)
+    }
+
+    if (shouldCompleteProfile(profile) || profileResponse?.data?.requires_profile_completion) {
+      authCompleteDialogOpen.value = true
+      return
     }
     await router.replace('/')
   } catch (err: any) {

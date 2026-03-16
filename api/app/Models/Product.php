@@ -18,7 +18,8 @@ class Product extends Model
         "price",
         "category_id",
         "sub_category_id",
-        "dress_type_id"
+        "dress_type_id",
+        "brand_id",
     ];
 
     protected $casts = [
@@ -43,6 +44,11 @@ class Product extends Model
     public function dressType()
     {
         return $this->belongsTo(DressType::class);
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     public function subCategory()

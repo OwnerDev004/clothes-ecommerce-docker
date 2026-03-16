@@ -103,9 +103,10 @@ class CommerceFlowTest extends TestCase
                 'updated_at' => now(),
             ]);
         }
-        DB::table('cart_items')->insert([
+        DB::table('cart_items')->updateOrInsert([
             'cart_id' => $cartId,
             'product_variant_id' => $variant->id,
+        ], [
             'quantity' => 1,
             'created_at' => now(),
             'updated_at' => now(),

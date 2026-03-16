@@ -14,7 +14,7 @@ class CustomerRepository extends BaseRepository
 
   }
 
-  public function create(array $data): TModel
+  public function create(array $data)
   {
     // Hash password
     if (isset($data['password'])) {

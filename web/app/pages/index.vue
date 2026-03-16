@@ -2,7 +2,7 @@
 import { useRouter } from 'nuxt/app'
 import { useInfiniteScroll } from '@vueuse/core'
 import { Loading } from '@element-plus/icons-vue'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const router = useRouter()
 const config = useRuntimeConfig()
@@ -32,6 +32,26 @@ type ProductCard = {
   rating_amount: number
 }
 
+type BrandApi = {
+  id: number | string
+  name?: string
+  image_url?: string
+}
+
+type CategoryApi = {
+  id: number | string
+  name?: string
+  slug?: string
+  image_url?: string
+}
+
+type DressTypeApi = {
+  id: number | string
+  name?: string
+  slug?: string
+  image_url?: string
+}
+
 const products = ref<ProductCard[]>([])
 const isLoadingProducts = ref(false)
 const productError = ref('')
@@ -40,33 +60,9 @@ const hasMoreProducts = ref(true)
 const perPage = 8
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 
-const brands = reactive([
-  {
-    id: 1,
-    name: "versace",
-    img: "/img/brand/brand1.png",
-  },
-  {
-    id: 2,
-    name: "zara",
-    img: "/img/brand/brand2.png",
-  },
-  {
-    id: 3,
-    name: "gucci",
-    img: "/img/brand/brand3.png",
-  },
-  {
-    id: 4,
-    name: "prada",
-    img: "/img/brand/brand4.png",
-  },
-  {
-    id: 5,
-    name: "calvin klein",
-    img: "/img/brand/brand5.png",
-  },
-]);
+const brands = ref<BrandApi[]>([])
+const categories = ref<CategoryApi[]>([])
+const dressTypes = ref<DressTypeApi[]>([])
 
 const onSlideChange = (swiper: any) => {
   const totalSlides = swiper.slides.length;
@@ -91,7 +87,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const resolveImageUrl = (input?: string) => {
   if (!input) {
-    return '/img/products/product1.png'
+    return '/img/products/default_image.webp'
   }
   if (/^https?:\/\//i.test(input)) {
     return input
@@ -101,6 +97,37 @@ const resolveImageUrl = (input?: string) => {
   }
   return `${backendOrigin}/${input}`
 }
+
+const resolveVisualImage = (input?: string, fallback = '/img/products/default_image.webp') => {
+  if (!input) {
+    return fallback
+  }
+  return resolveImageUrl(input)
+}
+
+const homeCategories = computed(() => {
+  if (categories.value.length) {
+    return categories.value.slice(0, 4)
+  }
+  return [
+    { id: 'mens', name: "Men's Clothing", slug: 'mens-clothing', image_url: '/img/dress_styles/style1.png' },
+    { id: 'women', name: "Women's Clothing", slug: 'womens-clothing', image_url: '/img/dress_styles/style2.png' },
+    { id: 'acc', name: 'Accessories', slug: 'accessories', image_url: '/img/dress_styles/style3.png' },
+    { id: 'shoes', name: 'Shoes', slug: 'shoes', image_url: '/img/dress_styles/style4.png' },
+  ] as CategoryApi[]
+})
+
+const homeDressTypes = computed(() => {
+  if (dressTypes.value.length) {
+    return dressTypes.value.slice(0, 4)
+  }
+  return [
+    { id: 'style1', name: 'Casual', slug: 'casual', image_url: '/img/dress_styles/style1.png' },
+    { id: 'style2', name: 'Elegant', slug: 'elegant', image_url: '/img/dress_styles/style2.png' },
+    { id: 'style3', name: 'Street', slug: 'street', image_url: '/img/dress_styles/style3.png' },
+    { id: 'style4', name: 'Formal', slug: 'formal', image_url: '/img/dress_styles/style4.png' },
+  ] as DressTypeApi[]
+})
 
 const mapProductToCard = (item: ProductApi): ProductCard => {
   const thumbnail = item.thumbnail?.image_url || item.images?.[0]?.image_url || ''
@@ -163,6 +190,33 @@ const fetchProducts = async (reset = false) => {
   }
 }
 
+const fetchBrands = async () => {
+  try {
+    const response: any = await $fetch(`${apiBase}/brands`, { method: 'GET' })
+    brands.value = Array.isArray(response?.data) ? response.data : []
+  } catch {
+    brands.value = []
+  }
+}
+
+const fetchCategories = async () => {
+  try {
+    const response: any = await $fetch(`${apiBase}/categories`, { method: 'GET' })
+    categories.value = Array.isArray(response?.data) ? response.data : []
+  } catch {
+    categories.value = []
+  }
+}
+
+const fetchDressTypes = async () => {
+  try {
+    const response: any = await $fetch(`${apiBase}/dress-types`, { method: 'GET' })
+    dressTypes.value = Array.isArray(response?.data) ? response.data : []
+  } catch {
+    dressTypes.value = []
+  }
+}
+
 useInfiniteScroll(
   loadMoreTrigger,
   () => {
@@ -181,7 +235,20 @@ const viewCategory = (slug: string) => {
   router.push('/frontend/categories/' + slug);
 }
 
+const viewDressStyle = (slug: string) => {
+  const fallbackCategory = categories.value[0]
+  const categorySlug = fallbackCategory?.slug || fallbackCategory?.id
+  if (!categorySlug) {
+    return
+  }
+  router.push({
+    path: `/frontend/categories/${categorySlug}`,
+    query: { dress_style: slug },
+  })
+}
+
 onMounted(async () => {
+  await Promise.all([fetchBrands(), fetchCategories(), fetchDressTypes()])
   await fetchProducts(true)
 })
 </script>
@@ -226,9 +293,12 @@ onMounted(async () => {
         delay: 5000,
         disableOnInteraction: false,
       }">
-        <SwiperSlide v-for="slide in brands" :key="slide.id">
+        <SwiperSlide
+          v-for="slide in brands.length ? brands : [{ id: 'placeholder', name: 'Brand', image_url: '/img/brand/brand1.png' }]"
+          :key="slide.id">
           <div class="p-4 bg-gray-200 flex justify-center">
-            <NuxtImg :src="slide.img" :alt="slide.name" class="w-[100px] md:w-[150px]" format="webp" densities="x1" />
+            <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/brand1.png')" :alt="slide.name"
+              class="w-[100px] md:w-[150px]" format="webp" densities="x1" />
           </div>
         </SwiperSlide>
       </Swiper>
@@ -306,48 +376,37 @@ onMounted(async () => {
         </h1>
 
         <div class="grid gap-5 grid-cols-1 md:grid-cols-3 px-6 md:px-20 py-10">
-          <!-- Men's Clothing -->
-          <div
-            class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center rounded-2xl relative h-[190px]"
-            @click="viewCategory('mens-clothing')">
+          <div v-for="(category, index) in homeCategories" :key="category.id" :class="[
+            'overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center rounded-2xl relative h-[190px]',
+            index === 1 || index === 2 ? 'col-span-1 md:col-span-2' : ''
+          ]" @click="viewCategory(String(category.slug || category.id))">
             <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
-              Men's Clothing
+              {{ category.name }}
             </h1>
-            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style1.png" format="webp" densities="x1"
-              alt="Men's Clothing" class="w-full h-auto" />
+            <NuxtImg sizes="sm:100vw md:669px"
+              :src="resolveVisualImage(category.image_url, `/img/dress_styles/style${index + 1}.png`)" format="webp"
+              densities="x1" :alt="category.name || 'Category'" class="w-full h-auto" />
           </div>
+        </div>
+      </div>
+    </section>
 
-          <!-- Women's Clothing -->
-          <div
-            class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center col-span-1 md:col-span-2 rounded-2xl relative h-[190px]"
-            @click="viewCategory('womens-clothing')">
-            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
-              Women's Clothing
-            </h1>
-            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style2.png" format="webp" densities="x1"
-              alt="Women's Clothing" class="w-full h-auto" />
-          </div>
+    <section class="px-5 desktop:container pb-10">
+      <div class="bg-white rounded-3xl text-center py-10 border border-zinc-200">
+        <h1 class="font-Poppins text-4xl md:text-5xl leading-tight text-center py-4 font-extrabold">
+          SHOP BY COLLECTION
+        </h1>
 
-          <!-- Accessories -->
-          <div
-            class="overflow-hidden bg-[#FFFFFF] flex items-center justify-center col-span-1 md:col-span-2 rounded-2xl p-4 relative h-[190px]"
-            @click="viewCategory('accessories')">
-            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
-              Accessories
+        <div class="grid gap-5 grid-cols-1 md:grid-cols-4 px-6 md:px-20 py-6">
+          <div v-for="(style, index) in homeDressTypes" :key="style.id"
+            class="overflow-hidden bg-[#FFFFFF] flex flex-col items-center justify-center rounded-2xl relative h-[190px]"
+            @click="viewDressStyle(String(style.slug || style.id))">
+            <h1 class="text-lg font-semibold mb-4 absolute top-8 text-black left-8">
+              {{ style.name }}
             </h1>
-            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style3.png" format="webp" densities="x1"
-              alt="Accessories" class="w-full h-auto" />
-          </div>
-
-          <!-- Shoes -->
-          <div
-            class="overflow-hidden bg-[#FFFFFF] flex flex-row items-center justify-center rounded-2xl relative h-[190px]"
-            @click="viewCategory('shoes')">
-            <h1 class="text-xl font-semibold mb-4 absolute top-10 text-black left-10">
-              Shoes
-            </h1>
-            <NuxtImg sizes="sm:100vw md:669px" src="/img/dress_styles/style4.png" format="webp" densities="x1"
-              alt="Shoes" class="w-full h-auto" />
+            <NuxtImg sizes="sm:100vw md:420px"
+              :src="resolveVisualImage(style.image_url, `/img/dress_styles/style${index + 1}.png`)" format="webp"
+              densities="x1" :alt="style.name || 'Collection'" class="w-full h-auto" />
           </div>
         </div>
       </div>

@@ -30,6 +30,7 @@ class Customer extends Authenticatable implements JWTSubject
         "telegram_user_id",
         "telegram_chat_id",
         "telegram_username",
+        "enable_telegram_alerts",
     ];
 
     /**
@@ -80,6 +81,28 @@ class Customer extends Authenticatable implements JWTSubject
 
     public function routeNotificationForTelegram(): ?string
     {
-        return $this->telegram_chat_id ?: $this->telegram_user_id;
+        if ($this->telegram_chat_id) {
+            return $this->telegram_chat_id;
+        }
+
+        if ($this->telegram_user_id) {
+            return $this->telegram_user_id;
+        }
+
+        if ($this->telegram_username) {
+            $username = ltrim($this->telegram_username, '@');
+            return $username !== '' ? '@' . $username : null;
+        }
+
+        return null;
+    }
+
+    public function requiresProfileCompletion(): bool
+    {
+        if (!$this->oauthAccounts()->exists()) {
+            return false;
+        }
+
+        return $this->telegram_username === null || $this->telegram_username === '';
     }
 }

@@ -50,10 +50,20 @@ return [
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'redirect' => env('GITHUB_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/github/callback'),
     ],
+    'telegram-bot-api' => [
+        'token' => env('TELEGRAM_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN')),
+        'username' => env('TELEGRAM_BOT_USERNAME', env('TELEGRAM_BOT_NAME')),
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        'admin_chat_id' => env('TELEGRAM_ADMIN_CHAT_ID'),
+        'link_ttl_minutes' => env('TELEGRAM_LINK_TTL_MINUTES', 10),
+        'base_uri' => env('TELEGRAM_BOT_BASE_URI', 'https://api.telegram.org'),
+        'send_inline' => env('TELEGRAM_SEND_INLINE', false),
+        'log_delivery' => env('TELEGRAM_LOG_DELIVERY', false),
+    ],
     'telegram' => [
         'bot' => env('TELEGRAM_BOT_NAME'),  // The bot's username
         'client_id' => null,
-        'client_secret' => env('TELEGRAM_TOKEN'),
+        'client_secret' => env('TELEGRAM_BOT_TOKEN'),
         'redirect' => env('TELEGRAM_REDIRECT_URI', rtrim(env('APP_URL', 'https://127.0.0.1:8000'), '/') . '/auth/telegram/callback'),
     ]
 

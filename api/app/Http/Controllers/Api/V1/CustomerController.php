@@ -7,6 +7,8 @@ use App\Http\Requests\Api\V1\Customer\CustomerUpdateRequest;
 use App\Http\Requests\Api\V1\Customer\CustomerAvatarRequest;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Arr;
 // use Cloudinary\Transformation\Resize;
 // use Cloudinary\Transformation\Gravity;
 use App\Repositories\CustomerRepository;
@@ -48,6 +50,9 @@ class CustomerController extends Controller
             return $this->error("Unauthorized", 401);
         }
         $profile = $this->customerRepository->findById($customer->id);
+        if ($profile) {
+            $profile->setAttribute('requires_profile_completion', $profile->requiresProfileCompletion());
+        }
 
         return $this->success($profile, "client profile success", 200);
     }
@@ -61,8 +66,43 @@ class CustomerController extends Controller
         if (!$customer) {
             return $this->error("Unauthorized", 401);
         }
-        $customer_updated = $this->customerRepository->update($request->validated(), $customer->id);
-        return $this->success($customer_updated, "Customer Updated", 200);
+
+        $data = $request->validated();
+
+        $basicFields = Arr::only($data, [
+            'full_name',
+            'gender',
+            'dob',
+            'email',
+            'phone',
+            'address',
+        ]);
+
+        if ($basicFields) {
+            $customer->fill($basicFields);
+        }
+
+        if (array_key_exists('user_name', $data) && $data['user_name'] !== null && $data['user_name'] !== '') {
+            $customer->user_name = $data['user_name'];
+        }
+
+        if (array_key_exists('password', $data) && $data['password']) {
+            $customer->password = Hash::make($data['password']);
+        }
+
+        if (array_key_exists('telegram_username', $data)) {
+            $customer->telegram_username = $data['telegram_username'];
+        }
+
+        if (array_key_exists('enable_telegram_alerts', $data)) {
+            $customer->enable_telegram_alerts = (bool) $data['enable_telegram_alerts'];
+        }
+
+        $customer->save();
+
+        $customer->setAttribute('requires_profile_completion', $customer->requiresProfileCompletion());
+
+        return $this->success($customer, "Customer Updated", 200);
     }
 
     /**
