@@ -99,7 +99,7 @@
       @closed="handlePaymentDialogClosed">
       <div class="space-y-4">
         <div class="grid place-items-center rounded-3xl bg-[#F5F5F5] p-5">
-          <div v-if="qrImageUrl" class="w-full max-w-[300px]">
+          <div v-if="qrImageUrl" ref="qrImage" class="w-full max-w-[300px]">
             <div class="overflow-hidden rounded-2xl bg-white shadow-md">
               <div class="relative h-14 bg-[#D8141F]">
                 <div
@@ -153,9 +153,11 @@
       </div>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-center gap-2">
           <el-button @click="pollPaymentOnce" :loading="pollingNow">Check Now</el-button>
+          <el-button @click="downloadQr" :loading="downloadingQr">Download</el-button>
           <el-button @click="paymentDialogOpen = false">Close</el-button>
+
         </div>
       </template>
     </el-dialog>
@@ -170,7 +172,8 @@ import { ElMessage } from 'element-plus'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
-import { da } from 'element-plus/es/locale/index.mjs'
+import { toPng } from 'html-to-image';
+import { useDateFormat, useNow } from '@vueuse/core'
 
 type CartItem = {
   variant_id: number
@@ -219,6 +222,8 @@ const pollStatus = ref('pending')
 const pollingNow = ref(false)
 const pollDeadlineAt = ref<number | null>(null)
 const timeLeftSeconds = ref(60)
+const downloadingQr = ref(false)
+const qrImage = ref<HTMLElement | null>(null)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -414,7 +419,7 @@ const pollPaymentOnce = async () => {
       paymentDialogOpen.value = false
       ElMessage.success('Payment successful.')
       await fetchCart()
-      return
+      return router.replace('/')
     }
 
     if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentState)) {
@@ -565,6 +570,29 @@ const checkout = async () => {
   } finally {
     checkingOut.value = false
   }
+}
+// downloadQr
+const downloadQr = () => {
+  if (qrImage.value == null) {
+    return
+  }
+
+  const appName = String(config.public.NUXT_PUBLIC_APP_NAME || 'Invoice').trim() || 'Invoice'
+  const orderLabel = currentOrderId.value ? `order-${currentOrderId.value}` : 'order'
+  const userLocale = navigator.language || 'en-US'
+  const timestamp = useDateFormat(useNow(), 'YYYY-MM-DD HH:mm:ss', { locales: userLocale }).value
+  const filename = `${appName}-invoice-${orderLabel}-${timestamp}.png`
+  toPng<any>(qrImage.value, { cacheBust: true })
+    .then((dataUrl) => {
+      const link = document.createElement('a')
+      link.download = filename
+      link.href = dataUrl
+      link.click()
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
 }
 watch(paymentMethod, (value) => {
   isPaymentByKhrqr.value = value === 'khqr'

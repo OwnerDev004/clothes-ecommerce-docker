@@ -418,31 +418,33 @@ onMounted(async () => {
         class="px-2 desktop:container text-center font-Poppins text-[2rem] md:text-5xl leading-tight py-4 font-extrabold desktop:">
         OUR HAPPY CUSTOMERS
       </h1>
-      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
-        '0': {
-          slidesPerView: 1,
-        },
-        '375': {
-          slidesPerView: 1.5,
-          spaceBetween: 20,
-        },
-        '992': {
-          slidesPerView: 4.1,
-          spaceBetween: 20,
-        },
-      }" :loop="true" :centered-slides="true" @slideChange="onSlideChange" autoplay>
-        <SwiperSlide v-for="(slide, index) in 10" :key="index">
-          <div class="p-4 bg-gray flex justify-center flex-col">
-            <SharesRating :stars-num="5" :rating-amount="0" />
-            <h1 class="font-Poppins text-xl font-bold">Sarah M.</h1>
-            <p class="font-Lato">
-              I'm blown away by the quality and style of the clothes I received
-              from Shop.co. From casual wear to elegant dresses, every piece
-              I've bought has exceeded my expectations.”
-            </p>
-          </div>
-        </SwiperSlide>
-      </Swiper>
+      <ClientOnly>
+        <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
+          '0': {
+            slidesPerView: 1,
+          },
+          '375': {
+            slidesPerView: 1.5,
+            spaceBetween: 20,
+          },
+          '992': {
+            slidesPerView: 4.1,
+            spaceBetween: 20,
+          },
+        }" :loop="true" :centered-slides="true" @slideChange="onSlideChange" autoplay>
+          <SwiperSlide v-for="(slide, index) in 10" :key="index">
+            <div class="p-4 bg-gray flex justify-center flex-col">
+              <SharesRating :stars-num="5" :rating-amount="0" />
+              <h1 class="font-Poppins text-xl font-bold">Sarah M.</h1>
+              <p class="font-Lato">
+                I'm blown away by the quality and style of the clothes I received
+                from Shop.co. From casual wear to elegant dresses, every piece
+                I've bought has exceeded my expectations.”
+              </p>
+            </div>
+          </SwiperSlide>
+        </Swiper>
+      </ClientOnly>
     </section>
   </main>
 </template>

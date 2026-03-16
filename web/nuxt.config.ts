@@ -41,18 +41,17 @@ export default defineNuxtConfig({
     '@element-plus/nuxt' ,
     'pinia-plugin-persistedstate/nuxt'
   ],
-  icon: {
-    fetchTimeout: 5000, // 15 seconds
-  },
-  elementPlus: { /** Options */ },
   swiper: {
     // Swiper options
     //----------------------
     prefix: 'Swiper',
     styleLang: 'css',
-    // modules: ['navigation', 'pagination'], // all modules are imported by default
+    modules: ['autoplay'], // all modules are imported by default
   },
-  
+  icon: {
+    fetchTimeout: 5000, // 15 seconds
+  },
+  elementPlus: { /** Options */ },
   googleFonts: {
     families:{
       "Poppins": true,
@@ -61,6 +60,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
+      appName: process.env.NUXT_PUBLIC_APP_NAME || "Docker-Ecommerce",
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api/v1',
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
       facebookAppId: process.env.NUXT_PUBLIC_FACEBOOK_APP_ID || '',
