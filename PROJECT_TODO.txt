@@ -115,10 +115,10 @@ Done check:
 PHASE 2: CLIENT CORE FLOWS
 1. Auth pages
 - Register, login, forgot/reset password.
-
+ 
 2. Product listing page
 - Search/filter/sort/pagination.
-- Category/dress-style filtering.
+- Category/collection filtering.
 
 3. Product detail page
 - Variant selector (color + size).

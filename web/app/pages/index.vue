@@ -62,7 +62,7 @@ const loadMoreTrigger = ref<HTMLElement | null>(null)
 
 const brands = ref<BrandApi[]>([])
 const categories = ref<CategoryApi[]>([])
-const dressTypes = ref<DressTypeApi[]>([])
+const collections = ref<DressTypeApi[]>([])
 
 const onSlideChange = (swiper: any) => {
   const totalSlides = swiper.slides.length;
@@ -117,9 +117,9 @@ const homeCategories = computed(() => {
   ] as CategoryApi[]
 })
 
-const homeDressTypes = computed(() => {
-  if (dressTypes.value.length) {
-    return dressTypes.value.slice(0, 4)
+const collectionItems = computed(() => {
+  if (collections.value.length) {
+    return collections.value.slice(0, 4)
   }
   return [
     { id: 'style1', name: 'Casual', slug: 'casual', image_url: '/img/dress_styles/style1.png' },
@@ -210,10 +210,10 @@ const fetchCategories = async () => {
 
 const fetchDressTypes = async () => {
   try {
-    const response: any = await $fetch(`${apiBase}/dress-types`, { method: 'GET' })
-    dressTypes.value = Array.isArray(response?.data) ? response.data : []
+    const response: any = await $fetch(`${apiBase}/collections`, { method: 'GET' })
+    collections.value = Array.isArray(response?.data) ? response.data : []
   } catch {
-    dressTypes.value = []
+    collections.value = []
   }
 }
 
@@ -243,7 +243,7 @@ const viewDressStyle = (slug: string) => {
   }
   router.push({
     path: `/frontend/categories/${categorySlug}`,
-    query: { dress_style: slug },
+    query: { collection: slug },
   })
 }
 
@@ -369,7 +369,7 @@ onMounted(async () => {
     </section>
 
     <!-- Shop by Category -->
-    <section class="px-5 desktop:container py-10">
+    <!-- <section class="px-5 desktop:container py-10">
       <div class="bg-gray rounded-3xl text-center py-10">
         <h1 class="font-Poppins text-4xl md:text-5xl leading-tight text-center py-4 font-extrabold">
           SHOP BY CATEGORY
@@ -389,7 +389,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <section class="px-5 desktop:container pb-10">
       <div class="bg-white rounded-3xl text-center py-10 border border-zinc-200">
@@ -398,7 +398,7 @@ onMounted(async () => {
         </h1>
 
         <div class="grid gap-5 grid-cols-1 md:grid-cols-4 px-6 md:px-20 py-6">
-          <div v-for="(style, index) in homeDressTypes" :key="style.id"
+          <div v-for="(style, index) in collectionItems" :key="style.id"
             class="overflow-hidden bg-[#FFFFFF] flex flex-col items-center justify-center rounded-2xl relative h-[190px]"
             @click="viewDressStyle(String(style.slug || style.id))">
             <h1 class="text-lg font-semibold mb-4 absolute top-8 text-black left-8">

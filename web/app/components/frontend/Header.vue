@@ -8,7 +8,6 @@
         <NuxtLink to="/" class="flex items-center">
           <span class="text-2xl sm:text-[28p. x] desktop:text-3xl font-bold">SHOP.CO</span>
         </NuxtLink>
-
         <!-- Desktop Navigation -->
         <ul class="hidden desktop:flex items-center gap-8 ml-8">
           <!-- Shop Menu -->
@@ -46,12 +45,12 @@
       <!-- Right Side: Search & Icons -->
       <div class="flex items-center gap-3 sm:gap-4">
         <!-- Desktop Search -->
-        <div class="hidden lg:flex items-center w-64 xl:w-80">
+        <div class="hidden lg:flex items-center w-64 xl:w-80 desktop-search-root">
           <div class="relative flex-1">
             <Icon name="mdi:search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
-            <input type="text"
+            <input ref="desktopSearchTriggerInput" v-model="desktopSearchKeyword" type="text"
               class="w-full rounded-full bg-gray-100 pl-12 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all"
-              placeholder="Search for products..." />
+              placeholder="Search for products..." @focus="openDesktopSearch" @keyup.enter="submitDesktopSearch" />
           </div>
         </div>
 
@@ -161,6 +160,29 @@
       </div>
     </nav>
 
+    <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0 -translate-y-4"
+      enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-3">
+      <div v-if="showDesktopSearch"
+        class="desktop-search-root hidden lg:block absolute left-0 right-0 top-full bg-white border-t border-gray-200 shadow-lg z-50">
+        <div class="desktop:container px-5 py-5">
+          <form class="flex items-center gap-3" @submit.prevent="submitDesktopSearch">
+            <div class="relative flex-1">
+              <Icon name="mdi:search"
+                class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+              <input ref="desktopSearchPanelInput" v-model="desktopSearchKeyword" type="text"
+                class="w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3 text-sm outline-none focus:border-black focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all"
+                placeholder="Type and press Enter to search products..." />
+            </div>
+            <button type="submit"
+              class="rounded-2xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors whitespace-nowrap">
+              Search all products
+            </button>
+          </form>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Dropdown Menu Container (Positioned under header) -->
     <div
       class="absolute left-0 right-0 top-full bg-white border-t border-gray-200 shadow-lg z-50 overflow-hidden transition-all duration-300 ease-in-out"
@@ -190,7 +212,7 @@
           <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Collection</h3>
           <ul class="space-y-3">
             <li v-for="collection in collectionItems" :key="`desktop-collection-${collection.id}`">
-              <NuxtLink :to="{ path: '/frontend/categories', query: { dress_style: collection.slug } }"
+              <NuxtLink :to="{ path: '/frontend/categories', query: { collection: collection.slug } }"
                 class="text-gray-600 hover:text-black transition-colors flex items-center group">
                 <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
                 {{ collection.name }}
@@ -277,7 +299,7 @@
               <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Collection</h3>
               <ul class="space-y-3">
                 <li v-for="collection in collectionItems" :key="`mobile-collection-${collection.id}`">
-                  <NuxtLink :to="{ path: '/frontend/categories', query: { dress_style: collection.slug } }"
+                  <NuxtLink :to="{ path: '/frontend/categories', query: { collection: collection.slug } }"
                     class="text-gray-600 hover:text-black transition-colors flex items-center group"
                     @click="toggleMenu">
                     <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
@@ -371,6 +393,10 @@ const isDropdownOpen = ref(false) // Desktop dropdown visibility
 const isShopMenuOpen = ref(false) // Mobile shop submenu
 const showMobileSearch = ref(false) // Mobile search visibility
 const mobileSearchInput = ref<HTMLInputElement | null>(null)
+const showDesktopSearch = ref(false)
+const desktopSearchKeyword = ref('')
+const desktopSearchTriggerInput = ref<HTMLInputElement | null>(null)
+const desktopSearchPanelInput = ref<HTMLInputElement | null>(null)
 const accountMenuOpen = ref(false)
 const connectingTelegram = ref(false)
 const telegramLinked = ref(false)
@@ -455,6 +481,30 @@ const toggleSearch = () => {
   }
 }
 
+const openDesktopSearch = () => {
+  showDesktopSearch.value = true
+  isDropdownOpen.value = false
+  nextTick(() => {
+    desktopSearchPanelInput.value?.focus()
+  })
+}
+
+const closeDesktopSearch = () => {
+  showDesktopSearch.value = false
+}
+
+const submitDesktopSearch = async () => {
+  const keyword = desktopSearchKeyword.value.trim()
+  if (!keyword) {
+    return
+  }
+  await router.push({
+    path: '/frontend/categories',
+    query: { search_txt: keyword },
+  })
+  closeDesktopSearch()
+}
+
 // Handle mobile search
 const handleMobileSearch = () => {
   if (mobileSearchInput.value) {
@@ -472,6 +522,7 @@ const handleMobileSearch = () => {
 const closeAll = () => {
   isMenuOpen.value = false
   showMobileSearch.value = false
+  showDesktopSearch.value = false
   accountMenuOpen.value = false
 }
 
@@ -485,12 +536,17 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target.closest('.account-menu-root')) {
     accountMenuOpen.value = false
   }
+
+  if (!target.closest('.desktop-search-root')) {
+    closeDesktopSearch()
+  }
 }
 
 // Close dropdown on ESC key
 const onKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     isDropdownOpen.value = false
+    closeDesktopSearch()
     closeAll()
   }
 }
@@ -498,6 +554,7 @@ const onKeydown = (e: KeyboardEvent) => {
 // Close dropdown when scrolling
 const handleScroll = () => {
   isDropdownOpen.value = false
+  closeDesktopSearch()
   accountMenuOpen.value = false
 }
 
@@ -558,7 +615,7 @@ const fetchCategories = async () => {
       }),
     ])
     categories.value = categoryResponse?.data || []
-    collectionItems.value = filterResponse?.data?.dress_types || []
+    collectionItems.value = filterResponse?.data?.collections || []
 
     if (accessToken.value || isAuthenticated.value) {
       const cartResponse: any = await $fetch(`${apiBase}/cart`, {

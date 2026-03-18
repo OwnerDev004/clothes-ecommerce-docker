@@ -42,7 +42,7 @@ class ProductRepository extends BaseRepository
             $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
-            $dressStyle = $filters['dress_style'] ?? null;
+            $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
 
             $query = $this->product_model->newQuery()->select('products.*')->with([
                 'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
@@ -51,6 +51,7 @@ class ProductRepository extends BaseRepository
                         ->orderBy('sort_order');
                 },
                 'subCategory:id,category_id,name,slug',
+                'collections:id,name,slug',
             ]);
 
 
@@ -79,17 +80,23 @@ class ProductRepository extends BaseRepository
                 }
             }
 
-            if (!is_null($dressStyle) && $dressStyle !== '') {
-                if (is_numeric($dressStyle)) {
-                    $query->where('products.dress_type_id', (int) $dressStyle);
-                } else {
-                    $query->whereExists(function (Builder $sub) use ($dressStyle) {
+            if (!is_null($collection) && $collection !== '') {
+                if (is_numeric($collection)) {
+                    $query->whereExists(function (Builder $sub) use ($collection) {
                         $sub->selectRaw('1')
-                            ->from('dress_types')
-                            ->whereColumn('dress_types.id', 'products.dress_type_id')
-                            ->where(function ($w) use ($dressStyle) {
-                                $w->where('dress_types.slug', $dressStyle)
-                                    ->orWhere('dress_types.name', 'like', '%' . $dressStyle . '%');
+                            ->from('collection_product')
+                            ->whereColumn('collection_product.product_id', 'products.id')
+                            ->where('collection_product.collection_id', (int) $collection);
+                    });
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($collection) {
+                        $sub->selectRaw('1')
+                            ->from('collection_product')
+                            ->join('collections', 'collections.id', '=', 'collection_product.collection_id')
+                            ->whereColumn('collection_product.product_id', 'products.id')
+                            ->where(function ($w) use ($collection) {
+                                $w->where('collections.slug', $collection)
+                                    ->orWhere('collections.name', 'like', '%' . $collection . '%');
                             });
                     });
                 }
@@ -162,10 +169,14 @@ class ProductRepository extends BaseRepository
     public function storeProduct(array $data = [])
     {
         $images = $data['images'] ?? [];
-        unset($data['images']);
+        $collectionIds = $data['collection_ids'] ?? null;
+        unset($data['images'], $data['collection_ids']);
 
         return DB::transaction(function () use ($data, $images) {
             $product = $this->product_model->create($data);
+            if (is_array($collectionIds)) {
+                $product->collections()->sync($collectionIds);
+            }
             $this->image_service->syncProductImages($product, null, $images, false);
 
             return $product->load([
@@ -184,18 +195,25 @@ class ProductRepository extends BaseRepository
         $hasClearImagesPayload = array_key_exists('clear_images', $data);
         $hasExistingImagesPayload = array_key_exists('existing_images', $data);
         $hasNewImagesPayload = array_key_exists('new_images', $data);
+        $hasCollectionIdsPayload = array_key_exists('collection_ids', $data);
 
         $clearImages = filter_var($data['clear_images'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $existingImages = $hasExistingImagesPayload ? ($data['existing_images'] ?? []) : null;
         $newImages = $hasNewImagesPayload ? ($data['new_images'] ?? []) : null;
+        $collectionIds = $hasCollectionIdsPayload ? ($data['collection_ids'] ?? []) : null;
 
         unset($data['clear_images']);
         unset($data['existing_images']);
         unset($data['new_images']);
+        unset($data['collection_ids']);
 
         return DB::transaction(function () use ($id, $data, $clearImages, $existingImages, $newImages, $hasClearImagesPayload, $hasExistingImagesPayload, $hasNewImagesPayload) {
             $product = $this->product_model->findOrFail($id);
             $product->update($data);
+
+            if ($hasCollectionIdsPayload && is_array($collectionIds)) {
+                $product->collections()->sync($collectionIds);
+            }
 
             $shouldSyncImages = $hasClearImagesPayload || $hasExistingImagesPayload || $hasNewImagesPayload;
 
@@ -247,7 +265,7 @@ class ProductRepository extends BaseRepository
     public function findById($id)
     {
         $product = $this->product_model
-            ->with(['category', 'subCategory', 'dressType', 'images', 'variants'])
+            ->with(['category', 'subCategory', 'collections', 'images', 'variants'])
             ->find($id);
         return $product;
     }

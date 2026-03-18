@@ -31,15 +31,16 @@ class ProductController extends Controller
 
     public function filters(Request $request)
     {
-        $searchText = trim((string) $request->query('search_txt', ''));
+        $searchText = trim((string) $request->query('search_txt', $request->query('searchTxt', '')));
         $category = $request->query('category');
         $subCategory = $request->query('sub_category');
-        $dressStyle = $request->query('dress_style');
+        $collection = $request->query('collection', $request->query('dress_style'));
         $price = $request->query('price');
         $priceMin = $request->query('price_min');
         $priceMax = $request->query('price_max');
 
-        $applyProductFilters = function ($query) use ($searchText, $category, $subCategory, $dressStyle, $price, $priceMin, $priceMax) {
+        $applyProductFilters = function ($query, array $options = []) use ($searchText, $category, $subCategory, $collection, $price, $priceMin, $priceMax) {
+            $ignoreSubCategory = $options['ignore_sub_category'] ?? false;
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
                     $q->where('p.name', 'like', '%' . $searchText . '%')
@@ -62,23 +63,29 @@ class ProductController extends Controller
                 }
             }
 
-            if (!is_null($dressStyle) && $dressStyle !== '') {
-                if (is_numeric($dressStyle)) {
-                    $query->where('p.dress_type_id', (int) $dressStyle);
-                } else {
-                    $query->whereExists(function ($sub) use ($dressStyle) {
+            if (!is_null($collection) && $collection !== '') {
+                if (is_numeric($collection)) {
+                    $query->whereExists(function ($sub) use ($collection) {
                         $sub->selectRaw('1')
-                            ->from('dress_types as d')
-                            ->whereColumn('d.id', 'p.dress_type_id')
-                            ->where(function ($w) use ($dressStyle) {
-                                $w->where('d.slug', $dressStyle)
-                                    ->orWhere('d.name', 'like', '%' . $dressStyle . '%');
+                            ->from('collection_product as cp')
+                            ->whereColumn('cp.product_id', 'p.id')
+                            ->where('cp.collection_id', (int) $collection);
+                    });
+                } else {
+                    $query->whereExists(function ($sub) use ($collection) {
+                        $sub->selectRaw('1')
+                            ->from('collection_product as cp')
+                            ->join('collections as d', 'd.id', '=', 'cp.collection_id')
+                            ->whereColumn('cp.product_id', 'p.id')
+                            ->where(function ($w) use ($collection) {
+                                $w->where('d.slug', $collection)
+                                    ->orWhere('d.name', 'like', '%' . $collection . '%');
                             });
                     });
                 }
             }
 
-            if (!is_null($subCategory) && $subCategory !== '') {
+            if (!$ignoreSubCategory && !is_null($subCategory) && $subCategory !== '') {
                 if (is_numeric($subCategory)) {
                     $query->where('p.sub_category_id', (int) $subCategory);
                 } else {
@@ -134,33 +141,52 @@ class ProductController extends Controller
             ->orderBy('s.name')
             ->get();
 
-        $dressTypes = DB::table('dress_types as d')
+        $collections = DB::table('collections as d')
             ->select('d.id', 'd.name', 'd.slug', 'd.sort_order', 'd.image_url')
             ->whereExists(function ($sub) {
                 $sub->selectRaw('1')
-                    ->from('products as p')
-                    ->whereColumn('p.dress_type_id', 'd.id');
+                    ->from('collection_product as cp')
+                    ->whereColumn('cp.collection_id', 'd.id');
             })
             ->orderBy('d.sort_order')
             ->orderBy('d.name')
             ->get();
 
+        $subCategoryGrouped = DB::table('sub_categories as sc')
+            ->join('products as p', 'p.sub_category_id', '=', 'sc.id')
+            ->whereIn('p.id', $productIdsQuery)
+            ->selectRaw('MAX(sc.id) as sub_category_id, sc.name')
+            ->groupBy('sc.name')
+            ->orderBy('sc.name');
+
         $subCategories = DB::table('sub_categories as sc')
-            ->select('sc.id', 'sc.name', 'sc.slug', 'sc.category_id')
-            ->whereExists(function ($sub) {
-                $sub->selectRaw('1')
-                    ->from('products as p')
-                    ->whereColumn('p.sub_category_id', 'sc.id');
+            ->joinSub($subCategoryGrouped, 'grp', function ($join) {
+                $join->on('grp.sub_category_id', '=', 'sc.id');
             })
+            ->select('sc.id', 'sc.name', 'sc.slug', 'sc.category_id')
             ->orderBy('sc.name')
             ->get();
+
+        $hasNullSubCategory = DB::table('products as p')
+            ->whereIn('p.id', $productIdsQuery)
+            ->whereNull('p.sub_category_id')
+            ->exists();
+
+        if ($hasNullSubCategory) {
+            $subCategories->push((object) [
+                'id' => null,
+                'name' => null,
+                'slug' => null,
+                'category_id' => null,
+            ]);
+        }
 
         return $this->success([
             'categories' => $categories,
             'sub_categories' => $subCategories,
             'colors' => $colors,
             'sizes' => $sizes,
-            'dress_types' => $dressTypes,
+            'collections' => $collections,
         ], 'Product filters');
     }
 

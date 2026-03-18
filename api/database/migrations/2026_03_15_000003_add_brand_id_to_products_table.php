@@ -13,7 +13,10 @@ return new class extends Migration
         }
 
         Schema::table('products', function (Blueprint $table) {
-            $table->foreignId('brand_id')->nullable()->after('dress_type_id')->constrained('brands')->nullOnDelete();
+            if (!Schema::hasColumn('products', 'brand_id')) {
+                $afterColumn = Schema::hasColumn('products', 'sub_category_id') ? 'sub_category_id' : 'category_id';
+                $table->foreignId('brand_id')->nullable()->after($afterColumn)->constrained('brands')->nullOnDelete();
+            }
         });
     }
 

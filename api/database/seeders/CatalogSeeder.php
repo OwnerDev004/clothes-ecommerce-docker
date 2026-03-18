@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Color;
-use App\Models\DressType;
+use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Size;
@@ -20,25 +20,39 @@ class CatalogSeeder extends Seeder
         $now = now();
 
         $categories = [
-            ['name' => "Men's Clothing", 'des' => 'Shirts, pants, and outfits for men', 'slug' => 'mens-clothing'],
-            ['name' => "Women's Clothing", 'des' => 'Dresses, tops, and outfits for women', 'slug' => 'womens-clothing'],
-            ['name' => 'Accessories', 'des' => 'Bags, belts, caps, and more', 'slug' => 'accessories'],
-            ['name' => 'Shoes', 'des' => 'Sneakers, loafers, and heels', 'slug' => 'shoes'],
+            ['name' => "Men", 'des' => 'Menswear', 'slug' => 'men'],
+            ['name' => "Women", 'des' => 'Womenswear', 'slug' => 'women'],
+            ['name' => 'Boys', 'des' => 'Boys clothing', 'slug' => 'boys'],
+            ['name' => 'Girls', 'des' => 'Girls clothing', 'slug' => 'girls'],
         ];
         $categories = array_map(function ($row) use ($now) {
             return $row + ['created_at' => $now, 'updated_at' => $now];
         }, $categories);
         DB::table('categories')->upsert($categories, ['slug'], ['name', 'des', 'updated_at']);
 
-        $dressTypes = [
-            ['name' => 'Gym Dress', 'desc' => 'Workout and training outfits', 'slug' => 'gym-dress', 'sort_order' => 1, 'img' => 'default_empty'],
-            ['name' => 'Party Dress', 'desc' => 'Event and celebration outfits', 'slug' => 'party-dress', 'sort_order' => 2, 'img' => 'default_empty'],
-            ['name' => 'Sport Dress', 'desc' => 'Performance and sport outfits', 'slug' => 'sport-dress', 'sort_order' => 3, 'img' => 'default_empty'],
+        $categoriesBySlug = Category::whereIn('slug', array_column($categories, 'slug'))->get()->keyBy('slug');
+
+        $collections = [
+            ['category_slug' => 'men', 'name' => 'Men Essentials', 'desc' => 'Core menswear staples', 'slug' => 'men-essentials', 'sort_order' => 1, 'img' => 'default_empty'],
+            ['category_slug' => 'men', 'name' => 'Men Active', 'desc' => 'Sport and training', 'slug' => 'men-active', 'sort_order' => 2, 'img' => 'default_empty'],
+            ['category_slug' => 'women', 'name' => 'Women Essentials', 'desc' => 'Core womenswear staples', 'slug' => 'women-essentials', 'sort_order' => 1, 'img' => 'default_empty'],
+            ['category_slug' => 'women', 'name' => 'Women Party', 'desc' => 'Event and celebration outfits', 'slug' => 'women-party', 'sort_order' => 2, 'img' => 'default_empty'],
+            ['category_slug' => 'boys', 'name' => 'Boys Play', 'desc' => 'Everyday playwear', 'slug' => 'boys-play', 'sort_order' => 1, 'img' => 'default_empty'],
+            ['category_slug' => 'girls', 'name' => 'Girls Play', 'desc' => 'Everyday playwear', 'slug' => 'girls-play', 'sort_order' => 1, 'img' => 'default_empty'],
         ];
-        $dressTypes = array_map(function ($row) use ($now) {
-            return $row + ['created_at' => $now, 'updated_at' => $now];
-        }, $dressTypes);
-        DB::table('dress_types')->upsert($dressTypes, ['slug'], ['name', 'desc', 'sort_order', 'img', 'updated_at']);
+        $collections = array_map(function ($row) use ($now, $categoriesBySlug) {
+            return [
+                'category_id' => $categoriesBySlug[$row['category_slug']]->id,
+                'name' => $row['name'],
+                'desc' => $row['desc'],
+                'slug' => $row['slug'],
+                'sort_order' => $row['sort_order'],
+                'img' => $row['img'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }, $collections);
+        DB::table('collections')->upsert($collections, ['slug'], ['category_id', 'name', 'desc', 'sort_order', 'img', 'updated_at']);
 
         $colors = [
             ['name' => 'Black', 'hex_code' => '#000000'],
@@ -64,15 +78,24 @@ class CatalogSeeder extends Seeder
         }, $sizes);
         DB::table('sizes')->upsert($sizes, ['name'], ['sort_order', 'updated_at']);
 
-        $categoriesBySlug = Category::whereIn('slug', array_column($categories, 'slug'))->get()->keyBy('slug');
-        $dressTypesBySlug = DressType::whereIn('slug', array_column($dressTypes, 'slug'))->get()->keyBy('slug');
+        $collectionsBySlug = Collection::whereIn('slug', array_column($collections, 'slug'))->get()->keyBy('slug');
 
-        $subCategories = [
-            ['category_slug' => 'mens-clothing', 'name' => 'Men Clothes', 'slug' => 'men-clothes', 'des' => 'Subcategory for men clothing'],
-            ['category_slug' => 'womens-clothing', 'name' => 'Women Clothes', 'slug' => 'women-clothes', 'des' => 'Subcategory for women clothing'],
-            ['category_slug' => 'shoes', 'name' => 'Shoes', 'slug' => 'shoes-sub', 'des' => 'Subcategory for shoes'],
-            ['category_slug' => 'accessories', 'name' => 'Accessories', 'slug' => 'accessories-sub', 'des' => 'Subcategory for accessories'],
+        $subCategories = [];
+        $subCategoryTypes = [
+            ['name' => 'Accessories', 'slug' => 'accessories', 'des' => 'Accessories'],
+            ['name' => 'Clothes', 'slug' => 'clothes', 'des' => 'Clothes'],
+            ['name' => 'Shoes', 'slug' => 'shoes', 'des' => 'Shoes'],
         ];
+        foreach (array_column($categories, 'slug') as $categorySlug) {
+            foreach ($subCategoryTypes as $sub) {
+                $subCategories[] = [
+                    'category_slug' => $categorySlug,
+                    'name' => $sub['name'],
+                    'slug' => $categorySlug . '-' . $sub['slug'],
+                    'des' => $sub['des'],
+                ];
+            }
+        }
         $subCategoryRows = array_map(function ($row) use ($categoriesBySlug, $now) {
             return [
                 'category_id' => $categoriesBySlug[$row['category_slug']]->id,
@@ -90,99 +113,93 @@ class CatalogSeeder extends Seeder
             [
                 'name' => 'Classic Cotton Tee',
                 'desc' => 'Soft cotton t-shirt with a clean fit',
-                'price' => 200.00,
-                'category_slug' => 'mens-clothing',
+                'price' => 20.00,
+                'category_slug' => 'men',
                 'sub_category_slug' => 'men-clothes',
-                'dress_type_slug' => 'gym-dress',
+                'collection_slug' => 'men-essentials',
             ],
             [
                 'name' => 'Oxford Button Shirt',
                 'desc' => 'Smart casual oxford shirt',
-                'price' => 200.00,
-                'category_slug' => 'mens-clothing',
+                'price' => 29.00,
+                'category_slug' => 'men',
                 'sub_category_slug' => 'men-clothes',
-                'dress_type_slug' => 'party-dress',
+                'collection_slug' => 'men-essentials',
             ],
             [
-                'name' => 'Slim Fit Jeans',
-                'desc' => 'Dark wash slim fit jeans',
-                'price' => 49.99,
-                'category_slug' => 'mens-clothing',
+                'name' => 'Performance Joggers',
+                'desc' => 'Breathable joggers for training',
+                'price' => 35.00,
+                'category_slug' => 'men',
                 'sub_category_slug' => 'men-clothes',
-                'dress_type_slug' => 'sport-dress',
+                'collection_slug' => 'men-active',
             ],
             [
-                'name' => 'Chino Pants',
-                'desc' => 'Comfortable tapered chinos',
-                'price' => 44.99,
-                'category_slug' => 'mens-clothing',
-                'sub_category_slug' => 'men-clothes',
-                'dress_type_slug' => 'gym-dress',
-            ],
-            [
-                'name' => 'Lightweight Windbreaker',
-                'desc' => 'Packable windbreaker jacket',
-                'price' => 59.99,
-                'category_slug' => 'womens-clothing',
+                'name' => 'Women Wrap Dress',
+                'desc' => 'Elegant wrap dress',
+                'price' => 45.00,
+                'category_slug' => 'women',
                 'sub_category_slug' => 'women-clothes',
-                'dress_type_slug' => 'sport-dress',
+                'collection_slug' => 'women-party',
             ],
             [
-                'name' => 'Denim Jacket',
-                'desc' => 'Classic denim jacket',
-                'price' => 79.99,
-                'category_slug' => 'womens-clothing',
+                'name' => 'Women Blouse',
+                'desc' => 'Lightweight everyday blouse',
+                'price' => 32.00,
+                'category_slug' => 'women',
                 'sub_category_slug' => 'women-clothes',
-                'dress_type_slug' => 'party-dress',
+                'collection_slug' => 'women-essentials',
             ],
             [
-                'name' => 'Midi Summer Dress',
-                'desc' => 'Flowy midi dress with prints',
-                'price' => 69.99,
-                'category_slug' => 'womens-clothing',
-                'sub_category_slug' => 'women-clothes',
-                'dress_type_slug' => 'gym-dress',
+                'name' => 'Boys Hoodie',
+                'desc' => 'Soft fleece hoodie',
+                'price' => 25.00,
+                'category_slug' => 'boys',
+                'sub_category_slug' => 'boys-clothes',
+                'collection_slug' => 'boys-play',
             ],
             [
-                'name' => 'Satin Evening Dress',
-                'desc' => 'Elegant satin dress for evenings',
-                'price' => 129.99,
-                'category_slug' => 'womens-clothing',
-                'sub_category_slug' => 'women-clothes',
-                'dress_type_slug' => 'party-dress',
+                'name' => 'Girls Sneakers',
+                'desc' => 'Everyday sneakers',
+                'price' => 28.00,
+                'category_slug' => 'girls',
+                'sub_category_slug' => 'girls-shoes',
+                'collection_slug' => 'girls-play',
             ],
-
         ];
 
         $targetProductCount = 50;
-        $categorySequence = ['mens-clothing', 'womens-clothing', 'accessories', 'shoes'];
-        $dressTypeSequence = ['gym-dress', 'party-dress', 'sport-dress'];
+        $categorySequence = ['men', 'women', 'boys', 'girls'];
+        $collectionSequence = ['men-essentials', 'men-active', 'women-essentials', 'women-party', 'boys-play', 'girls-play'];
         $subCategoryByCategory = [
-            'mens-clothing' => 'men-clothes',
-            'womens-clothing' => 'women-clothes',
-            'accessories' => 'accessories-sub',
-            'shoes' => 'shoes-sub',
+            'men' => 'men-clothes',
+            'women' => 'women-clothes',
+            'boys' => 'boys-clothes',
+            'girls' => 'girls-clothes',
         ];
         $categoryProductNames = [
-            'mens-clothing' => ['Crew Tee', 'Polo Shirt', 'Cargo Pants', 'Oxford Shirt', 'Denim Jeans'],
-            'womens-clothing' => ['Wrap Dress', 'Blouse Top', 'Maxi Dress', 'Skirt Set', 'Knit Top'],
-            'accessories' => ['Leather Belt', 'Crossbody Bag', 'Classic Cap', 'Sunglasses', 'Wallet'],
-            'shoes' => ['Running Sneakers', 'Loafers', 'Canvas Shoes', 'Formal Shoes', 'Sandals'],
+            'men' => ['Crew Tee', 'Polo Shirt', 'Cargo Pants', 'Oxford Shirt', 'Denim Jeans'],
+            'women' => ['Wrap Dress', 'Blouse Top', 'Maxi Dress', 'Skirt Set', 'Knit Top'],
+            'boys' => ['Hoodie', 'Joggers', 'Graphic Tee', 'Shorts', 'Sweatshirt'],
+            'girls' => ['Leggings', 'Tunic', 'Skirt', 'Cardigan', 'Dress'],
         ];
-        $stylePrefixes = [
-            'gym-dress' => 'Gym',
-            'party-dress' => 'Party',
-            'sport-dress' => 'Sport',
+        $collectionPrefixes = [
+            'men-essentials' => 'Men',
+            'men-active' => 'Active',
+            'women-essentials' => 'Women',
+            'women-party' => 'Party',
+            'boys-play' => 'Boys',
+            'girls-play' => 'Girls',
         ];
 
         $seedIndex = 1;
         while (count($products) < $targetProductCount) {
             $categorySlug = $categorySequence[($seedIndex - 1) % count($categorySequence)];
-            $dressTypeSlug = $dressTypeSequence[($seedIndex - 1) % count($dressTypeSequence)];
+            $collectionSlug = $collectionSequence[($seedIndex - 1) % count($collectionSequence)];
             $subCategorySlug = $subCategoryByCategory[$categorySlug];
             $nameOptions = $categoryProductNames[$categorySlug];
             $baseName = $nameOptions[($seedIndex - 1) % count($nameOptions)];
-            $prefix = $stylePrefixes[$dressTypeSlug];
+            $prefix = $collectionPrefixes[$collectionSlug];
 
             $products[] = [
                 'name' => sprintf('%s %s %02d', $prefix, $baseName, $seedIndex),
@@ -190,15 +207,17 @@ class CatalogSeeder extends Seeder
                 'price' => round(22 + (($seedIndex * 7) % 95) + (($seedIndex % 3) * 0.99), 2),
                 'category_slug' => $categorySlug,
                 'sub_category_slug' => $subCategorySlug,
-                'dress_type_slug' => $dressTypeSlug,
+                'collection_slug' => $collectionSlug,
             ];
 
             $seedIndex++;
         }
 
         $productRows = [];
+        $productCollectionMap = [];
         foreach ($products as $product) {
             $slug = Str::slug($product['name']);
+            $productCollectionMap[$slug] = $product['collection_slug'];
             $productRows[] = [
                 'sku' => 'SKU-' . strtoupper(substr(md5($slug), 0, 8)),
                 'slug' => $slug,
@@ -207,7 +226,6 @@ class CatalogSeeder extends Seeder
                 'price' => $product['price'],
                 'category_id' => $categoriesBySlug[$product['category_slug']]->id,
                 'sub_category_id' => $subCategoriesBySlug[$product['sub_category_slug']]->id,
-                'dress_type_id' => $dressTypesBySlug[$product['dress_type_slug']]->id,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
@@ -216,10 +234,31 @@ class CatalogSeeder extends Seeder
         DB::table('products')->upsert(
             $productRows,
             ['slug'],
-            ['sku', 'name', 'desc', 'price', 'category_id', 'sub_category_id', 'dress_type_id', 'updated_at']
+            ['sku', 'name', 'desc', 'price', 'category_id', 'sub_category_id', 'updated_at']
         );
 
         $productsBySlug = Product::whereIn('slug', array_column($productRows, 'slug'))->get()->keyBy('slug');
+        $collectionLinks = [];
+        foreach ($productRows as $row) {
+            $slug = $row['slug'];
+            $collectionSlug = $productCollectionMap[$slug] ?? null;
+            if (!$collectionSlug || !isset($collectionsBySlug[$collectionSlug])) {
+                continue;
+            }
+            $collectionLinks[] = [
+                'collection_id' => $collectionsBySlug[$collectionSlug]->id,
+                'product_id' => $productsBySlug[$slug]->id,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+        if (!empty($collectionLinks)) {
+            DB::table('collection_product')->upsert(
+                $collectionLinks,
+                ['collection_id', 'product_id'],
+                ['updated_at']
+            );
+        }
         $colorsByName = Color::whereIn('name', array_column($colors, 'name'))->get()->keyBy('name');
         $sizesByName = Size::whereIn('name', array_column($sizes, 'name'))->get()->keyBy('name');
 

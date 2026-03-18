@@ -70,7 +70,7 @@
             </section>
 
             <section class="border-b border-b-gray py-3">
-              <h1 class="text-lg font-bold font-Poppins">Dress Style</h1>
+              <h1 class="text-lg font-bold font-Poppins">Collection</h1>
               <ul class="leading-10">
                 <li v-for="style in dressTypes" :key="style.id"
                   class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
@@ -205,7 +205,7 @@
           </section>
 
           <section class="border-b border-b-gray py-3">
-            <h1 class="text-lg font-bold font-Poppins">Dress Style</h1>
+            <h1 class="text-lg font-bold font-Poppins">Collection</h1>
             <ul class="leading-10">
               <li v-for="style in dressTypes" :key="style.id"
                 class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
@@ -308,7 +308,7 @@ const categoryParam = computed(() => {
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 })
 const dressStyleParam = computed(() => {
-  const raw = route.query.dress_style
+  const raw = route.query.collection ?? route.query.dress_style
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 })
 const subCategoryParam = computed(() => {
@@ -324,6 +324,11 @@ const priceMaxParam = computed(() => {
   const raw = route.query.price_max
   const value = Array.isArray(raw) ? Number(raw[0]) : Number(raw)
   return Number.isFinite(value) ? value : 200
+})
+// searchTxtParam
+const searchTxtParam = computed(() => {
+  const raw = route.query.search_txt ?? route.query.searchTxt
+  return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 })
 
 const currentCategoryLabel = computed(() => {
@@ -384,7 +389,7 @@ const fetchFilterOptions = async () => {
       query: {
         category: selectedCategory.value || undefined,
         sub_category: subCategoryFilter.value || undefined,
-        dress_style: dressStyleFilter.value || undefined,
+        collection: dressStyleFilter.value || undefined,
         search_txt: searchText.value || undefined,
         price_min: priceRange.value[0] > 0 ? priceRange.value[0] : undefined,
         price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
@@ -393,7 +398,7 @@ const fetchFilterOptions = async () => {
     subCategories.value = Array.isArray(response?.data?.sub_categories) ? response.data.sub_categories : []
     colors.value = Array.isArray(response?.data?.colors) ? response.data.colors : []
     sizes.value = Array.isArray(response?.data?.sizes) ? response.data.sizes : []
-    dressTypes.value = Array.isArray(response?.data?.dress_types) ? response.data.dress_types : []
+    dressTypes.value = Array.isArray(response?.data?.collections) ? response.data.collections : []
     selectedCategory.value = categoryParam.value || ''
 
     if (colorFilter.value && !colors.value.some((row) => String(row.id) === colorFilter.value)) {
@@ -430,7 +435,7 @@ const fetchProducts = async () => {
         price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
         color: colorFilter.value || undefined,
         size: sizeFilter.value || undefined,
-        dress_style: dressStyleFilter.value || undefined,
+        collection: dressStyleFilter.value || undefined,
       },
     })
 
@@ -457,7 +462,7 @@ const applyFilters = async (closeDialog = false) => {
     ? `/frontend/categories/${selectedCategory.value}`
     : '/frontend/categories'
   const targetQuery: Record<string, string> = {}
-  if (dressStyleFilter.value) targetQuery.dress_style = dressStyleFilter.value
+  if (dressStyleFilter.value) targetQuery.collection = dressStyleFilter.value
   if (subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
   if (priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
   if (priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
@@ -516,6 +521,7 @@ watch(() => route.fullPath, async () => {
   dressStyleFilter.value = dressStyleParam.value || ''
   subCategoryFilter.value = subCategoryParam.value || ''
   priceRange.value = [priceMinParam.value, priceMaxParam.value]
+  searchText.value = searchTxtParam.value || ''
   page.value = 1
   await fetchCategories()
   await fetchFilterOptions()
@@ -527,6 +533,7 @@ onMounted(async () => {
   dressStyleFilter.value = dressStyleParam.value || ''
   subCategoryFilter.value = subCategoryParam.value || ''
   priceRange.value = [priceMinParam.value, priceMaxParam.value]
+  searchText.value = searchTxtParam.value || ''
   await fetchCategories()
   await fetchFilterOptions()
   await fetchProducts()

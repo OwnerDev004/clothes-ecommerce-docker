@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('dress_types', function (Blueprint $table) {
-            if (!Schema::hasColumn('dress_types', 'image_url')) {
+        Schema::table('collections', function (Blueprint $table) {
+            if (!Schema::hasColumn('collections', 'image_url')) {
                 $table->string('image_url')->nullable()->after('img');
             }
-            if (!Schema::hasColumn('dress_types', 'image_public_id')) {
+            if (!Schema::hasColumn('collections', 'image_public_id')) {
                 $table->string('image_public_id')->nullable()->after('image_url');
             }
         });
@@ -20,11 +20,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('dress_types', function (Blueprint $table) {
-            if (Schema::hasColumn('dress_types', 'image_public_id')) {
+        Schema::table('collections', function (Blueprint $table) {
+            if (Schema::hasColumn('collections', 'image_public_id')) {
                 $table->dropColumn('image_public_id');
             }
-            if (Schema::hasColumn('dress_types', 'image_url')) {
+            if (Schema::hasColumn('collections', 'image_url')) {
                 $table->dropColumn('image_url');
             }
         });

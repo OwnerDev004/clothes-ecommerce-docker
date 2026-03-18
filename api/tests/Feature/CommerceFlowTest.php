@@ -396,9 +396,9 @@ class CommerceFlowTest extends TestCase
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        $dressTypeId = DB::table('dress_types')->insertGetId([
-            'name' => 'DressType ' . $suffix,
-            'slug' => 'dress-type-' . $suffix,
+        $collectionId = DB::table('collections')->insertGetId([
+            'name' => 'Collection ' . $suffix,
+            'slug' => 'collection-' . $suffix,
             'sort_order' => 0,
             'img' => 'default_empty',
             'created_at' => now(),
@@ -423,7 +423,12 @@ class CommerceFlowTest extends TestCase
             'name' => 'Product ' . $suffix,
             'price' => $sellPrice,
             'category_id' => $categoryId,
-            'dress_type_id' => $dressTypeId,
+        ]);
+        DB::table('collection_product')->insert([
+            'collection_id' => $collectionId,
+            'product_id' => $product->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return ProductVariant::create([

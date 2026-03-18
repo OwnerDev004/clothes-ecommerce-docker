@@ -59,7 +59,8 @@ class ProductUpdateRequest extends FormRequest
             "price" => "sometimes|numeric|min:0",
             "category_id" => "sometimes|integer|exists:categories,id",
             "sub_category_id" => "sometimes|nullable|integer|exists:sub_categories,id",
-            "dress_type_id" => "sometimes|integer|exists:dress_types,id",
+            "collection_ids" => "sometimes|array",
+            "collection_ids.*" => "integer|exists:collections,id",
             "clear_images" => "nullable|boolean",
 
             // Mixed update payload: keep existing + upload new.

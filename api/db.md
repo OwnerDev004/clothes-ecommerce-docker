@@ -26,7 +26,7 @@
 -desc (nullable)
 -slug
 
-+dress_types
++collections
 -id
 -name
 -desc (nullable)
@@ -42,7 +42,6 @@
 -desc
 -price
 -category_id
--dress_type_id
 
 +colors
 -id

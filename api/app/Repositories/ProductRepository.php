@@ -34,7 +34,7 @@ class ProductRepository extends BaseRepository
             $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
-            $dressStyle = $filters['dress_style'] ?? null;
+            $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
 
             $query = $this->model->newQuery()->select('products.*')->with([
                 'thumbnail:id,product_id,image_url,image_type,sort_order',
@@ -44,6 +44,7 @@ class ProductRepository extends BaseRepository
                 },
                 'brand:id,name,slug,image_url',
                 'subCategory:id,category_id,name,slug',
+                'collections:id,name,slug',
             ]);
 
             if ($searchText !== '') {
@@ -68,17 +69,23 @@ class ProductRepository extends BaseRepository
                 }
             }
 
-            if (!is_null($dressStyle) && $dressStyle !== '') {
-                if (is_numeric($dressStyle)) {
-                    $query->where('products.dress_type_id', (int) $dressStyle);
-                } else {
-                    $query->whereExists(function (Builder $sub) use ($dressStyle) {
+            if (!is_null($collection) && $collection !== '') {
+                if (is_numeric($collection)) {
+                    $query->whereExists(function (Builder $sub) use ($collection) {
                         $sub->selectRaw('1')
-                            ->from('dress_types')
-                            ->whereColumn('dress_types.id', 'products.dress_type_id')
-                            ->where(function ($w) use ($dressStyle) {
-                                $w->where('dress_types.slug', $dressStyle)
-                                    ->orWhere('dress_types.name', 'like', '%' . $dressStyle . '%');
+                            ->from('collection_product')
+                            ->whereColumn('collection_product.product_id', 'products.id')
+                            ->where('collection_product.collection_id', (int) $collection);
+                    });
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($collection) {
+                        $sub->selectRaw('1')
+                            ->from('collection_product')
+                            ->join('collections', 'collections.id', '=', 'collection_product.collection_id')
+                            ->whereColumn('collection_product.product_id', 'products.id')
+                            ->where(function ($w) use ($collection) {
+                                $w->where('collections.slug', $collection)
+                                    ->orWhere('collections.name', 'like', '%' . $collection . '%');
                             });
                     });
                 }
@@ -160,7 +167,7 @@ class ProductRepository extends BaseRepository
             ->with([
                 'category:id,name,slug',
                 'subCategory:id,category_id,name,slug',
-                'dressType:id,name,slug',
+                'collections:id,name,slug',
                 'brand:id,name,slug,image_url',
                 'thumbnail:id,product_id,image_url,image_type,sort_order',
                 'images' => function ($q) {

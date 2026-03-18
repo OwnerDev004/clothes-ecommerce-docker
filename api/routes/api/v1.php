@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\BrandController;
-use App\Http\Controllers\Api\V1\DressTypeController;
+use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\VoucherController;
 use Illuminate\Support\Facades\Route;
@@ -93,8 +93,9 @@ Route::prefix('brands')->group(function () {
     Route::get('/', [BrandController::class, 'index']);
 });
 
-Route::prefix('dress-types')->group(function () {
-    Route::get('/', [DressTypeController::class, 'index']);
+Route::prefix('collections')->group(function () {
+    Route::get('/', [CollectionController::class, 'index']);
+    Route::get('/{collection:slug}', [CollectionController::class, 'show']);
 });
 
 Route::prefix('categories')->group(function () {
@@ -173,10 +174,10 @@ Route::prefix('admin')->group(function () {
         Route::delete('/{brand}', [BrandController::class, 'destroy']);
     });
 
-    Route::prefix('dress-types')->middleware(['auth:admin'])->group(function () {
-        Route::post('/', [DressTypeController::class, 'store']);
-        Route::put('/{dressType}', [DressTypeController::class, 'update']);
-        Route::delete('/{dressType}', [DressTypeController::class, 'destroy']);
+    Route::prefix('collections')->middleware(['auth:admin'])->group(function () {
+        Route::post('/', [CollectionController::class, 'store']);
+        Route::put('/{collection:slug}', [CollectionController::class, 'update']);
+        Route::delete('/{collection:slug}', [CollectionController::class, 'destroy']);
     });
 
 

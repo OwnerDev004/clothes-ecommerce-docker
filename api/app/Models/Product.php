@@ -18,7 +18,6 @@ class Product extends Model
         "price",
         "category_id",
         "sub_category_id",
-        "dress_type_id",
         "brand_id",
     ];
 
@@ -41,9 +40,9 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function dressType()
+    public function collections()
     {
-        return $this->belongsTo(DressType::class);
+        return $this->belongsToMany(Collection::class);
     }
 
     public function brand()
