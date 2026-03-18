@@ -247,6 +247,11 @@ const viewDressStyle = (slug: string) => {
   })
 }
 
+// shopNow
+const shopNow = () => {
+  router.push('/frontend/categories')
+}
+
 onMounted(async () => {
   await Promise.all([fetchBrands(), fetchCategories(), fetchDressTypes()])
   await fetchProducts(true)
@@ -272,7 +277,7 @@ onMounted(async () => {
                 garments, designed to bring out your individuality and cater to
                 your sense of style.
               </p>
-              <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]">
+              <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]" @click="shopNow">
                 Shop Now
               </button>
             </div>
