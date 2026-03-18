@@ -251,6 +251,15 @@ const viewDressStyle = (slug: string) => {
 const shopNow = () => {
   router.push('/frontend/categories')
 }
+const getBrandRoute = (id: number | string) => {
+  if (String(id) === 'placeholder') {
+    return { path: '/frontend/categories' }
+  }
+  return {
+    path: '/frontend/categories',
+    query: { brand: String(id), brand_only: '1' },
+  }
+}
 
 onMounted(async () => {
   await Promise.all([fetchBrands(), fetchCategories(), fetchDressTypes()])
@@ -294,17 +303,24 @@ onMounted(async () => {
 
     <!-- Brand Section -->
     <section class="py-10 bg-black">
-      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4" :space-between="1" :loop="true" :autoplay="{
+      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
+        640: { slidesPerView: 3, spaceBetween: 10 },
+        1024: { slidesPerView: 4, spaceBetween: 12 },
+      }" :loop="true" :autoplay="{
         delay: 5000,
-        disableOnInteraction: false,
+        disableOnInteraction: true
       }">
         <SwiperSlide
           v-for="slide in brands.length ? brands : [{ id: 'placeholder', name: 'Brand', image_url: '/img/brand/brand1.png' }]"
           :key="slide.id">
-          <div class="p-4 bg-gray-200 flex justify-center">
-            <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/brand1.png')" :alt="slide.name"
-              class="w-[100px] md:w-[150px]" format="webp" densities="x1" />
-          </div>
+          <NuxtLink :to="getBrandRoute(slide.id)" class="block rounded-xl bg-gray-200 h-[96px] md:h-[110px]">
+            <div class="w-full h-full px-3 md:px-4 flex items-center justify-center">
+              <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/default_image.webp')"
+                :alt="slide.name"
+                class="w-full h-full max-w-[170px] md:max-w-[220px] max-h-[64px] md:max-h-[72px] object-contain object-center"
+                format="webp" densities="x1" />
+            </div>
+          </NuxtLink>
         </SwiperSlide>
       </Swiper>
     </section>

@@ -35,11 +35,12 @@ class ProductController extends Controller
         $category = $request->query('category');
         $subCategory = $request->query('sub_category');
         $collection = $request->query('collection', $request->query('dress_style'));
+        $brand = $request->query('brand');
         $price = $request->query('price');
         $priceMin = $request->query('price_min');
         $priceMax = $request->query('price_max');
 
-        $applyProductFilters = function ($query, array $options = []) use ($searchText, $category, $subCategory, $collection, $price, $priceMin, $priceMax) {
+        $applyProductFilters = function ($query, array $options = []) use ($searchText, $category, $subCategory, $collection, $brand, $price, $priceMin, $priceMax) {
             $ignoreSubCategory = $options['ignore_sub_category'] ?? false;
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
@@ -98,6 +99,22 @@ class ProductController extends Controller
                 }
             }
 
+            if (!is_null($brand) && $brand !== '') {
+                if (is_numeric($brand)) {
+                    $query->where('p.brand_id', (int) $brand);
+                } else {
+                    $query->whereExists(function ($sub) use ($brand) {
+                        $sub->selectRaw('1')
+                            ->from('brands as b')
+                            ->whereColumn('b.id', 'p.brand_id')
+                            ->where(function ($w) use ($brand) {
+                                $w->where('b.slug', $brand)
+                                    ->orWhere('b.name', 'like', '%' . $brand . '%');
+                            });
+                    });
+                }
+            }
+
             if (!is_null($price) && $price !== '') {
                 $query->where('p.price', '<=', (float) $price);
             }
@@ -116,10 +133,11 @@ class ProductController extends Controller
 
         $categories = DB::table('categories as c')
             ->select('c.id', 'c.name', 'c.slug', 'c.image_url')
-            ->whereExists(function ($sub) {
+            ->whereExists(function ($sub) use ($productIdsQuery) {
                 $sub->selectRaw('1')
                     ->from('products as p')
-                    ->whereColumn('p.category_id', 'c.id');
+                    ->whereColumn('p.category_id', 'c.id')
+                    ->whereIn('p.id', $productIdsQuery);
             })
             ->orderBy('name')
             ->get();
@@ -142,11 +160,13 @@ class ProductController extends Controller
             ->get();
 
         $collections = DB::table('collections as d')
-            ->select('d.id', 'd.name', 'd.slug', 'd.sort_order', 'd.image_url')
-            ->whereExists(function ($sub) {
+            ->select('d.id', 'd.category_id', 'd.name', 'd.slug', 'd.sort_order', 'd.image_url')
+            ->whereExists(function ($sub) use ($productIdsQuery) {
                 $sub->selectRaw('1')
                     ->from('collection_product as cp')
-                    ->whereColumn('cp.collection_id', 'd.id');
+                    ->join('products as p', 'p.id', '=', 'cp.product_id')
+                    ->whereColumn('cp.collection_id', 'd.id')
+                    ->whereIn('p.id', $productIdsQuery);
             })
             ->orderBy('d.sort_order')
             ->orderBy('d.name')
@@ -155,8 +175,9 @@ class ProductController extends Controller
         $subCategoryGrouped = DB::table('sub_categories as sc')
             ->join('products as p', 'p.sub_category_id', '=', 'sc.id')
             ->whereIn('p.id', $productIdsQuery)
-            ->selectRaw('MAX(sc.id) as sub_category_id, sc.name')
-            ->groupBy('sc.name')
+            ->selectRaw('MAX(sc.id) as sub_category_id, sc.category_id, sc.name')
+            ->groupBy('sc.category_id', 'sc.name')
+            ->orderBy('sc.category_id')
             ->orderBy('sc.name');
 
         $subCategories = DB::table('sub_categories as sc')
@@ -181,12 +202,53 @@ class ProductController extends Controller
             ]);
         }
 
+        $brands = DB::table('brands as b')
+            ->select('b.id', 'b.name', 'b.slug', 'b.sort_order', 'b.image_url')
+            ->whereExists(function ($sub) use ($productIdsQuery) {
+                $sub->selectRaw('1')
+                    ->from('products as p')
+                    ->whereColumn('p.brand_id', 'b.id')
+                    ->whereIn('p.id', $productIdsQuery);
+            })
+            ->orderBy('b.sort_order')
+            ->orderBy('b.name')
+            ->get();
+
+        $collectionsByCategory = $collections->groupBy('category_id');
+        $subCategoriesByCategory = $subCategories
+            ->filter(fn ($row) => !is_null($row->category_id))
+            ->groupBy('category_id');
+
+        $categoryTree = $categories->map(function ($parent) use ($subCategoriesByCategory, $collectionsByCategory) {
+            $children = collect($subCategoriesByCategory->get($parent->id, []))->map(function ($child) use ($collectionsByCategory, $parent) {
+                return (object) [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'slug' => $child->slug,
+                    'category_id' => $child->category_id,
+                    'sub_child' => collect($collectionsByCategory->get($parent->id, []))->values(),
+                ];
+            })->values();
+
+            return (object) [
+                'id' => $parent->id,
+                'name' => $parent->name,
+                'slug' => $parent->slug,
+                'image_url' => $parent->image_url,
+                'child' => $children,
+            ];
+        })->values();
+
         return $this->success([
             'categories' => $categories,
             'sub_categories' => $subCategories,
             'colors' => $colors,
             'sizes' => $sizes,
             'collections' => $collections,
+            'brands' => $brands,
+            'category_hierarchy' => [
+                'parents' => $categoryTree,
+            ],
         ], 'Product filters');
     }
 

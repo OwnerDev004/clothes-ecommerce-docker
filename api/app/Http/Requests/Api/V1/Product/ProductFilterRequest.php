@@ -22,6 +22,7 @@ class ProductFilterRequest extends FormRequest
             "price_max" => "nullable|numeric",
             "color" => "nullable|string",
             "size" => "nullable|string",
+            "brand" => "nullable|string",
             "collection" => "nullable|string",
             "dress_style" => "nullable|string",
             "page" => "nullable|integer|min:1",

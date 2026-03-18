@@ -33,9 +33,11 @@ const props = defineProps({
 </script>
 <template>
     <div>
-        <section
-            class="bg-gray p-5 flex justify-center rounded-2xl cursor-pointer hover:scale-95 translate-all duration-300">
-            <NuxtImg sizes="sm:100vw md:500px" :src="img" format="webp" densities="x1" />
+        <section class="bg-gray p-4 rounded-2xl cursor-pointer hover:scale-95 translate-all duration-300">
+            <div class="w-full aspect-[4/5] overflow-hidden rounded-xl bg-white/40">
+                <NuxtImg sizes="sm:100vw md:500px" :src="img" format="webp" densities="x1"
+                    class="w-full h-full object-cover" />
+            </div>
         </section>
         <h1>{{ title }}</h1>
         <SharesRating :stars-num="starsNum" :rating-amount="ratingAmount" />

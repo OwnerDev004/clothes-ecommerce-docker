@@ -4,6 +4,7 @@ namespace App\Repositories\Admin;
 
 use App\Models\Product;
 use App\Repositories\BaseRepository;
+use App\Repositories\ProductRepository as PublicProductRepository;
 use App\Services\Api\V1\Image\ImageService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class ProductRepository extends BaseRepository
 {
+    private const ADMIN_LIST_VERSION_KEY = 'products:admin:getAll:version';
+    private const ADMIN_LIST_TTL_SECONDS = 300;
     protected $product_model;
 
     // Services
@@ -30,8 +33,9 @@ class ProductRepository extends BaseRepository
             return $value !== null && $value !== '';
         });
         ksort($normalized);
-        $cacheKey = 'products:admin:getAll:' . md5(json_encode($normalized));
-        $ttlSeconds = 300;
+        $cacheVersion = self::getAdminListCacheVersion();
+        $cacheKey = 'products:admin:getAll:v' . $cacheVersion . ':' . md5(json_encode($normalized));
+        $ttlSeconds = self::ADMIN_LIST_TTL_SECONDS;
 
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
             $searchText = trim((string) ($filters['search_txt'] ?? ''));
@@ -42,6 +46,7 @@ class ProductRepository extends BaseRepository
             $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
+            $brand = $filters['brand'] ?? null;
             $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
 
             $query = $this->product_model->newQuery()->select('products.*')->with([
@@ -115,6 +120,22 @@ class ProductRepository extends BaseRepository
                 }
             }
 
+            if (!is_null($brand) && $brand !== '') {
+                if (is_numeric($brand)) {
+                    $query->where('products.brand_id', (int) $brand);
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($brand) {
+                        $sub->selectRaw('1')
+                            ->from('brands')
+                            ->whereColumn('brands.id', 'products.brand_id')
+                            ->where(function ($w) use ($brand) {
+                                $w->where('brands.slug', $brand)
+                                    ->orWhere('brands.name', 'like', '%' . $brand . '%');
+                            });
+                    });
+                }
+            }
+
             if (!is_null($color) && $color !== '') {
                 $query->whereExists(function (Builder $sub) use ($color) {
                     $sub->selectRaw('1')
@@ -172,12 +193,17 @@ class ProductRepository extends BaseRepository
         $collectionIds = $data['collection_ids'] ?? null;
         unset($data['images'], $data['collection_ids']);
 
-        return DB::transaction(function () use ($data, $images) {
+        return DB::transaction(function () use ($data, $images, $collectionIds) {
             $product = $this->product_model->create($data);
             if (is_array($collectionIds)) {
                 $product->collections()->sync($collectionIds);
             }
             $this->image_service->syncProductImages($product, null, $images, false);
+
+            DB::afterCommit(function () {
+                self::bumpAdminListCacheVersion();
+                PublicProductRepository::bumpPublicListCacheVersion();
+            });
 
             return $product->load([
                 'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
@@ -207,7 +233,7 @@ class ProductRepository extends BaseRepository
         unset($data['new_images']);
         unset($data['collection_ids']);
 
-        return DB::transaction(function () use ($id, $data, $clearImages, $existingImages, $newImages, $hasClearImagesPayload, $hasExistingImagesPayload, $hasNewImagesPayload) {
+        return DB::transaction(function () use ($id, $data, $clearImages, $existingImages, $newImages, $collectionIds, $hasCollectionIdsPayload, $hasClearImagesPayload, $hasExistingImagesPayload, $hasNewImagesPayload) {
             $product = $this->product_model->findOrFail($id);
             $product->update($data);
 
@@ -220,6 +246,11 @@ class ProductRepository extends BaseRepository
             if ($shouldSyncImages) {
                 $this->image_service->syncProductImages($product, $existingImages, $newImages, $clearImages);
             }
+
+            DB::afterCommit(function () {
+                self::bumpAdminListCacheVersion();
+                PublicProductRepository::bumpPublicListCacheVersion();
+            });
 
             return $product->load([
                 'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
@@ -258,6 +289,11 @@ class ProductRepository extends BaseRepository
                 });
             }
 
+            DB::afterCommit(function () {
+                self::bumpAdminListCacheVersion();
+                PublicProductRepository::bumpPublicListCacheVersion();
+            });
+
             return true;
         });
     }
@@ -268,6 +304,25 @@ class ProductRepository extends BaseRepository
             ->with(['category', 'subCategory', 'collections', 'images', 'variants'])
             ->find($id);
         return $product;
+    }
+
+    private static function bumpAdminListCacheVersion(): void
+    {
+        if (!Cache::has(self::ADMIN_LIST_VERSION_KEY)) {
+            Cache::forever(self::ADMIN_LIST_VERSION_KEY, 1);
+        }
+        Cache::increment(self::ADMIN_LIST_VERSION_KEY);
+    }
+
+    private static function getAdminListCacheVersion(): int
+    {
+        $version = Cache::get(self::ADMIN_LIST_VERSION_KEY);
+        if (is_null($version)) {
+            Cache::forever(self::ADMIN_LIST_VERSION_KEY, 1);
+            return 1;
+        }
+
+        return (int) $version;
     }
 
 }

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Cache;
 
 class ProductRepository extends BaseRepository
 {
+    private const PUBLIC_LIST_VERSION_KEY = 'products:public:getAll:version';
+    private const PUBLIC_LIST_TTL_SECONDS = 300;
 
     public function __construct(Product $model)
     {
@@ -22,10 +24,13 @@ class ProductRepository extends BaseRepository
             return $value !== null && $value !== '';
         });
         ksort($normalized);
-        $cacheKey = 'products:public:getAll:' . md5(json_encode($normalized));
-        $ttlSeconds = 300;
+        $cacheVersion = self::getPublicListCacheVersion();
+        $cacheKey = 'products:public:getAll:v' . $cacheVersion . ':' . md5(json_encode($normalized));
+        $requestedPage = (int) ($filters['page'] ?? 1);
+        $shouldCache = $requestedPage === 1;
+        $isUnfilteredRequest = empty(array_diff_key($normalized, array_flip(['page', 'per_page'])));
 
-        return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
+        $queryBuilder = function () use ($filters) {
             $searchText = trim((string) ($filters['search_txt'] ?? ''));
             $category = $filters['category'] ?? null;
             $subCategory = $filters['sub_category'] ?? null;
@@ -34,6 +39,7 @@ class ProductRepository extends BaseRepository
             $priceMax = $filters['price_max'] ?? null;
             $color = $filters['color'] ?? null;
             $size = $filters['size'] ?? null;
+            $brand = $filters['brand'] ?? null;
             $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
 
             $query = $this->model->newQuery()->select('products.*')->with([
@@ -104,6 +110,22 @@ class ProductRepository extends BaseRepository
                 }
             }
 
+            if (!is_null($brand) && $brand !== '') {
+                if (is_numeric($brand)) {
+                    $query->where('products.brand_id', (int) $brand);
+                } else {
+                    $query->whereExists(function (Builder $sub) use ($brand) {
+                        $sub->selectRaw('1')
+                            ->from('brands')
+                            ->whereColumn('brands.id', 'products.brand_id')
+                            ->where(function ($w) use ($brand) {
+                                $w->where('brands.slug', $brand)
+                                    ->orWhere('brands.name', 'like', '%' . $brand . '%');
+                            });
+                    });
+                }
+            }
+
             if (!is_null($color) && $color !== '') {
                 $query->whereExists(function (Builder $sub) use ($color) {
                     $sub->selectRaw('1')
@@ -158,7 +180,45 @@ class ProductRepository extends BaseRepository
             }
 
             return $query->orderByDesc('products.id')->paginate($perPage);
-        });
+        };
+
+        if (!$shouldCache) {
+            return $queryBuilder();
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (!is_null($cached)) {
+            return $cached;
+        }
+
+        $result = $queryBuilder();
+
+        // Prevent poisoning cache with an accidental empty first-page unfiltered response.
+        if ($isUnfilteredRequest && $result->total() === 0) {
+            return $result;
+        }
+
+        Cache::put($cacheKey, $result, self::PUBLIC_LIST_TTL_SECONDS);
+        return $result;
+    }
+
+    public static function bumpPublicListCacheVersion(): void
+    {
+        if (!Cache::has(self::PUBLIC_LIST_VERSION_KEY)) {
+            Cache::forever(self::PUBLIC_LIST_VERSION_KEY, 1);
+        }
+        Cache::increment(self::PUBLIC_LIST_VERSION_KEY);
+    }
+
+    private static function getPublicListCacheVersion(): int
+    {
+        $version = Cache::get(self::PUBLIC_LIST_VERSION_KEY);
+        if (is_null($version)) {
+            Cache::forever(self::PUBLIC_LIST_VERSION_KEY, 1);
+            return 1;
+        }
+
+        return (int) $version;
     }
 
     public function findById(int $id): ?Product

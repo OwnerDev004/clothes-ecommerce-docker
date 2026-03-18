@@ -20,6 +20,19 @@ class ProductUpdateRequest extends FormRequest
             $merge['existing_images'] = is_array($raw['existing_images']) ? $raw['existing_images'] : [];
         }
 
+        if (array_key_exists('collection_ids', $raw) && !is_array($raw['collection_ids'])) {
+            $collectionRaw = trim((string) $raw['collection_ids']);
+            if ($collectionRaw !== '' && $collectionRaw[0] === '[') {
+                $decoded = json_decode($collectionRaw, true);
+                if (is_array($decoded)) {
+                    $merge['collection_ids'] = $decoded;
+                }
+            } else {
+                $items = array_values(array_filter(array_map('trim', explode(',', $collectionRaw)), fn($v) => $v !== ''));
+                $merge['collection_ids'] = $items;
+            }
+        }
+
         // If client explicitly sends image keys but both are empty/null, treat as clear-all.
         $hasNewImagesKey = array_key_exists('new_images', $raw);
         $hasExistingImagesKey = array_key_exists('existing_images', $raw);
@@ -59,6 +72,7 @@ class ProductUpdateRequest extends FormRequest
             "price" => "sometimes|numeric|min:0",
             "category_id" => "sometimes|integer|exists:categories,id",
             "sub_category_id" => "sometimes|nullable|integer|exists:sub_categories,id",
+            "brand_id" => "sometimes|nullable|integer|exists:brands,id",
             "collection_ids" => "sometimes|array",
             "collection_ids.*" => "integer|exists:collections,id",
             "clear_images" => "nullable|boolean",

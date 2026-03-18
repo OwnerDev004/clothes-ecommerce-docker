@@ -5,8 +5,8 @@
         <Loading />
       </el-icon>
       <p class="text-sm text-gray-500">Loading category data...</p>
-    </div>
 
+    </div>
     <div v-else>
       <div class="px-5 desktop:container relative">
         <BaseBreadcrumb :icon="ArrowRight">
@@ -83,6 +83,18 @@
             </section>
 
             <section class="border-b border-b-gray py-3">
+              <h1 class="text-lg font-bold font-Poppins">Brand</h1>
+              <ul class="leading-10">
+                <li v-for="brand in brands" :key="brand.id"
+                  class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                  :class="{ 'bg-gray': brandFilter === String(brand.id) }" @click="selectBrand(String(brand.id))">
+                  <p>{{ brand.name }}</p>
+                  <Icon name="weui:arrow-filled" />
+                </li>
+              </ul>
+            </section>
+
+            <section class="border-b border-b-gray py-3">
               <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
               <ul class="leading-10">
                 <li v-for="sub in subCategories" :key="sub.id"
@@ -97,7 +109,7 @@
 
             <el-button
               class="border rounded-[64px] p-4 w-full outline-none bg-transparent text-black hover:bg-black hover:text-white mt-4"
-              :disabled="isLoadingProducts" @click="applyFilters">
+              :disabled="isLoadingProducts" onclick="applyFilters">
               Apply Filter
             </el-button>
           </div>
@@ -218,6 +230,18 @@
           </section>
 
           <section class="border-b border-b-gray py-3">
+            <h1 class="text-lg font-bold font-Poppins">Brand</h1>
+            <ul class="leading-10">
+              <li v-for="brand in brands" :key="brand.id"
+                class="flex justify-between cursor-pointer hover:bg-gray items-center px-2 rounded-xl"
+                :class="{ 'bg-gray': brandFilter === String(brand.id) }" @click="selectBrand(String(brand.id))">
+                <p>{{ brand.name }}</p>
+                <Icon name="weui:arrow-filled" />
+              </li>
+            </ul>
+          </section>
+
+          <section class="border-b border-b-gray py-3">
             <h1 class="text-lg font-bold font-Poppins">Sub Category</h1>
             <ul class="leading-10">
               <li v-for="sub in subCategories" :key="sub.id"
@@ -261,6 +285,7 @@ type SubCategoryOption = { id: number | string; name: string; slug?: string; cat
 type ColorOption = { id: number | string; name: string; hex_code?: string }
 type SizeOption = { id: number | string; name: string }
 type DressTypeOption = { id: number | string; name: string; slug?: string }
+type BrandOption = { id: number | string; name: string; slug?: string }
 type ProductImage = { image_url?: string }
 type ProductApi = { id: number | string; name?: string; price?: number | string; thumbnail?: ProductImage | null; images?: ProductImage[] }
 type ProductCard = {
@@ -279,6 +304,7 @@ const subCategories = ref<SubCategoryOption[]>([])
 const colors = ref<ColorOption[]>([])
 const sizes = ref<SizeOption[]>([])
 const dressTypes = ref<DressTypeOption[]>([])
+const brands = ref<BrandOption[]>([])
 
 const products = ref<ProductCard[]>([])
 const displayProducts = ref<ProductCard[]>([])
@@ -288,6 +314,7 @@ const searchText = ref('')
 const priceRange = ref<[number, number]>([0, 200])
 const colorFilter = ref('')
 const sizeFilter = ref('')
+const brandFilter = ref('')
 const subCategoryFilter = ref('')
 const dressStyleFilter = ref('')
 const sortBy = ref<'newest' | 'price_asc' | 'price_desc' | 'name_asc'>('newest')
@@ -314,6 +341,16 @@ const dressStyleParam = computed(() => {
 const subCategoryParam = computed(() => {
   const raw = route.query.sub_category
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+})
+const brandParam = computed(() => {
+  const raw = route.query.brand
+  const value = Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+  return /^\d+$/.test(value) ? value : ''
+})
+const brandOnlyParam = computed(() => {
+  const raw = route.query.brand_only
+  const value = Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+  return ['1', 'true', 'yes'].includes(value.toLowerCase())
 })
 const priceMinParam = computed(() => {
   const raw = route.query.price_min
@@ -387,18 +424,20 @@ const fetchFilterOptions = async () => {
     const response: any = await $fetch(`${apiBase}/products/filters`, {
       method: 'GET',
       query: {
-        category: selectedCategory.value || undefined,
-        sub_category: subCategoryFilter.value || undefined,
-        collection: dressStyleFilter.value || undefined,
-        search_txt: searchText.value || undefined,
-        price_min: priceRange.value[0] > 0 ? priceRange.value[0] : undefined,
-        price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
+        category: brandOnlyParam.value ? undefined : (selectedCategory.value || undefined),
+        sub_category: brandOnlyParam.value ? undefined : (subCategoryFilter.value || undefined),
+        collection: brandOnlyParam.value ? undefined : (dressStyleFilter.value || undefined),
+        brand: brandFilter.value || undefined,
+        search_txt: brandOnlyParam.value ? undefined : (searchText.value || undefined),
+        price_min: brandOnlyParam.value ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
+        price_max: brandOnlyParam.value ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
       },
     })
     subCategories.value = Array.isArray(response?.data?.sub_categories) ? response.data.sub_categories : []
     colors.value = Array.isArray(response?.data?.colors) ? response.data.colors : []
     sizes.value = Array.isArray(response?.data?.sizes) ? response.data.sizes : []
     dressTypes.value = Array.isArray(response?.data?.collections) ? response.data.collections : []
+    brands.value = Array.isArray(response?.data?.brands) ? response.data.brands : []
     selectedCategory.value = categoryParam.value || ''
 
     if (colorFilter.value && !colors.value.some((row) => String(row.id) === colorFilter.value)) {
@@ -407,6 +446,8 @@ const fetchFilterOptions = async () => {
     if (sizeFilter.value && !sizes.value.some((row) => String(row.id) === sizeFilter.value)) {
       sizeFilter.value = ''
     }
+    // Keep explicit brand query even when API returns no matching products/brands.
+    // Otherwise brand filter gets cleared and products fallback to unfiltered results.
     if (subCategoryFilter.value && !subCategories.value.some((row) => (row.slug || String(row.id)) === subCategoryFilter.value)) {
       subCategoryFilter.value = ''
     }
@@ -428,14 +469,15 @@ const fetchProducts = async () => {
       query: {
         page: page.value,
         per_page: meta.value.per_page,
-        category: selectedCategory.value || undefined,
-        sub_category: subCategoryFilter.value || undefined,
-        search_txt: searchText.value || undefined,
-        price_min: priceRange.value[0] > 0 ? priceRange.value[0] : undefined,
-        price_max: priceRange.value[1] < 200 ? priceRange.value[1] : undefined,
+        category: brandOnlyParam.value ? undefined : (selectedCategory.value || undefined),
+        sub_category: brandOnlyParam.value ? undefined : (subCategoryFilter.value || undefined),
+        search_txt: brandOnlyParam.value ? undefined : (searchText.value || undefined),
+        price_min: brandOnlyParam.value ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
+        price_max: brandOnlyParam.value ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
         color: colorFilter.value || undefined,
         size: sizeFilter.value || undefined,
-        collection: dressStyleFilter.value || undefined,
+        collection: brandOnlyParam.value ? undefined : (dressStyleFilter.value || undefined),
+        brand: brandFilter.value || undefined,
       },
     })
 
@@ -458,14 +500,19 @@ const fetchProducts = async () => {
 
 const applyFilters = async (closeDialog = false) => {
   page.value = 1
-  const targetPath = selectedCategory.value
-    ? `/frontend/categories/${selectedCategory.value}`
-    : '/frontend/categories'
+  const targetPath = brandOnlyParam.value
+    ? '/frontend/categories'
+    : selectedCategory.value
+      ? `/frontend/categories/${selectedCategory.value}`
+      : '/frontend/categories'
   const targetQuery: Record<string, string> = {}
-  if (dressStyleFilter.value) targetQuery.collection = dressStyleFilter.value
-  if (subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
-  if (priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
-  if (priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
+  if (!brandOnlyParam.value && dressStyleFilter.value) targetQuery.collection = dressStyleFilter.value
+  if (brandFilter.value) targetQuery.brand = brandFilter.value
+  if (!brandOnlyParam.value && subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
+  if (!brandOnlyParam.value && priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
+  if (!brandOnlyParam.value && priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
+  if (!brandOnlyParam.value && searchText.value) targetQuery.search_txt = searchText.value
+  if (brandOnlyParam.value && brandFilter.value) targetQuery.brand_only = '1'
 
   if (route.path !== targetPath || JSON.stringify(route.query) !== JSON.stringify(targetQuery)) {
     await router.push({ path: targetPath, query: targetQuery })
@@ -494,6 +541,10 @@ const selectDressStyle = (value: string) => {
   dressStyleFilter.value = dressStyleFilter.value === value ? '' : value
 }
 
+const selectBrand = (value: string) => {
+  brandFilter.value = brandFilter.value === value ? '' : value
+}
+
 const selectSubCategory = (value: string) => {
   subCategoryFilter.value = subCategoryFilter.value === value ? '' : value
 }
@@ -517,11 +568,12 @@ const checkScreenSize = () => {
 }
 
 watch(() => route.fullPath, async () => {
-  selectedCategory.value = categoryParam.value || ''
-  dressStyleFilter.value = dressStyleParam.value || ''
-  subCategoryFilter.value = subCategoryParam.value || ''
-  priceRange.value = [priceMinParam.value, priceMaxParam.value]
-  searchText.value = searchTxtParam.value || ''
+  selectedCategory.value = brandOnlyParam.value ? '' : (categoryParam.value || '')
+  dressStyleFilter.value = brandOnlyParam.value ? '' : (dressStyleParam.value || '')
+  brandFilter.value = brandParam.value || ''
+  subCategoryFilter.value = brandOnlyParam.value ? '' : (subCategoryParam.value || '')
+  priceRange.value = brandOnlyParam.value ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
+  searchText.value = brandOnlyParam.value ? '' : (searchTxtParam.value || '')
   page.value = 1
   await fetchCategories()
   await fetchFilterOptions()
@@ -529,11 +581,12 @@ watch(() => route.fullPath, async () => {
 })
 
 onMounted(async () => {
-  selectedCategory.value = categoryParam.value || ''
-  dressStyleFilter.value = dressStyleParam.value || ''
-  subCategoryFilter.value = subCategoryParam.value || ''
-  priceRange.value = [priceMinParam.value, priceMaxParam.value]
-  searchText.value = searchTxtParam.value || ''
+  selectedCategory.value = brandOnlyParam.value ? '' : (categoryParam.value || '')
+  dressStyleFilter.value = brandOnlyParam.value ? '' : (dressStyleParam.value || '')
+  brandFilter.value = brandParam.value || ''
+  subCategoryFilter.value = brandOnlyParam.value ? '' : (subCategoryParam.value || '')
+  priceRange.value = brandOnlyParam.value ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
+  searchText.value = brandOnlyParam.value ? '' : (searchTxtParam.value || '')
   await fetchCategories()
   await fetchFilterOptions()
   await fetchProducts()

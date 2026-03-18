@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1;
+namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
@@ -16,15 +16,29 @@ class BrandController extends Controller
     private const BRAND_IMAGE_WIDTH = 320;
     private const BRAND_IMAGE_HEIGHT = 140;
 
-    public function index()
+    public function index(Request $request)
     {
-        $brands = Brand::query()
-            ->select('id', 'name', 'slug', 'sort_order', 'image_url')
+        $query = Brand::query()->select('id', 'name', 'slug', 'sort_order', 'image_url', 'created_at', 'updated_at');
+
+        if ($request->filled('search_txt')) {
+            $search = trim((string) $request->query('search_txt'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('slug', 'like', '%' . $search . '%');
+            });
+        }
+
+        $brands = $query
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get();
+            ->paginate((int) $request->query('per_page', 20));
 
-        return $this->success($brands, 'Brands list');
+        return $this->paginate($brands, 'Brands list');
+    }
+
+    public function show(Brand $brand)
+    {
+        return $this->success($brand, 'Brand detail');
     }
 
     public function store(Request $request)
@@ -45,7 +59,6 @@ class BrandController extends Controller
                 $request->file('image')->getRealPath(),
                 [
                     'folder' => 'clothes_ecommerce/brand-images',
-                    // Keep brand images consistent for homepage slider cards.
                     'transformation' => [
                         'width' => self::BRAND_IMAGE_WIDTH,
                         'height' => self::BRAND_IMAGE_HEIGHT,
@@ -99,7 +112,6 @@ class BrandController extends Controller
                 $request->file('image')->getRealPath(),
                 [
                     'folder' => 'clothes_ecommerce/brand-images',
-                    // Keep brand images consistent for homepage slider cards.
                     'transformation' => [
                         'width' => self::BRAND_IMAGE_WIDTH,
                         'height' => self::BRAND_IMAGE_HEIGHT,
@@ -118,7 +130,7 @@ class BrandController extends Controller
 
         $brand->update($updateData);
 
-        return $this->success($brand, 'Brand updated');
+        return $this->success($brand->fresh(), 'Brand updated');
     }
 
     public function destroy(Brand $brand)
