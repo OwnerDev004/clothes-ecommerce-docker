@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductControlle
 use App\Http\Controllers\Api\V1\Admin\ProductVariantController as AdminProductVariantController;
 use App\Http\Controllers\Api\V1\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\Api\V1\Admin\BrandController as AdminBrandController;
+use App\Http\Controllers\Api\V1\Admin\CollectionController as AdminCollectionController;
 
 
 //** Customers */ 
@@ -178,9 +179,11 @@ Route::prefix('admin')->group(function () {
     });
 
     Route::prefix('collections')->middleware(['auth:admin'])->group(function () {
-        Route::post('/', [CollectionController::class, 'store']);
-        Route::put('/{collection:slug}', [CollectionController::class, 'update']);
-        Route::delete('/{collection:slug}', [CollectionController::class, 'destroy']);
+        Route::get('/', [AdminCollectionController::class, 'index']);
+        Route::get('/{collection}', [AdminCollectionController::class, 'show']);
+        Route::post('/', [AdminCollectionController::class, 'store']);
+        Route::put('/{collection}', [AdminCollectionController::class, 'update']);
+        Route::delete('/{collection}', [AdminCollectionController::class, 'destroy']);
     });
 
 

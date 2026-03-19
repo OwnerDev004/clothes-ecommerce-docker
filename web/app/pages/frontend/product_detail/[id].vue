@@ -2,8 +2,11 @@
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
+import type { TabsPaneContext } from 'element-plus'
 import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
+import { ArrowRight } from '@element-plus/icons-vue'
+import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 
 type ProductImage = {
   image_url?: string
@@ -68,7 +71,7 @@ const selectedImage = ref('')
 const selectedColorId = ref<number | null>(null)
 const selectedSizeId = ref<number | null>(null)
 const sortBy = ref('')
-const tabIndex = ref(0)
+const activeIndex = ref(1)
 
 const tablists = ref([
   { id: 1, name: 'Product Details' },
@@ -81,8 +84,8 @@ const dropdownOptions = ref([
   { id: 2, label: 'Oldest' },
 ])
 
-const tabClick = (index: number) => {
-  tabIndex.value = index
+const tabClick = (tab: TabsPaneContext) => {
+  activeIndex.value = Number(tab.paneName)
 }
 
 const resolveImageUrl = (input?: string) => {
@@ -306,13 +309,10 @@ watch(() => route.params.id, () => {
 
 <template>
   <div class="px-5 desktop:container">
-    <div class="breadcrumbs text-sm">
-      <ul>
-        <li><a @click.prevent="router.push('/')">Home</a></li>
-        <li>Product Detail</li>
-        <li>{{ product?.name || '...' }}</li>
-      </ul>
-    </div>
+    <BaseBreadcrumb :icon="ArrowRight">
+      <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
+      <el-breadcrumb-item>Product Detail</el-breadcrumb-item>
+    </BaseBreadcrumb>
 
     <div v-if="loading" class="py-16 text-center text-gray-500">Loading product...</div>
 
@@ -400,33 +400,32 @@ watch(() => route.params.id, () => {
     </div>
 
     <div role="tablist" class="tabs tabs-bordered mt-6">
-      <a v-for="(tab, index) in tablists" :key="tab.id" role="tab" class="tab"
-        :class="tabIndex === index ? 'tab-active' : ''" @click="tabClick(index)">
-        <h1>{{ tab.name }}</h1>
-      </a>
-    </div>
-
-    <div class="w-full">
-      <div class="bg-red p-3" v-if="tabIndex == 0">
-        <h1>Product details</h1>
-      </div>
-      <div class="p-3" v-if="tabIndex == 1">
-        <div class="flex justify-between">
-          <h1 class="text-lg sm:text-2xl">All Reviews (0)</h1>
-          <div class="flex gap-2">
-            <button class="bg-gray w-12 h-12 rounded-full text-2xl p-3">
-              <Icon name="lets-icons:filter" class="text-black" />
-            </button>
-            <SharesDropdown v-model="sortBy" :options="dropdownOptions" class="hidden desktop:block" />
-            <button class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl">
-              Write a Review
-            </button>
+      <el-tabs v-model="activeIndex" class="demo-tabs" @tab-click="tabClick">
+        <el-tab-pane v-for="tab in tablists" :key="tab.id" :label="tab.name" :name="tab.id">
+          <div class="w-full">
+            <div class="p-3" v-if="tab.id === 1">
+              <h1>Product details</h1>
+            </div>
+            <div class="p-3" v-if="tab.id === 2">
+              <div class="flex justify-between">
+                <h1 class="text-lg sm:text-2xl">All Reviews (0)</h1>
+                <div class="flex gap-2">
+                  <button class="bg-gray w-12 h-12 rounded-full text-2xl p-3">
+                    <Icon name="lets-icons:filter" class="text-black" />
+                  </button>
+                  <SharesDropdown v-model="sortBy" :options="dropdownOptions" class="hidden desktop:block" />
+                  <button class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl">
+                    Write a Review
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray p-3" v-if="tab.id === 3">
+              <h1>FAQs</h1>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="bg-gray p-3" v-if="tabIndex == 2">
-        <h1>FAQs</h1>
-      </div>
+        </el-tab-pane>
+      </el-tabs>
     </div>
 
     <section class="py-10">
