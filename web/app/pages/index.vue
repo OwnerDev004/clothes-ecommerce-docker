@@ -219,9 +219,7 @@ useInfiniteScroll(
 const viewProduct = (id: number | string) => {
   router.push('/frontend/product_detail/' + id);
 }
-// const viewCategory = (slug: string) => {
-//   router.push('/frontend/categories/' + slug);
-// }
+
 
 const viewCollection = (slug: string | number | null | undefined) => {
   const normalizedSlug = String(slug || '').trim()
@@ -249,6 +247,22 @@ const viewCollection = (slug: string | number | null | undefined) => {
 // shopNow
 const shopNow = () => {
   router.push('/frontend/categories')
+}
+//  viewAllProduct
+const viewAllProduct = () => {
+  router.push({
+    path: '/frontend/categories',
+    query: {
+      collection: undefined,
+      collection_only: undefined,
+      brand: undefined,
+      brand_only: undefined,
+      sub_category: undefined,
+      price_min: undefined,
+      price_max: undefined,
+      search_txt: undefined,
+    },
+  })
 }
 const getBrandRoute = (id: number | string) => {
   if (String(id) === 'placeholder') {
@@ -382,7 +396,8 @@ onMounted(async () => {
       </div>
       <div class="flex justify-center mt-5">
         <button
-          class="border rounded-[64px] p-4 w-full md:w-1/4 xl:w-1/6 outline-none bg-transparent text-black hover:bg-black hover:text-white">
+          class="border rounded-[64px] p-4 w-full md:w-1/4 xl:w-1/6 outline-none bg-transparent text-black hover:bg-black hover:text-white"
+          @click="viewAllProduct">
           View All
         </button>
       </div>
