@@ -105,29 +105,17 @@ const resolveVisualImage = (input?: string, fallback = '/img/products/default_im
   return resolveImageUrl(input)
 }
 
-const homeCategories = computed(() => {
-  if (categories.value.length) {
-    return categories.value.slice(0, 4)
-  }
-  return [
-    { id: 'mens', name: "Men's Clothing", slug: 'mens-clothing', image_url: '/img/dress_styles/style1.png' },
-    { id: 'women', name: "Women's Clothing", slug: 'womens-clothing', image_url: '/img/dress_styles/style2.png' },
-    { id: 'acc', name: 'Accessories', slug: 'accessories', image_url: '/img/dress_styles/style3.png' },
-    { id: 'shoes', name: 'Shoes', slug: 'shoes', image_url: '/img/dress_styles/style4.png' },
-  ] as CategoryApi[]
-})
 
 const collectionItems = computed(() => {
   if (collections.value.length) {
-    return collections.value.slice(0, 4)
+    return collections.value.slice(0, 4) as DressTypeApi[]
   }
-  return [
-    { id: 'style1', name: 'Casual', slug: 'casual', image_url: '/img/dress_styles/style1.png' },
-    { id: 'style2', name: 'Elegant', slug: 'elegant', image_url: '/img/dress_styles/style2.png' },
-    { id: 'style3', name: 'Street', slug: 'street', image_url: '/img/dress_styles/style3.png' },
-    { id: 'style4', name: 'Formal', slug: 'formal', image_url: '/img/dress_styles/style4.png' },
-  ] as DressTypeApi[]
 })
+
+const getCollectionSpanClass = (index: number) => {
+  const position = index % 4
+  return position === 1 || position === 2 ? 'md:col-span-2' : ''
+}
 
 const mapProductToCard = (item: ProductApi): ProductCard => {
   const thumbnail = item.thumbnail?.image_url || item.images?.[0]?.image_url || ''
@@ -231,19 +219,30 @@ useInfiniteScroll(
 const viewProduct = (id: number | string) => {
   router.push('/frontend/product_detail/' + id);
 }
-const viewCategory = (slug: string) => {
-  router.push('/frontend/categories/' + slug);
-}
+// const viewCategory = (slug: string) => {
+//   router.push('/frontend/categories/' + slug);
+// }
 
-const viewDressStyle = (slug: string) => {
-  const fallbackCategory = categories.value[0]
-  const categorySlug = fallbackCategory?.slug || fallbackCategory?.id
-  if (!categorySlug) {
-    return
+const viewCollection = (slug: string | number | null | undefined) => {
+  const normalizedSlug = String(slug || '').trim()
+  const categoryPath = '/frontend/categories'
+
+  if (!normalizedSlug || normalizedSlug === 'placeholder') {
+    return router.push({ path: categoryPath })
   }
-  router.push({
-    path: `/frontend/categories/${categorySlug}`,
-    query: { collection: slug },
+
+  return router.push({
+    path: categoryPath,
+    query: {
+      collection: normalizedSlug,
+      collection_only: '1',
+      brand: undefined,
+      brand_only: undefined,
+      sub_category: undefined,
+      price_min: undefined,
+      price_max: undefined,
+      search_txt: undefined,
+    },
   })
 }
 
@@ -418,10 +417,10 @@ onMounted(async () => {
           SHOP BY COLLECTION
         </h1>
 
-        <div class="grid gap-5 grid-cols-1 md:grid-cols-4 px-6 md:px-20 py-6">
+        <div class="grid gap-5 grid-cols-1 md:grid-cols-3 px-6 md:px-20 py-6">
           <div v-for="(style, index) in collectionItems" :key="style.id"
             class="overflow-hidden bg-[#FFFFFF] flex flex-col items-center justify-center rounded-2xl relative h-[190px]"
-            @click="viewDressStyle(String(style.slug || style.id))">
+            :class="getCollectionSpanClass(index)" @click="viewCollection(String(style.slug || style.id))">
             <h1 class="text-lg font-semibold mb-4 absolute top-8 text-black left-8">
               {{ style.name }}
             </h1>

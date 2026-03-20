@@ -334,8 +334,8 @@ const categoryParam = computed(() => {
   const raw = route.params.id
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 })
-const dressStyleParam = computed(() => {
-  const raw = route.query.collection ?? route.query.dress_style
+const collectionParam = computed(() => {
+  const raw = route.query.collection
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
 })
 const subCategoryParam = computed(() => {
@@ -351,6 +351,11 @@ const brandOnlyParam = computed(() => {
   const raw = route.query.brand_only
   const value = Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
   return ['1', 'true', 'yes'].includes(value.toLowerCase())
+})
+const collectionOnlyParam = computed(() => {
+  const raw = route.query.collection_only
+  const value = Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
+  return ['1', 'true', 'yes'].includes(value.toLowerCase()) && !!collectionParam.value
 })
 const priceMinParam = computed(() => {
   const raw = route.query.price_min
@@ -421,16 +426,17 @@ const fetchFilterOptions = async () => {
   if (isLoadingFilters.value) return
   isLoadingFilters.value = true
   try {
+    const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
     const response: any = await $fetch(`${apiBase}/products/filters`, {
       method: 'GET',
       query: {
-        category: brandOnlyParam.value ? undefined : (selectedCategory.value || undefined),
-        sub_category: brandOnlyParam.value ? undefined : (subCategoryFilter.value || undefined),
+        category: isCategoryLocked ? undefined : (selectedCategory.value || undefined),
+        sub_category: isCategoryLocked ? undefined : (subCategoryFilter.value || undefined),
         collection: brandOnlyParam.value ? undefined : (dressStyleFilter.value || undefined),
-        brand: brandFilter.value || undefined,
-        search_txt: brandOnlyParam.value ? undefined : (searchText.value || undefined),
-        price_min: brandOnlyParam.value ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
-        price_max: brandOnlyParam.value ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
+        brand: collectionOnlyParam.value ? undefined : (brandFilter.value || undefined),
+        search_txt: isCategoryLocked ? undefined : (searchText.value || undefined),
+        price_min: isCategoryLocked ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
+        price_max: isCategoryLocked ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
       },
     })
     subCategories.value = Array.isArray(response?.data?.sub_categories) ? response.data.sub_categories : []
@@ -464,20 +470,21 @@ const fetchProducts = async () => {
   errorMessage.value = ''
 
   try {
+    const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
     const response: any = await $fetch(`${apiBase}/products`, {
       method: 'GET',
       query: {
         page: page.value,
         per_page: meta.value.per_page,
-        category: brandOnlyParam.value ? undefined : (selectedCategory.value || undefined),
-        sub_category: brandOnlyParam.value ? undefined : (subCategoryFilter.value || undefined),
-        search_txt: brandOnlyParam.value ? undefined : (searchText.value || undefined),
-        price_min: brandOnlyParam.value ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
-        price_max: brandOnlyParam.value ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
+        category: isCategoryLocked ? undefined : (selectedCategory.value || undefined),
+        sub_category: isCategoryLocked ? undefined : (subCategoryFilter.value || undefined),
+        search_txt: isCategoryLocked ? undefined : (searchText.value || undefined),
+        price_min: isCategoryLocked ? undefined : (priceRange.value[0] > 0 ? priceRange.value[0] : undefined),
+        price_max: isCategoryLocked ? undefined : (priceRange.value[1] < 200 ? priceRange.value[1] : undefined),
         color: colorFilter.value || undefined,
         size: sizeFilter.value || undefined,
         collection: brandOnlyParam.value ? undefined : (dressStyleFilter.value || undefined),
-        brand: brandFilter.value || undefined,
+        brand: collectionOnlyParam.value ? undefined : (brandFilter.value || undefined),
       },
     })
 
@@ -500,19 +507,21 @@ const fetchProducts = async () => {
 
 const applyFilters = async (closeDialog = false) => {
   page.value = 1
-  const targetPath = brandOnlyParam.value
+  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
+  const targetPath = isCategoryLocked
     ? '/frontend/categories'
     : selectedCategory.value
       ? `/frontend/categories/${selectedCategory.value}`
       : '/frontend/categories'
   const targetQuery: Record<string, string> = {}
   if (!brandOnlyParam.value && dressStyleFilter.value) targetQuery.collection = dressStyleFilter.value
-  if (brandFilter.value) targetQuery.brand = brandFilter.value
-  if (!brandOnlyParam.value && subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
-  if (!brandOnlyParam.value && priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
-  if (!brandOnlyParam.value && priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
-  if (!brandOnlyParam.value && searchText.value) targetQuery.search_txt = searchText.value
+  if (!collectionOnlyParam.value && brandFilter.value) targetQuery.brand = brandFilter.value
+  if (!isCategoryLocked && subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
+  if (!isCategoryLocked && priceRange.value[0] > 0) targetQuery.price_min = String(priceRange.value[0])
+  if (!isCategoryLocked && priceRange.value[1] < 200) targetQuery.price_max = String(priceRange.value[1])
+  if (!isCategoryLocked && searchText.value) targetQuery.search_txt = searchText.value
   if (brandOnlyParam.value && brandFilter.value) targetQuery.brand_only = '1'
+  if (collectionOnlyParam.value && dressStyleFilter.value) targetQuery.collection_only = '1'
 
   if (route.path !== targetPath || JSON.stringify(route.query) !== JSON.stringify(targetQuery)) {
     await router.push({ path: targetPath, query: targetQuery })
@@ -568,12 +577,13 @@ const checkScreenSize = () => {
 }
 
 watch(() => route.fullPath, async () => {
-  selectedCategory.value = brandOnlyParam.value ? '' : (categoryParam.value || '')
-  dressStyleFilter.value = brandOnlyParam.value ? '' : (dressStyleParam.value || '')
-  brandFilter.value = brandParam.value || ''
-  subCategoryFilter.value = brandOnlyParam.value ? '' : (subCategoryParam.value || '')
-  priceRange.value = brandOnlyParam.value ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
-  searchText.value = brandOnlyParam.value ? '' : (searchTxtParam.value || '')
+  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
+  selectedCategory.value = isCategoryLocked ? '' : (categoryParam.value || '')
+  dressStyleFilter.value = brandOnlyParam.value ? '' : (collectionParam.value || '')
+  brandFilter.value = collectionOnlyParam.value ? '' : (brandParam.value || '')
+  subCategoryFilter.value = isCategoryLocked ? '' : (subCategoryParam.value || '')
+  priceRange.value = isCategoryLocked ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
+  searchText.value = isCategoryLocked ? '' : (searchTxtParam.value || '')
   page.value = 1
   await fetchCategories()
   await fetchFilterOptions()
@@ -581,12 +591,13 @@ watch(() => route.fullPath, async () => {
 })
 
 onMounted(async () => {
-  selectedCategory.value = brandOnlyParam.value ? '' : (categoryParam.value || '')
-  dressStyleFilter.value = brandOnlyParam.value ? '' : (dressStyleParam.value || '')
-  brandFilter.value = brandParam.value || ''
-  subCategoryFilter.value = brandOnlyParam.value ? '' : (subCategoryParam.value || '')
-  priceRange.value = brandOnlyParam.value ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
-  searchText.value = brandOnlyParam.value ? '' : (searchTxtParam.value || '')
+  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
+  selectedCategory.value = isCategoryLocked ? '' : (categoryParam.value || '')
+  dressStyleFilter.value = brandOnlyParam.value ? '' : (collectionParam.value || '')
+  brandFilter.value = collectionOnlyParam.value ? '' : (brandParam.value || '')
+  subCategoryFilter.value = isCategoryLocked ? '' : (subCategoryParam.value || '')
+  priceRange.value = isCategoryLocked ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
+  searchText.value = isCategoryLocked ? '' : (searchTxtParam.value || '')
   await fetchCategories()
   await fetchFilterOptions()
   await fetchProducts()
