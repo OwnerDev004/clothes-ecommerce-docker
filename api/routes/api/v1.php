@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductControlle
 use App\Http\Controllers\Api\V1\Admin\ProductVariantController as AdminProductVariantController;
 use App\Http\Controllers\Api\V1\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\Api\V1\Admin\BrandController as AdminBrandController;
+use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\CollectionController as AdminCollectionController;
 
 
@@ -165,9 +166,11 @@ Route::prefix('admin')->group(function () {
     });
 
     Route::prefix('categories')->middleware(['auth:admin'])->group(function () {
-        Route::post('/', [CategoryController::class, 'store']);
-        Route::put('/{category:slug}', [CategoryController::class, 'update']);
-        Route::delete('/{category:slug}', [CategoryController::class, 'destroy']);
+        Route::get('/', [AdminCategoryController::class, 'index']);
+        Route::get('/{category:id}', [AdminCategoryController::class, 'show']);
+        Route::post('/', [AdminCategoryController::class, 'store']);
+        Route::put('/{category:id}', [AdminCategoryController::class, 'update']);
+        Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
     });
 
     Route::prefix('brands')->middleware(['auth:admin'])->group(function () {

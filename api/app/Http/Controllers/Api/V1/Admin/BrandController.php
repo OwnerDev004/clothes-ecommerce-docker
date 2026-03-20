@@ -3,144 +3,54 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Admin\Brand\ListBrandRequest;
+use App\Http\Requests\Api\V1\Admin\Brand\StoreBrandRequest;
+use App\Http\Requests\Api\V1\Admin\Brand\UpdateBrandRequest;
+use App\Http\Resources\Api\V1\Admin\BrandResource;
 use App\Models\Brand;
+use App\Services\Api\V1\Admin\BrandService;
 use App\Traits\ApiResponse;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class BrandController extends Controller
 {
     use ApiResponse;
 
-    private const BRAND_IMAGE_WIDTH = 320;
-    private const BRAND_IMAGE_HEIGHT = 140;
-
-    public function index(Request $request)
+    public function __construct(private readonly BrandService $brandService)
     {
-        $query = Brand::query()->select('id', 'name', 'slug', 'sort_order', 'image_url', 'created_at', 'updated_at');
+    }
 
-        if ($request->filled('search_txt')) {
-            $search = trim((string) $request->query('search_txt'));
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('slug', 'like', '%' . $search . '%');
-            });
-        }
-
-        $brands = $query
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->paginate((int) $request->query('per_page', 20));
+    public function index(ListBrandRequest $request)
+    {
+        $brands = $this->brandService->paginate($request->validated());
+        $brands->setCollection($brands->getCollection()->map(fn($brand) => BrandResource::make($brand)->resolve()));
 
         return $this->paginate($brands, 'Brands list');
     }
 
     public function show(Brand $brand)
     {
-        return $this->success($brand, 'Brand detail');
+        return $this->success(new BrandResource($brand), 'Brand detail');
     }
 
-    public function store(Request $request)
+    public function store(StoreBrandRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:brands,name'],
-            'sort_order' => ['nullable', 'integer'],
-            'image' => ['nullable', 'image', 'max:5120'],
-        ]);
+        $brand = $this->brandService->store($request->validated(), $request->file('image'));
 
-        $brandData = [
-            'name' => $validated['name'],
-            'sort_order' => (int) ($validated['sort_order'] ?? 0),
-        ];
-
-        if ($request->hasFile('image')) {
-            $upload = Cloudinary::uploadApi()->upload(
-                $request->file('image')->getRealPath(),
-                [
-                    'folder' => 'clothes_ecommerce/brand-images',
-                    'transformation' => [
-                        'width' => self::BRAND_IMAGE_WIDTH,
-                        'height' => self::BRAND_IMAGE_HEIGHT,
-                        'crop' => 'fill',
-                        'gravity' => 'auto',
-                        'background' => 'white',
-                        'fetch_format' => 'auto',
-                        'quality' => 'auto',
-                    ],
-                ]
-            );
-
-            $brandData['image_url'] = $upload['secure_url'] ?? null;
-            $brandData['image_public_id'] = $upload['public_id'] ?? null;
-        }
-
-        $brand = Brand::create($brandData);
-
-        return $this->created($brand, 'Brand created');
+        return $this->created(new BrandResource($brand), 'Brand created');
     }
 
-    public function update(Request $request, Brand $brand)
+    public function update(UpdateBrandRequest $request, Brand $brand)
     {
-        $validated = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('brands', 'name')->ignore($brand->id)],
-            'sort_order' => ['sometimes', 'integer'],
-            'image' => ['sometimes', 'nullable', 'image', 'max:5120'],
-            'remove_image' => ['sometimes', 'boolean'],
-        ]);
+        $brand = $this->brandService->update($brand, $request->validated(), $request->file('image'));
 
-        $updateData = [];
-        if (array_key_exists('name', $validated)) {
-            $updateData['name'] = $validated['name'];
-        }
-        if (array_key_exists('sort_order', $validated)) {
-            $updateData['sort_order'] = (int) $validated['sort_order'];
-        }
-
-        if (($validated['remove_image'] ?? false) && $brand->image_public_id) {
-            Cloudinary::uploadApi()->destroy($brand->image_public_id);
-            $updateData['image_url'] = null;
-            $updateData['image_public_id'] = null;
-        }
-
-        if ($request->hasFile('image')) {
-            if ($brand->image_public_id) {
-                Cloudinary::uploadApi()->destroy($brand->image_public_id);
-            }
-
-            $upload = Cloudinary::uploadApi()->upload(
-                $request->file('image')->getRealPath(),
-                [
-                    'folder' => 'clothes_ecommerce/brand-images',
-                    'transformation' => [
-                        'width' => self::BRAND_IMAGE_WIDTH,
-                        'height' => self::BRAND_IMAGE_HEIGHT,
-                        'crop' => 'fill',
-                        'gravity' => 'auto',
-                        'background' => 'white',
-                        'fetch_format' => 'auto',
-                        'quality' => 'auto',
-                    ],
-                ]
-            );
-
-            $updateData['image_url'] = $upload['secure_url'] ?? null;
-            $updateData['image_public_id'] = $upload['public_id'] ?? null;
-        }
-
-        $brand->update($updateData);
-
-        return $this->success($brand->fresh(), 'Brand updated');
+        return $this->success(new BrandResource($brand->fresh()), 'Brand updated');
     }
 
     public function destroy(Brand $brand)
     {
-        if ($brand->image_public_id) {
-            Cloudinary::uploadApi()->destroy($brand->image_public_id);
-        }
-
-        $brand->delete();
+        $this->brandService->destroy($brand);
 
         return $this->success(null, 'Brand deleted');
     }
 }
+
