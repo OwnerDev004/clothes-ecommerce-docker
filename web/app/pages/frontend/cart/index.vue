@@ -39,8 +39,11 @@
 
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Province</label>
-          <input v-model="shippingProvince" type="text"
-            class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm" placeholder="e.g. Phnom Penh" />
+          <select v-model="shippingProvince" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
+            <option v-for="province in shippingProvinceOptions" :key="province" :value="province">
+              {{ province }}
+            </option>
+          </select>
         </div>
 
         <div class="flex flex-col gap-2">
@@ -78,13 +81,17 @@
               class="rounded-[62px] bg-gray px-10 outline-none py-3 w-full text-sm desktop:text-lg"
               placeholder="Add Promo Code" />
           </div>
-          <button class="bg-black rounded-3xl text-white p-3 lg:w-[110px]" :disabled="applyingCoupon"
+          <el-button class="bg-black rounded-3xl text-white p-3 lg:w-[110px]" :disabled="applyingCoupon"
             @click="applyCoupon">
             {{ applyingCoupon ? 'Applying...' : 'Apply' }}
-          </button>
+          </el-button>
         </div>
         <p v-if="appliedVoucherCode" class="text-xs text-emerald-600">
           Applied coupon: {{ appliedVoucherCode }}
+        </p>
+        <p v-if="autoCouponMessage" class="text-xs"
+          :class="autoCouponMessageType === 'success' ? 'text-emerald-600' : 'text-amber-600'">
+          {{ autoCouponMessage }}
         </p>
 
         <button class="bg-black rounded-3xl text-white w-full p-3 mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -117,7 +124,7 @@
                   </p>
                   <div class="flex items-end gap-2 text-gray-900">
                     <span class="text-2xl font-extrabold">
-                      {{ subtotal.toFixed(2) }}
+                      {{ payableAmount.toFixed(2) }}
                     </span>
                     <span class="text-sm font-semibold uppercase text-gray-600">
                       {{ paymentCurrency }}
@@ -204,6 +211,10 @@ const shippingFee = ref(0)
 const discountAmount = ref(0)
 const promoCode = ref('')
 const appliedVoucherCode = ref('')
+const autoCouponAttempted = ref(false)
+const autoCouponMessage = ref('')
+const autoCouponMessageType = ref<'success' | 'warning'>('warning')
+const isCouponComplete = ref(false)
 
 const shippingProvince = ref('Phnom Penh')
 const shippingAddress = ref('')
@@ -217,6 +228,7 @@ const qrString = ref('')
 const pollHash = ref('')
 const checkoutUrl = ref('')
 const merchantName = ref('')
+const payableAmount = ref(0)
 const currentOrderId = ref<number | null>(null)
 const pollStatus = ref('pending')
 const pollingNow = ref(false)
@@ -227,9 +239,71 @@ const qrImage = ref<HTMLElement | null>(null)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
+const shippingProvinceOptions = [
+  'Phnom Penh',
+  'Kandal',
+  'Siem Reap',
+  'Battambang',
+  'Preah Sihanouk',
+  'Other',
+]
+
+const shippingRateByProvince: Record<string, number> = {
+  'phnom penh': 1.5,
+  kandal: 2.0,
+  'siem reap': 2.5,
+  battambang: 2.5,
+  'preah sihanouk': 3.0,
+  other: 3.5,
+}
+
 const grandTotal = computed(() => {
   return Math.max(0, subtotal.value - discountAmount.value + shippingFee.value)
 })
+
+const normalizeProvince = (value: string) => String(value || '').trim().toLowerCase()
+
+const computeShippingFee = (province: string) => {
+  const normalized = normalizeProvince(province)
+  return shippingRateByProvince[normalized] ?? 3.5
+}
+
+const parseKhqrAmountFromQrString = (rawQr: string) => {
+  const qr = String(rawQr || '').trim()
+  if (!qr) {
+    return null
+  }
+
+  let cursor = 0
+  while (cursor + 4 <= qr.length) {
+    const tag = qr.slice(cursor, cursor + 2)
+    const lengthRaw = qr.slice(cursor + 2, cursor + 4)
+    const valueLength = Number(lengthRaw)
+
+    if (!Number.isInteger(valueLength) || valueLength < 0) {
+      break
+    }
+
+    const valueStart = cursor + 4
+    const valueEnd = valueStart + valueLength
+    if (valueEnd > qr.length) {
+      break
+    }
+
+    const value = qr.slice(valueStart, valueEnd)
+    if (tag === '54') {
+      const amount = Number(value)
+      if (Number.isFinite(amount) && amount >= 0) {
+        return Math.round(amount * 100) / 100
+      }
+      return null
+    }
+
+    cursor = valueEnd
+  }
+
+  return null
+}
 
 const qrImageUrl = computed(() => {
   if (!qrString.value) {
@@ -293,6 +367,20 @@ const fetchCart = async () => {
   }
 }
 
+const fetchSignupOfferCode = async () => {
+  try {
+    const response: any = await $fetch(`${apiBase}/vouchers/signup-offer`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+    })
+    const code = String(response?.data?.code || '').trim()
+    return code
+  } catch {
+    return ''
+  }
+}
+
 const removeProduct = async (variantId: number) => {
   try {
     const response: any = await $fetch(`${apiBase}/cart/items/${variantId}`, {
@@ -322,10 +410,12 @@ const updateQuantity = async ({ variantId, quantity }: { variantId: number; quan
   }
 }
 
-const applyCoupon = async () => {
+const applyCoupon = async (silent = false) => {
   if (!promoCode.value.trim()) {
-    ElMessage.warning('Please enter promo code.')
-    return
+    if (!silent) {
+      ElMessage.warning('Please enter promo code.')
+    }
+    return { ok: false, message: 'Please enter promo code.' }
   }
   applyingCoupon.value = true
   try {
@@ -337,14 +427,48 @@ const applyCoupon = async () => {
     })
     discountAmount.value = Number(response?.data?.discount || 0)
     appliedVoucherCode.value = String(response?.data?.voucher?.code || promoCode.value.trim())
-    ElMessage.success('Coupon applied.')
+    if (!silent) {
+      ElMessage.success('Coupon applied.')
+    }
+    isCouponComplete.value = true
+    return { ok: true, message: 'Coupon applied.' }
   } catch (error: any) {
     appliedVoucherCode.value = ''
     discountAmount.value = 0
-    ElMessage.error(error?.data?.message || 'Invalid coupon.')
+    const errMessage = String(error?.data?.message || 'Invalid coupon.')
+    if (!silent) {
+      ElMessage.error(errMessage)
+    }
+    return { ok: false, message: errMessage }
   } finally {
     applyingCoupon.value = false
   }
+}
+
+const autoApplySignupCoupon = async () => {
+  if (autoCouponAttempted.value) return
+  if (!cartItems.value.length) return
+  if (appliedVoucherCode.value || promoCode.value.trim()) return
+
+  autoCouponAttempted.value = true
+  const signupCode = await fetchSignupOfferCode()
+  if (!signupCode) {
+    autoCouponMessageType.value = 'warning'
+    autoCouponMessage.value = 'No active signup voucher is available right now.'
+    return
+  }
+
+  promoCode.value = signupCode
+  const result = await applyCoupon(true)
+  if (result?.ok) {
+    autoCouponMessageType.value = 'success'
+    autoCouponMessage.value = `Signup offer applied automatically: ${signupCode}`
+    isCouponComplete.value = true
+    return
+  }
+
+  autoCouponMessageType.value = 'warning'
+  autoCouponMessage.value = `Auto-apply failed: ${result?.message || 'Invalid coupon.'}`
 }
 
 const stopPolling = () => {
@@ -381,6 +505,7 @@ const cancelPendingOrder = async () => {
     qrString.value = ''
     pollHash.value = ''
     checkoutUrl.value = ''
+    payableAmount.value = 0
     pollStatus.value = 'pending'
     await fetchCart()
   } catch (error: any) {
@@ -499,13 +624,12 @@ const createPaymentIntent = async (orderId: number) => {
   } catch (error: any) {
     throw new Error(extractApiErrorDetails(error))
   }
-  console.log(response?.data);
-
-
   qrString.value = String(response?.data?.qr_string || '')
   pollHash.value = String(response?.data?.poll_hash || '')
   checkoutUrl.value = String(response?.data?.checkout_url || '')
   merchantName.value = String(response?.data.mechant_name || '')
+  const parsedAmount = parseKhqrAmountFromQrString(qrString.value)
+  payableAmount.value = parsedAmount ?? Number(response?.data?.amount || 0)
 
   pollStatus.value = 'pending'
   timeLeftSeconds.value = 60
@@ -540,6 +664,7 @@ const checkout = async () => {
         shipping_phone: shippingPhone.value.trim() || undefined,
         payment_method: paymentMethod.value,
         voucher_code: appliedVoucherCode.value || undefined,
+        grand_total: Number(grandTotal.value.toFixed(2)),
       }
     })
 
@@ -598,8 +723,23 @@ watch(paymentMethod, (value) => {
   isPaymentByKhrqr.value = value === 'khqr'
 }, { immediate: true })
 
+watch(
+  shippingProvince,
+  (value) => {
+    shippingFee.value = computeShippingFee(value)
+  },
+  { immediate: true }
+)
+
+watch(
+  () => cartItems.value.length,
+  () => {
+    autoApplySignupCoupon()
+  }
+)
+
 onMounted(() => {
-  fetchCart()
+  fetchCart().then(() => autoApplySignupCoupon())
 })
 
 onBeforeUnmount(() => {

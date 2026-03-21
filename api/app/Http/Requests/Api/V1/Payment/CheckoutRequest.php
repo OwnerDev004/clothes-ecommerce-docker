@@ -19,6 +19,7 @@ class CheckoutRequest extends FormRequest
             'shipping_phone' => ['nullable', 'string', 'max:30'],
             'payment_method' => ['nullable', 'in:khqr,cash_on_delivery'],
             'voucher_code' => ['nullable', 'string', 'max:100'],
+            'grand_total' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

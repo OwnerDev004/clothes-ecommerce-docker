@@ -27,6 +27,8 @@ class VoucherStoreRequest extends FormRequest
             'code' => ['required', 'string', 'max:100', 'unique:vouchers,code'],
             'name' => ['required', 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_signup_coupon' => ['sometimes', 'boolean'],
+            'first_order_only' => ['sometimes', 'boolean'],
             'discount_type' => ['required', Rule::in(['percentage', 'fixed_amount'])],
             'discount_value' => ['required', 'numeric', 'min:0'],
             'minimum_order_amount' => ['nullable', 'numeric', 'min:0'],

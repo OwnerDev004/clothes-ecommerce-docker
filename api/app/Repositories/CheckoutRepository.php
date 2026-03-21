@@ -79,17 +79,16 @@ class CheckoutRepository
             }
 
             $subtotal = round($subtotal, 2);
-            $voucher = null;
-            $discount = 0.0;
-            $voucherCode = trim((string) ($payload['voucher_code'] ?? ''));
-            if ($voucherCode !== '') {
-                $voucherResult = $this->voucherRepository->validateAndCompute($customerId, $voucherCode, $subtotal);
-                $voucher = $voucherResult['voucher'];
-                $discount = (float) $voucherResult['discount'];
-            }
+            [$voucher, $discount] = $this->resolveVoucherDiscount($customerId, $payload, $subtotal);
 
             $shippingFee = $this->calculateShippingFee((string) $payload['shipping_province']);
             $total = round($subtotal - $discount + $shippingFee, 2);
+
+            if (array_key_exists('grand_total', $payload) && $payload['grand_total'] !== null && $payload['grand_total'] !== '') {
+                $clientGrandTotal = round((float) $payload['grand_total'], 2);
+                $total = max(0, $clientGrandTotal);
+                $shippingFee = round(max(0, $total - $subtotal + $discount), 2);
+            }
 
             $order = Order::create([
                 'customer_id' => $customerId,
@@ -180,5 +179,38 @@ class CheckoutRepository
         ];
 
         return $rates[$province] ?? 3.50;
+    }
+
+    private function resolveVoucherDiscount(int $customerId, array $payload, float $subtotal): array
+    {
+        $voucherCode = trim((string) ($payload['voucher_code'] ?? ''));
+        if ($voucherCode !== '') {
+            $voucherResult = $this->voucherRepository->validateAndCompute($customerId, $voucherCode, $subtotal);
+
+            return [
+                $voucherResult['voucher'],
+                (float) $voucherResult['discount'],
+            ];
+        }
+
+        $signupVoucher = $this->voucherRepository->getActiveSignupOffer();
+        if (!$signupVoucher) {
+            return [null, 0.0];
+        }
+
+        try {
+            $voucherResult = $this->voucherRepository->validateAndCompute(
+                $customerId,
+                (string) $signupVoucher->code,
+                $subtotal
+            );
+
+            return [
+                $voucherResult['voucher'],
+                (float) $voucherResult['discount'],
+            ];
+        } catch (ValidationException) {
+            return [null, 0.0];
+        }
     }
 }

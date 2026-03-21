@@ -29,6 +29,8 @@ class VoucherUpdateRequest extends FormRequest
             'code' => ['sometimes', 'string', 'max:100', Rule::unique('vouchers', 'code')->ignore($voucherId)],
             'name' => ['sometimes', 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_signup_coupon' => ['sometimes', 'boolean'],
+            'first_order_only' => ['sometimes', 'boolean'],
             'discount_type' => ['sometimes', Rule::in(['percentage', 'fixed_amount'])],
             'discount_value' => ['sometimes', 'numeric', 'min:0'],
             'minimum_order_amount' => ['sometimes', 'nullable', 'numeric', 'min:0'],

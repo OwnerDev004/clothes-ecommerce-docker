@@ -40,7 +40,8 @@
 
         <div v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</div>
 
-        <button type="submit" :disabled="loading" class="w-full py-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60">
+        <button type="submit" :disabled="loading"
+          class="w-full py-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60">
           {{ loading ? 'Creating account...' : 'Create account' }}
         </button>
       </form>

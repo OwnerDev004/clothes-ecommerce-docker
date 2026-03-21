@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Order;
 use App\Models\Voucher;
 use App\Models\VoucherUse;
 use Illuminate\Database\Eloquent\Collection;
@@ -9,16 +10,29 @@ use Illuminate\Validation\ValidationException;
 
 class VoucherRepository
 {
-    public function getActiveForCustomer(): Collection
+    private function activeVoucherQuery()
     {
         return Voucher::query()
             ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('expires_at')
                     ->orWhereDate('expires_at', '>=', now()->toDateString());
-            })
+            });
+    }
+
+    public function getActiveForCustomer(): Collection
+    {
+        return $this->activeVoucherQuery()
             ->orderByDesc('id')
             ->get();
+    }
+
+    public function getActiveSignupOffer(): ?Voucher
+    {
+        return $this->activeVoucherQuery()
+            ->where('is_signup_coupon', true)
+            ->orderByDesc('id')
+            ->first();
     }
 
     public function getAllForAdmin(array $filters = []): Collection
@@ -88,6 +102,23 @@ class VoucherRepository
             throw ValidationException::withMessages([
                 'voucher_code' => ['Voucher has expired'],
             ]);
+        }
+
+        if ((bool) $voucher->first_order_only) {
+            $hasPriorOrders = Order::query()
+                ->where('customer_id', $customerId)
+                ->where(function ($query) {
+                    $query->whereNotNull('paid_at')
+                        ->orWhere('payment_status', 'paid')
+                        ->orWhere('payment_state', 'paid');
+                })
+                ->exists();
+
+            if ($hasPriorOrders) {
+                throw ValidationException::withMessages([
+                    'voucher_code' => ['Voucher is only valid for first paid order'],
+                ]);
+            }
         }
 
         if ((float) $subtotal < (float) $voucher->minimum_order_amount) {

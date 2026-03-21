@@ -28,6 +28,24 @@ class VoucherController extends Controller
         return $this->success($vouchers, 'Active vouchers', 200);
     }
 
+    public function signupOffer()
+    {
+        $voucher = $this->voucherRepository->getActiveSignupOffer();
+        if (!$voucher) {
+            return $this->success(null, 'Signup offer unavailable', 200);
+        }
+
+        return $this->success([
+            'id' => $voucher->id,
+            'code' => $voucher->code,
+            'name' => $voucher->name,
+            'discount_type' => $voucher->discount_type,
+            'discount_value' => (float) $voucher->discount_value,
+            'first_order_only' => (bool) $voucher->first_order_only,
+            'expires_at' => optional($voucher->expires_at)->toDateString(),
+        ], 'Signup offer', 200);
+    }
+
     public function validateVoucher(Request $request)
     {
         $customer = auth()->guard('customer')->user();

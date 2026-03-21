@@ -112,6 +112,7 @@ Route::prefix('sub-categories')->group(function () {
 
 Route::prefix('vouchers')->group(function () {
     Route::get('/', [VoucherController::class, 'index']);
+    Route::get('/signup-offer', [VoucherController::class, 'signupOffer']);
 
 });
 

@@ -11,6 +11,8 @@ class Voucher extends Model
         'code',
         'name',
         'is_active',
+        'is_signup_coupon',
+        'first_order_only',
         'discount_type',
         'discount_value',
         'minimum_order_amount',
@@ -21,6 +23,8 @@ class Voucher extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_signup_coupon' => 'boolean',
+        'first_order_only' => 'boolean',
         'discount_value' => 'decimal:2',
         'minimum_order_amount' => 'decimal:2',
         'expires_at' => 'date:Y-m-d',
