@@ -63,6 +63,11 @@ class Customer extends Authenticatable implements JWTSubject
         return $this->hasMany(VoucherUse::class);
     }
 
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
     public function telegramLinkTokens(): HasMany
     {
         return $this->hasMany(CustomerTelegramLinkToken::class);

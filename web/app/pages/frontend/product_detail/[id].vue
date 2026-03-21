@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import type { TabsPaneContext } from 'element-plus'
@@ -42,6 +42,26 @@ type ProductDetail = {
   variants?: ProductVariant[]
 }
 
+type ProductDetailSection = {
+  key: string
+  label: string
+  value: string | number
+}
+
+type ProductReview = {
+  id: number
+  customer_name: string
+  rating: number
+  comment: string
+  created_at: string | null
+}
+
+type ProductFaq = {
+  id: number
+  question: string
+  answer: string
+}
+
 type ProductCard = {
   id: number | string
   title: string
@@ -72,6 +92,27 @@ const selectedColorId = ref<number | null>(null)
 const selectedSizeId = ref<number | null>(null)
 const sortBy = ref('')
 const activeIndex = ref(1)
+const productDeatil = ref<ProductDetailSection[]>([])
+const ratingAndReviews = ref<ProductReview[]>([])
+const faqsDetail = ref<ProductFaq[]>([])
+const detailsLoading = ref(false)
+const reviewStats = ref({
+  total_reviews: 0,
+  average_rating: 0,
+})
+const reviewFilterDialogOpen = ref(false)
+const writeReviewDialogOpen = ref(false)
+const submittingReview = ref(false)
+const reviewFilters = reactive({
+  sort_by: 'latest',
+  rating: null as number | null,
+  mine_only: false,
+})
+const reviewForm = reactive({
+  rating: 5,
+  comment: '',
+})
+
 
 const tablists = ref([
   { id: 1, name: 'Product Details' },
@@ -273,6 +314,7 @@ const fetchRelatedProducts = async () => {
   }
 }
 
+// fetch Products
 const fetchProduct = async () => {
   loading.value = true
   errorMessage.value = ''
@@ -298,12 +340,127 @@ const fetchProduct = async () => {
   }
 }
 
+const fetDetailProduct = async () => {
+  detailsLoading.value = true
+  try {
+    const response: any = await $fetch(`${apiBase}/products/${route.params.id}/detail-sections`, {
+      method: 'GET',
+    })
+    const payload = response?.data || {}
+    productDeatil.value = Array.isArray(payload?.product_detail) ? payload.product_detail : []
+    faqsDetail.value = Array.isArray(payload?.faqs_detail) ? payload.faqs_detail : []
+    await fetchRatingAndReviews()
+  } catch {
+    productDeatil.value = []
+    ratingAndReviews.value = []
+    faqsDetail.value = []
+    reviewStats.value = {
+      total_reviews: 0,
+      average_rating: 0,
+    }
+  } finally {
+    detailsLoading.value = false
+  }
+}
+
+const fetchRatingAndReviews = async () => {
+  try {
+    const query: Record<string, string | number> = {
+      sort_by: reviewFilters.sort_by,
+    }
+    if (reviewFilters.rating !== null) {
+      query.rating = reviewFilters.rating
+    }
+    if (reviewFilters.mine_only) {
+      query.mine_only = 1
+    }
+
+    const response: any = await $fetch(`${apiBase}/products/${route.params.id}/reviews`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      query,
+    })
+
+    const payload = response?.data || {}
+    ratingAndReviews.value = Array.isArray(payload?.reviews) ? payload.reviews : []
+    reviewStats.value = {
+      total_reviews: Number(payload?.total_reviews || 0),
+      average_rating: Number(payload?.average_rating || 0),
+    }
+  } catch (error: any) {
+    ratingAndReviews.value = []
+    reviewStats.value = {
+      total_reviews: 0,
+      average_rating: 0,
+    }
+    if (reviewFilters.mine_only) {
+      ElMessage.error(error?.data?.message || 'Failed to filter reviews.')
+    }
+  }
+}
+
+const openReviewFilterDialog = () => {
+  reviewFilterDialogOpen.value = true
+}
+
+const applyReviewFilter = async () => {
+  if (reviewFilters.mine_only && !isAuthenticated.value && !accessToken.value) {
+    ElMessage.warning('Please login first to filter your own reviews.')
+    await router.push('/auth/login')
+    return
+  }
+  reviewFilterDialogOpen.value = false
+  await fetchRatingAndReviews()
+}
+
+const openWriteReviewDialog = async () => {
+  if (!isAuthenticated.value && !accessToken.value) {
+    ElMessage.warning('Please login first to write a review.')
+    await router.push('/auth/login')
+    return
+  }
+  writeReviewDialogOpen.value = true
+}
+
+const submitReview = async () => {
+  submittingReview.value = true
+  try {
+    await $fetch(`${apiBase}/products/${route.params.id}/reviews`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeaders(),
+      body: {
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim(),
+      },
+    })
+    ElMessage.success('Review submitted successfully.')
+    writeReviewDialogOpen.value = false
+    reviewForm.rating = 5
+    reviewForm.comment = ''
+    await fetchRatingAndReviews()
+  } catch (error: any) {
+    const statusCode = error?.statusCode ?? error?.status
+    if (statusCode === 401 || statusCode === 403) {
+      authStore.resetAuth()
+      ElMessage.error('Session expired. Please login again.')
+      await router.push('/auth/login')
+      return
+    }
+    ElMessage.error(error?.data?.message || 'Failed to submit review.')
+  } finally {
+    submittingReview.value = false
+  }
+}
+
 const viewProduct = (id: number | string) => {
   router.push(`/frontend/product_detail/${id}`)
 }
 
 watch(() => route.params.id, () => {
   fetchProduct()
+  fetDetailProduct()
 }, { immediate: true })
 </script>
 
@@ -337,7 +494,6 @@ watch(() => route.params.id, () => {
           <NuxtImg :src="selectedImage" class="rounded-3xl w-full h-full object-cover" />
         </div>
       </div>
-
       <div class="w-full desktop:w-1/2">
         <section class="border-b py-4 border-b-black">
           <h1 class="text-4xl font-extrabold">{{ product.name }}</h1>
@@ -405,24 +561,53 @@ watch(() => route.params.id, () => {
           <div class="w-full">
             <div class="p-3" v-if="tab.id === 1">
               <h1>Product details</h1>
+              <ul v-if="productDeatil.length" class="space-y-2">
+                <li v-for="item in productDeatil" :key="item.key" class="text-sm leading-6">
+                  <span class="font-semibold">{{ item.label }}:</span>
+                  {{ item.value }}
+                </li>
+              </ul>
+              <p v-else class="text-sm text-gray-500">No product details available.</p>
             </div>
             <div class="p-3" v-if="tab.id === 2">
               <div class="flex justify-between">
-                <h1 class="text-lg sm:text-2xl">All Reviews (0)</h1>
+                <h1 class="text-lg sm:text-2xl">
+                  All Reviews ({{ reviewStats.total_reviews }}) - Avg {{ reviewStats.average_rating }}/5
+                </h1>
                 <div class="flex gap-2">
-                  <button class="bg-gray w-12 h-12 rounded-full text-2xl p-3">
+                  <button class="bg-gray w-12 h-12 rounded-full text-2xl p-3" @click="openReviewFilterDialog">
                     <Icon name="lets-icons:filter" class="text-black" />
                   </button>
                   <SharesDropdown v-model="sortBy" :options="dropdownOptions" class="hidden desktop:block" />
-                  <button class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl">
+                  <button class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl"
+                    @click="openWriteReviewDialog">
                     Write a Review
                   </button>
                 </div>
               </div>
+
+              <ul v-if="ratingAndReviews.length" class="mt-4 space-y-3">
+                <li v-for="review in ratingAndReviews" :key="review.id" class="rounded-lg border p-3">
+                  <p class="font-semibold">{{ review.customer_name }}
+                    <el-rate v-model="review.rating" :max="5" disabled />
+
+                  </p>
+                  <p class="text-sm text-gray-700">{{ review.comment }}</p>
+                </li>
+              </ul>
+              <p v-else class="mt-4 text-sm text-gray-500">No reviews yet.</p>
             </div>
             <div class="bg-gray p-3" v-if="tab.id === 3">
               <h1>FAQs</h1>
+              <ul v-if="faqsDetail.length" class="space-y-3">
+                <li v-for="faq in faqsDetail" :key="faq.id" class="rounded-lg bg-white p-3">
+                  <p class="font-semibold">{{ faq.question }}</p>
+                  <p class="text-sm text-gray-700">{{ faq.answer }}</p>
+                </li>
+              </ul>
+              <p v-else class="text-sm text-gray-500">No FAQs available.</p>
             </div>
+            <p v-if="detailsLoading" class="text-sm text-gray-500">Loading section content...</p>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -441,6 +626,59 @@ watch(() => route.params.id, () => {
       </div>
       <div class="border-b border-zinc-300 mt-10"></div>
     </section>
+
+    <el-dialog v-model="reviewFilterDialogOpen" title="Filter Reviews" width="420px">
+      <div class="space-y-4">
+        <div>
+          <p class="mb-2 text-sm font-semibold">Sort by</p>
+          <el-select v-model="reviewFilters.sort_by" class="w-full">
+            <el-option label="Latest" value="latest" />
+            <el-option label="Oldest" value="oldest" />
+            <el-option label="Highest Rating" value="rating_high" />
+            <el-option label="Lowest Rating" value="rating_low" />
+          </el-select>
+        </div>
+        <div>
+          <p class="mb-2 text-sm font-semibold">Rating</p>
+          <el-select v-model="reviewFilters.rating" class="w-full" clearable placeholder="All ratings">
+            <el-option :value="5" label="5 stars" />
+            <el-option :value="4" label="4 stars" />
+            <el-option :value="3" label="3 stars" />
+            <el-option :value="2" label="2 stars" />
+            <el-option :value="1" label="1 star" />
+          </el-select>
+        </div>
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold">Only my reviews</p>
+          <el-switch v-model="reviewFilters.mine_only" />
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <el-button @click="reviewFilterDialogOpen = false">Cancel</el-button>
+          <el-button type="primary" @click="applyReviewFilter">Apply</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="writeReviewDialogOpen" title="Write a Review" width="520px">
+      <div class="space-y-4">
+        <div>
+          <p class="mb-2 text-sm font-semibold">Rating</p>
+          <el-rate v-model="reviewForm.rating" :max="5" />
+        </div>
+        <div>
+          <p class="mb-2 text-sm font-semibold">Comment</p>
+          <el-input v-model="reviewForm.comment" type="textarea" :rows="5" maxlength="1000" show-word-limit />
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <el-button @click="writeReviewDialogOpen = false">Cancel</el-button>
+          <el-button type="primary" :loading="submittingReview" @click="submitReview">Submit Review</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

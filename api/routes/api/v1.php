@@ -83,12 +83,18 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
         Route::post('validate', [VoucherController::class, 'validateVoucher']);
         Route::post('/apply', [VoucherController::class, 'applyVoucher']);
     });
+
+    Route::prefix('products')->group(function () {
+        Route::post('/{id}/reviews', [ProductController::class, 'storeReview']);
+    });
 });
 
 // Products
 Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/filters', [ProductController::class, 'filters']);
+    Route::get('/{id}/detail-sections', [ProductController::class, 'detailSections']);
+    Route::get('/{id}/reviews', [ProductController::class, 'reviews']);
     Route::get('/{id}', [ProductController::class, 'show']);
 });
 

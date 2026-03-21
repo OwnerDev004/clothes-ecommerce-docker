@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Product\ProductFilterRequest;
+use App\Http\Requests\Api\V1\Product\ProductReviewIndexRequest;
+use App\Http\Requests\Api\V1\Product\ProductReviewStoreRequest;
+use App\Models\ProductFaq;
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Repositories\ProductRepository;
 use Illuminate\Support\Facades\DB;
+
 class ProductController extends Controller
 {
     use ApiResponse;
@@ -216,7 +221,7 @@ class ProductController extends Controller
 
         $collectionsByCategory = $collections->groupBy('category_id');
         $subCategoriesByCategory = $subCategories
-            ->filter(fn ($row) => !is_null($row->category_id))
+            ->filter(fn($row) => !is_null($row->category_id))
             ->groupBy('category_id');
 
         $categoryTree = $categories->map(function ($parent) use ($subCategoriesByCategory, $collectionsByCategory) {
@@ -271,6 +276,195 @@ class ProductController extends Controller
         }
 
         return $this->success($product, 'Product detail', 200);
+    }
+
+    public function detailSections(int $id)
+    {
+        $product = $this->productRepository->findById($id);
+        if (!$product) {
+            return $this->error('Product not found', 404);
+        }
+
+        $details = [];
+        if (!empty($product->desc)) {
+            $details[] = [
+                'key' => 'description',
+                'label' => 'Description',
+                'value' => (string) $product->desc,
+            ];
+        }
+        if (!empty($product->category?->name)) {
+            $details[] = [
+                'key' => 'category',
+                'label' => 'Category',
+                'value' => (string) $product->category->name,
+            ];
+        }
+        if (!empty($product->subCategory?->name)) {
+            $details[] = [
+                'key' => 'sub_category',
+                'label' => 'Sub Category',
+                'value' => (string) $product->subCategory->name,
+            ];
+        }
+        if (!empty($product->brand?->name)) {
+            $details[] = [
+                'key' => 'brand',
+                'label' => 'Brand',
+                'value' => (string) $product->brand->name,
+            ];
+        }
+        if (!empty($product->collections)) {
+            $collectionNames = $product->collections
+                ->pluck('name')
+                ->filter()
+                ->values()
+                ->implode(', ');
+
+            if ($collectionNames !== '') {
+                $details[] = [
+                    'key' => 'collections',
+                    'label' => 'Collections',
+                    'value' => $collectionNames,
+                ];
+            }
+        }
+
+        $totalStock = (int) $product->variants->sum('stock_quantity');
+        $details[] = [
+            'key' => 'total_stock',
+            'label' => 'Total Stock',
+            'value' => $totalStock,
+        ];
+
+        $reviews = ProductReview::query()
+            ->where('product_id', $product->id)
+            ->with('customer:id,full_name,user_name')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(function (ProductReview $review) {
+                return [
+                    'id' => (int) $review->id,
+                    'customer_name' => (string) ($review->customer?->full_name ?: $review->customer?->user_name ?: 'Customer'),
+                    'rating' => (int) $review->rating,
+                    'comment' => (string) $review->comment,
+                    'created_at' => optional($review->created_at)?->toISOString(),
+                ];
+            })
+            ->values();
+
+        $faqs = ProductFaq::query()
+            ->where('product_id', $product->id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get()
+            ->map(function (ProductFaq $faq) {
+                return [
+                    'id' => (int) $faq->id,
+                    'question' => (string) $faq->question,
+                    'answer' => (string) $faq->answer,
+                ];
+            })
+            ->values();
+
+        return $this->success([
+            'product_detail' => $details,
+            'rating_and_reviews' => $reviews,
+            'faqs_detail' => $faqs,
+        ], 'Product detail sections', 200);
+    }
+
+    public function reviews(ProductReviewIndexRequest $request, int $id)
+    {
+        $productExists = Product::query()->whereKey($id)->exists();
+        if (!$productExists) {
+            return $this->error('Product not found', 404);
+        }
+
+        $filters = $request->validated();
+        $reviewQuery = ProductReview::query()
+            ->where('product_id', $id)
+            ->with('customer:id,full_name,user_name');
+
+        if (!empty($filters['rating'])) {
+            $reviewQuery->where('rating', (int) $filters['rating']);
+        }
+
+        $mineOnly = filter_var($filters['mine_only'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if ($mineOnly) {
+            $customer = auth()->guard('customer')->user();
+            if (!$customer) {
+                return $this->error('Unauthorized', 401);
+            }
+            $reviewQuery->where('customer_id', $customer->id);
+        }
+
+        $sortBy = $filters['sort_by'] ?? 'latest';
+        if ($sortBy === 'oldest') {
+            $reviewQuery->orderBy('created_at');
+        } elseif ($sortBy === 'rating_high') {
+            $reviewQuery->orderByDesc('rating')->orderByDesc('created_at');
+        } elseif ($sortBy === 'rating_low') {
+            $reviewQuery->orderBy('rating')->orderByDesc('created_at');
+        } else {
+            $reviewQuery->orderByDesc('created_at');
+        }
+
+        $reviews = $reviewQuery->get();
+        $reviewRows = $reviews->map(function (ProductReview $review) {
+            return [
+                'id' => (int) $review->id,
+                'customer_name' => (string) ($review->customer?->full_name ?: $review->customer?->user_name ?: 'Customer'),
+                'rating' => (int) $review->rating,
+                'comment' => (string) $review->comment,
+                'created_at' => optional($review->created_at)?->toISOString(),
+            ];
+        })->values();
+
+        $average = ProductReview::query()
+            ->where('product_id', $id)
+            ->avg('rating');
+
+        return $this->success([
+            'reviews' => $reviewRows,
+            'total_reviews' => (int) $reviewRows->count(),
+            'average_rating' => $average ? round((float) $average, 1) : 0.0,
+        ], 'Product reviews', 200);
+    }
+
+    public function storeReview(ProductReviewStoreRequest $request, int $id)
+    {
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+        $productExists = Product::query()->whereKey($id)->exists();
+        if (!$productExists) {
+            return $this->error('Product not found', 404);
+        }
+
+        $payload = $request->validated();
+        $review = ProductReview::query()->updateOrCreate(
+            [
+                'product_id' => $id,
+                'customer_id' => $customer->id,
+            ],
+            [
+                'rating' => (int) $payload['rating'],
+                'comment' => (string) $payload['comment'],
+            ]
+        );
+
+        return $this->success([
+            'id' => (int) $review->id,
+            'customer_name' => (string) ($customer->full_name ?: $customer->user_name ?: 'Customer'),
+            'rating' => (int) $review->rating,
+            'comment' => (string) $review->comment,
+            'created_at' => optional($review->created_at)?->toISOString(),
+        ], 'Review submitted', 200);
     }
 
     /**
