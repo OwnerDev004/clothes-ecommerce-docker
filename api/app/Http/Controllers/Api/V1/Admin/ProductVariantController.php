@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Repositories\Admin\ProductVariantRepository;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class ProductVariantController extends Controller
 {
@@ -24,6 +25,15 @@ class ProductVariantController extends Controller
     /**
      * Display a listing of the resource.
      */
+    #[OA\Get(
+        path: '/api/v1/admin/product_variants',
+        tags: ['Admin/Product Variants'],
+        summary: 'Get product variants',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Product variants list'),
+        ]
+    )]
     public function index(ProductVariantFilterRequest $request)
     {
         $filters = $request->validated();
@@ -33,6 +43,16 @@ class ProductVariantController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    #[OA\Post(
+        path: '/api/v1/admin/product_variants',
+        tags: ['Admin/Product Variants'],
+        summary: 'Create product variant',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Product variant created'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(ProductVariantStoreRequest $request)
     {
         $products = $this->productVariantRepository->storeProduct($request->validated());
@@ -43,6 +63,19 @@ class ProductVariantController extends Controller
     /**
      * Display the specified resource.
      */
+    #[OA\Get(
+        path: '/api/v1/admin/product_variants/{id}',
+        tags: ['Admin/Product Variants'],
+        summary: 'Get product variant detail',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product variant detail'),
+            new OA\Response(response: 404, description: 'Product variant not found'),
+        ]
+    )]
     public function show(int $id)
     {
         $variant = $this->productVariantRepository->findById($id);
@@ -55,6 +88,19 @@ class ProductVariantController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    #[OA\Put(
+        path: '/api/v1/admin/product_variants/{id}',
+        tags: ['Admin/Product Variants'],
+        summary: 'Update product variant',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product variant updated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(ProductVariantUpdateRequest $request, $id)
     {
         $payload = $request->validated();
@@ -64,6 +110,19 @@ class ProductVariantController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    #[OA\Delete(
+        path: '/api/v1/admin/product_variants/{id}',
+        tags: ['Admin/Product Variants'],
+        summary: 'Delete product variant',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product variant deleted'),
+            new OA\Response(response: 404, description: 'Product variant not found'),
+        ]
+    )]
     public function destroy(int $id)
     {
         $this->productVariantRepository->deleteVariant($id); // throws 404 if not found

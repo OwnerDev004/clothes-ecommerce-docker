@@ -13,6 +13,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Repositories\ProductRepository;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class ProductController extends Controller
 {
@@ -26,6 +27,23 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
+    #[OA\Get(
+        path: '/api/v1/products',
+        tags: ['Products'],
+        summary: 'Get products',
+        parameters: [
+            new OA\Parameter(name: 'search_txt', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'category', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'sub_category', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'brand', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'price_min', in: 'query', required: false, schema: new OA\Schema(type: 'number', format: 'float')),
+            new OA\Parameter(name: 'price_max', in: 'query', required: false, schema: new OA\Schema(type: 'number', format: 'float')),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Products list'),
+        ]
+    )]
     public function index(ProductFilterRequest $request)
     {
         $filters = $request->validated();
@@ -34,6 +52,14 @@ class ProductController extends Controller
         return $this->paginate($products, 'Products list');
     }
 
+    #[OA\Get(
+        path: '/api/v1/products/filters',
+        tags: ['Products'],
+        summary: 'Get product filters',
+        responses: [
+            new OA\Response(response: 200, description: 'Product filters'),
+        ]
+    )]
     public function filters(Request $request)
     {
         $searchText = trim((string) $request->query('search_txt', $request->query('searchTxt', '')));
@@ -268,6 +294,18 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
+    #[OA\Get(
+        path: '/api/v1/products/{id}',
+        tags: ['Products'],
+        summary: 'Get product detail',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product detail'),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function show(int $id)
     {
         $product = $this->productRepository->findById($id);
@@ -278,6 +316,18 @@ class ProductController extends Controller
         return $this->success($product, 'Product detail', 200);
     }
 
+    #[OA\Get(
+        path: '/api/v1/products/{id}/detail-sections',
+        tags: ['Products'],
+        summary: 'Get product detail sections',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product detail sections'),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function detailSections(int $id)
     {
         $product = $this->productRepository->findById($id);
@@ -376,6 +426,22 @@ class ProductController extends Controller
         ], 'Product detail sections', 200);
     }
 
+    #[OA\Get(
+        path: '/api/v1/products/{id}/reviews',
+        tags: ['Products'],
+        summary: 'Get product reviews',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'rating', in: 'query', required: false, schema: new OA\Schema(type: 'integer', minimum: 1, maximum: 5)),
+            new OA\Parameter(name: 'sort_by', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest', 'rating_high', 'rating_low'])),
+            new OA\Parameter(name: 'mine_only', in: 'query', required: false, schema: new OA\Schema(type: 'boolean')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Product reviews'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
     public function reviews(ProductReviewIndexRequest $request, int $id)
     {
         $productExists = Product::query()->whereKey($id)->exists();
@@ -434,6 +500,31 @@ class ProductController extends Controller
         ], 'Product reviews', 200);
     }
 
+    #[OA\Post(
+        path: '/api/v1/products/{id}/reviews',
+        tags: ['Products'],
+        summary: 'Create or update product review',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['rating', 'comment'],
+                properties: [
+                    new OA\Property(property: 'rating', type: 'integer', minimum: 1, maximum: 5),
+                    new OA\Property(property: 'comment', type: 'string', minLength: 3, maxLength: 1000),
+                ]
+            )
+        ),
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Review submitted'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 404, description: 'Product not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function storeReview(ProductReviewStoreRequest $request, int $id)
     {
         $customer = auth()->guard('customer')->user();

@@ -13,6 +13,7 @@ use Illuminate\Support\Arr;
 // use Cloudinary\Transformation\Gravity;
 use App\Repositories\CustomerRepository;
 use App\Traits\ApiResponse;
+use OpenApi\Attributes as OA;
 class CustomerController extends Controller
 {
     use ApiResponse;
@@ -43,6 +44,25 @@ class CustomerController extends Controller
     /**
      * Display the specified resource.
      */
+    #[OA\Get(
+        path: '/api/v1/profile',
+        tags: ['Customer/Profile'],
+        summary: 'Get customer profile',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Profile fetched',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ]
+    )]
     public function show()
     {
         $customer = auth()->guard('customer')->user();
@@ -60,6 +80,35 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    #[OA\Put(
+        path: '/api/v1/profile',
+        tags: ['Customer/Profile'],
+        summary: 'Update customer profile',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'user_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'full_name', type: 'string', maxLength: 255, nullable: true),
+                    new OA\Property(property: 'gender', type: 'string', enum: ['male', 'female'], nullable: true),
+                    new OA\Property(property: 'dob', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', nullable: true),
+                    new OA\Property(property: 'phone', type: 'string', maxLength: 20, nullable: true),
+                    new OA\Property(property: 'address', type: 'string', maxLength: 500, nullable: true),
+                    new OA\Property(property: 'password', type: 'string', minLength: 8, nullable: true),
+                    new OA\Property(property: 'password_confirmation', type: 'string', minLength: 8, nullable: true),
+                    new OA\Property(property: 'telegram_username', type: 'string', maxLength: 255, nullable: true),
+                    new OA\Property(property: 'enable_telegram_alerts', type: 'boolean', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Customer updated'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(CustomerUpdateRequest $request)
     {
         $customer = auth()->guard('customer')->user();
@@ -108,6 +157,29 @@ class CustomerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    #[OA\Post(
+        path: '/api/v1/change_avatar',
+        tags: ['Customer/Profile'],
+        summary: 'Update customer avatar',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['avatar'],
+                    properties: [
+                        new OA\Property(property: 'avatar', type: 'string', format: 'binary'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Avatar updated'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function editAvatar(CustomerAvatarRequest $request)
     {
         $customer = auth()->guard('customer')->user();
@@ -136,6 +208,16 @@ class CustomerController extends Controller
     }
 
 
+    #[OA\Post(
+        path: '/api/v1/delete_avatar',
+        tags: ['Customer/Profile'],
+        summary: 'Delete customer avatar',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Avatar deleted'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ]
+    )]
     public function deleteAvatar(Request $request)
     {
         $customer = auth()->guard('customer')->user();

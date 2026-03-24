@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Auth\AdminLoginRequest;
 use App\Repositories\Admin\AdminRepository;
 use App\Traits\ApiResponse;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use OpenApi\Attributes as OA;
 
 class AdminAuthController extends Controller
 {
@@ -19,6 +20,16 @@ class AdminAuthController extends Controller
 
     }
 
+    #[OA\Post(
+        path: '/api/v1/admin/register',
+        tags: ['Admin/Auth'],
+        summary: 'Register admin',
+        responses: [
+            new OA\Response(response: 201, description: 'Admin registered'),
+            new OA\Response(response: 409, description: 'Email or username exists'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function register(AdminRegisterRequest $request)
     {
         if ($this->adminRepository->findByEmail($request->email)) {
@@ -31,6 +42,16 @@ class AdminAuthController extends Controller
         $customer = $this->adminRepository->create($request->validated());
         return $this->created($customer, 'Customer registered successfully');
     }
+    #[OA\Post(
+        path: '/api/v1/admin/login',
+        tags: ['Admin/Auth'],
+        summary: 'Login admin',
+        responses: [
+            new OA\Response(response: 200, description: 'Login successful'),
+            new OA\Response(response: 401, description: 'Credentials invalid'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function login(AdminLoginRequest $request)
     {
         $credentials = $request->only('email', 'password');
@@ -50,5 +71,4 @@ class AdminAuthController extends Controller
 
 
 }
-
 

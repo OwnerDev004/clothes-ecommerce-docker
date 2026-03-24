@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Order\OrderStatusUpdateRequest;
 use App\Repositories\OrderLifecycleRepository;
 use App\Traits\ApiResponse;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
 class OrderController extends Controller
 {
@@ -16,12 +17,35 @@ class OrderController extends Controller
     {
     }
 
+    #[OA\Get(
+        path: '/api/v1/admin/orders',
+        tags: ['Admin/Orders'],
+        summary: 'Get admin orders',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Admin orders'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+        ]
+    )]
     public function index()
     {
         $orders = $this->orderLifecycleRepository->listForAdmin(request()->all());
         return $this->paginate($orders, 'Admin orders');
     }
 
+    #[OA\Get(
+        path: '/api/v1/admin/orders/{id}',
+        tags: ['Admin/Orders'],
+        summary: 'Get admin order detail',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Order detail'),
+            new OA\Response(response: 404, description: 'Order not found'),
+        ]
+    )]
     public function show(int $id)
     {
         $order = $this->orderLifecycleRepository->findForAdmin($id);
@@ -32,6 +56,19 @@ class OrderController extends Controller
         return $this->success($order, 'Order detail', 200);
     }
 
+    #[OA\Patch(
+        path: '/api/v1/admin/orders/{id}/status',
+        tags: ['Admin/Orders'],
+        summary: 'Update order status',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Order status updated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function updateStatus(OrderStatusUpdateRequest $request, int $id)
     {
         try {

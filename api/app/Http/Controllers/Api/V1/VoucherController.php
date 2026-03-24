@@ -8,6 +8,7 @@ use App\Repositories\VoucherRepository;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
 class VoucherController extends Controller
 {
@@ -21,6 +22,14 @@ class VoucherController extends Controller
     /**
      * Display a listing of the resource.
      */
+    #[OA\Get(
+        path: '/api/v1/vouchers',
+        tags: ['Vouchers'],
+        summary: 'Get active vouchers',
+        responses: [
+            new OA\Response(response: 200, description: 'Active vouchers'),
+        ]
+    )]
     public function index()
     {
         $vouchers = $this->voucherRepository->getActiveForCustomer();
@@ -28,6 +37,14 @@ class VoucherController extends Controller
         return $this->success($vouchers, 'Active vouchers', 200);
     }
 
+    #[OA\Get(
+        path: '/api/v1/vouchers/signup-offer',
+        tags: ['Vouchers'],
+        summary: 'Get signup offer voucher',
+        responses: [
+            new OA\Response(response: 200, description: 'Signup offer'),
+        ]
+    )]
     public function signupOffer()
     {
         $voucher = $this->voucherRepository->getActiveSignupOffer();
@@ -46,6 +63,26 @@ class VoucherController extends Controller
         ], 'Signup offer', 200);
     }
 
+    #[OA\Post(
+        path: '/api/v1/vouchers/validate',
+        tags: ['Vouchers'],
+        summary: 'Validate voucher code',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['code'],
+                properties: [
+                    new OA\Property(property: 'code', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Voucher valid'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Voucher invalid'),
+        ]
+    )]
     public function validateVoucher(Request $request)
     {
         $customer = auth()->guard('customer')->user();
@@ -82,6 +119,26 @@ class VoucherController extends Controller
         ], 'Voucher valid', 200);
     }
 
+    #[OA\Post(
+        path: '/api/v1/vouchers/apply',
+        tags: ['Vouchers'],
+        summary: 'Apply voucher code',
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['code'],
+                properties: [
+                    new OA\Property(property: 'code', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Voucher applied'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Voucher invalid'),
+        ]
+    )]
     public function applyVoucher(Request $request)
     {
         $customer = auth()->guard('customer')->user();

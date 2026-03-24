@@ -12,11 +12,23 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use OpenApi\Attributes as OA;
 
 class TelegramLinkController extends Controller
 {
     use ApiResponse;
 
+    #[OA\Post(
+        path: '/api/v1/telegram/connect-link',
+        tags: ['Telegram'],
+        summary: 'Create Telegram connect link',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Telegram link created'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Configuration error'),
+        ]
+    )]
     public function createLink(Request $request)
     {
         $customer = auth()->guard('customer')->user();
@@ -55,6 +67,18 @@ class TelegramLinkController extends Controller
         ], 'Telegram link created');
     }
 
+    #[OA\Post(
+        path: '/api/v1/telegram/webhook/{secret}',
+        tags: ['Telegram'],
+        summary: 'Telegram webhook',
+        parameters: [
+            new OA\Parameter(name: 'secret', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Webhook processed'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+        ]
+    )]
     public function webhook(Request $request, string $secret)
     {
         $expectedSecret = trim((string) config('services.telegram-bot-api.webhook_secret', ''));
@@ -131,6 +155,18 @@ class TelegramLinkController extends Controller
         return $this->success(['processed' => true], 'Webhook processed');
     }
 
+    #[OA\Post(
+        path: '/api/v1/telegram/poll-link',
+        tags: ['Telegram'],
+        summary: 'Poll Telegram link status',
+        security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Poll result'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 422, description: 'Configuration error'),
+            new OA\Response(response: 502, description: 'Telegram upstream error'),
+        ]
+    )]
     public function pollLink(Request $request)
     {
         $customer = auth()->guard('customer')->user();

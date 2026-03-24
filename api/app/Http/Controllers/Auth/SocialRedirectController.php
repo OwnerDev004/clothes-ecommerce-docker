@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use OpenApi\Attributes as OA;
 
 class SocialRedirectController extends Controller
 {
@@ -21,6 +22,15 @@ class SocialRedirectController extends Controller
         $this->customerRepository = $customerRepo;
     }
 
+    #[OA\Get(
+        path: '/api/v1/auth/telegram/redirect',
+        tags: ['Customer/Auth'],
+        summary: 'Redirect to Telegram OAuth',
+        responses: [
+            new OA\Response(response: 200, description: 'Redirect response'),
+            new OA\Response(response: 302, description: 'Redirect'),
+        ]
+    )]
     public function redirect(Request $request, string $provider): Response|RedirectResponse
     {
         $provider = strtolower($provider);
@@ -42,6 +52,14 @@ class SocialRedirectController extends Controller
         return $driver->redirect();
     }
 
+    #[OA\Get(
+        path: '/api/v1/auth/telegram/callback',
+        tags: ['Customer/Auth'],
+        summary: 'Telegram OAuth callback',
+        responses: [
+            new OA\Response(response: 302, description: 'Frontend redirect with auth result'),
+        ]
+    )]
     public function callback(Request $request, string $provider): RedirectResponse
     {
         $provider = strtolower($provider);
