@@ -1,5 +1,6 @@
 <?php
 // Client
+use App\Http\Controllers\Api\V1\NewsLetterSubScribeController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\OrderController;
@@ -129,6 +130,9 @@ Route::prefix('payments')->group(function () {
 Route::prefix('telegram')->group(function () {
     Route::post('/webhook/{secret}', [TelegramLinkController::class, 'webhook']);
 });
+
+// newsletters
+Route::post('newsletters/subscribe', [NewsLetterSubScribeController::class, 'subscribeMail']);
 
 
 

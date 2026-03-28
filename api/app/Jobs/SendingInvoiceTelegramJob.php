@@ -31,8 +31,6 @@ class SendingInvoiceTelegramJob implements ShouldQueue
             return;
         }
 
-        \Log::info($order);
-
         $telegramSendingService->sendPaidOrderInvoice($order);
     }
 }

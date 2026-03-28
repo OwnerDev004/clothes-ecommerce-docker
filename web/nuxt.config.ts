@@ -38,9 +38,13 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/image',
     'nuxt-swiper',
-    '@element-plus/nuxt' ,
-    'pinia-plugin-persistedstate/nuxt'
+    '@element-plus/nuxt',
+    'pinia-plugin-persistedstate/nuxt',
+    'nuxt-vitalizer',
   ],
+  vitalizer:{
+      disableStylesheets: 'entry'
+  },
   swiper: {
     // Swiper options
     //----------------------
