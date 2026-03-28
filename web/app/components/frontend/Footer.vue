@@ -103,13 +103,14 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage } from 'element-plus'
 import { ref } from 'vue'
 import { useAuthStore } from '~/stores/authStore';
 
 const authStore = useAuthStore()
 // state
 const email_subscribe = ref<string>('')
-const errorMessage = ref('')
+// const errorMessage = ref('')
 const isLoading = ref<Boolean>(false)
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
@@ -117,7 +118,6 @@ const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 // functions
 const subscribeNewsLetter = async () => {
     isLoading.value = true
-    errorMessage.value = ''
     try {
         await $fetch(`${apiBase}/newsletters/subscribe`, {
             method: 'POST',
@@ -126,8 +126,9 @@ const subscribeNewsLetter = async () => {
                 email: email_subscribe.value
             }
         })
+        ElMessage.success('Newsletter Sent Success')
     } catch (error: any) {
-        errorMessage.value = error?.data?.message || 'Unable Subscribe Newsletter'
+        ElMessage.error(error?.data?.message || 'Unable Subscribe Newsletter')
     }
     finally {
         isLoading.value = false
