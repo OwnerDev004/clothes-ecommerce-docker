@@ -18,6 +18,7 @@ use App\Http\Controllers\Auth\SocialRedirectController;
 
 // Admin
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\ProductVariantController as AdminProductVariantController;
@@ -136,6 +137,8 @@ Route::post('newsletters/subscribe', [NewsLetterSubScribeController::class, 'sub
 
 
 
+
+
 //**Admin */ 
 
 Route::prefix('admin')->group(function () {
@@ -143,61 +146,67 @@ Route::prefix('admin')->group(function () {
     // Admin Auth
     Route::post("/login", [AdminAuthController::class, 'login']);
     Route::post("/register", [AdminAuthController::class, 'register']);
+    Route::middleware(['auth:admin'])->group(function () {
+        // dashboard
+        Route::prefix('dashboard')->group(function () {
+            Route::get('/', [AdminDashboardController::class, 'index']);
+        });
 
-    // Products
-    Route::prefix('products')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminProductController::class, 'index']);
-        Route::get('/{id}', [AdminProductController::class, 'show']);
-        Route::post('/', [AdminProductController::class, 'store']);
-        Route::put('/{id}', [AdminProductController::class, 'update']);
-        Route::delete('/{id}', [AdminProductController::class, 'destroy']);
-    });
+        // Products
+        Route::prefix('products')->group(function () {
+            Route::get('/', [AdminProductController::class, 'index']);
+            Route::get('/{id}', [AdminProductController::class, 'show']);
+            Route::post('/', [AdminProductController::class, 'store']);
+            Route::put('/{id}', [AdminProductController::class, 'update']);
+            Route::delete('/{id}', [AdminProductController::class, 'destroy']);
+        });
 
-    // Products Variants
-    Route::prefix('product_variants')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminProductVariantController::class, 'index']);
-        Route::get('/{id}', [AdminProductVariantController::class, 'show']);
-        Route::post('/', [AdminProductVariantController::class, 'store']);
-        Route::put('/{id}', [AdminProductVariantController::class, 'update']);
-        Route::delete('/{id}', [AdminProductVariantController::class, 'destroy']);
-    });
+        // Products Variants
+        Route::prefix('product_variants')->group(function () {
+            Route::get('/', [AdminProductVariantController::class, 'index']);
+            Route::get('/{id}', [AdminProductVariantController::class, 'show']);
+            Route::post('/', [AdminProductVariantController::class, 'store']);
+            Route::put('/{id}', [AdminProductVariantController::class, 'update']);
+            Route::delete('/{id}', [AdminProductVariantController::class, 'destroy']);
+        });
 
-    Route::prefix('orders')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminOrderController::class, 'index']);
-        Route::get('/{id}', [AdminOrderController::class, 'show']);
-        Route::patch('/{id}/status', [AdminOrderController::class, 'updateStatus']);
-    });
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [AdminOrderController::class, 'index']);
+            Route::get('/{id}', [AdminOrderController::class, 'show']);
+            Route::patch('/{id}/status', [AdminOrderController::class, 'updateStatus']);
+        });
 
-    Route::prefix('vouchers')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminVoucherController::class, 'index']);
-        Route::get('/{id}', [AdminVoucherController::class, 'show']);
-        Route::post('/', [AdminVoucherController::class, 'store']);
-        Route::put('/{id}', [AdminVoucherController::class, 'update']);
-        Route::delete('/{id}', [AdminVoucherController::class, 'destroy']);
-    });
+        Route::prefix('vouchers')->group(function () {
+            Route::get('/', [AdminVoucherController::class, 'index']);
+            Route::get('/{id}', [AdminVoucherController::class, 'show']);
+            Route::post('/', [AdminVoucherController::class, 'store']);
+            Route::put('/{id}', [AdminVoucherController::class, 'update']);
+            Route::delete('/{id}', [AdminVoucherController::class, 'destroy']);
+        });
 
-    Route::prefix('categories')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminCategoryController::class, 'index']);
-        Route::get('/{category:id}', [AdminCategoryController::class, 'show']);
-        Route::post('/', [AdminCategoryController::class, 'store']);
-        Route::put('/{category:id}', [AdminCategoryController::class, 'update']);
-        Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
-    });
+        Route::prefix('categories')->group(function () {
+            Route::get('/', [AdminCategoryController::class, 'index']);
+            Route::get('/{category:id}', [AdminCategoryController::class, 'show']);
+            Route::post('/', [AdminCategoryController::class, 'store']);
+            Route::put('/{category:id}', [AdminCategoryController::class, 'update']);
+            Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
+        });
 
-    Route::prefix('brands')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminBrandController::class, 'index']);
-        Route::get('/{brand}', [AdminBrandController::class, 'show']);
-        Route::post('/', [AdminBrandController::class, 'store']);
-        Route::put('/{brand}', [AdminBrandController::class, 'update']);
-        Route::delete('/{brand}', [AdminBrandController::class, 'destroy']);
-    });
+        Route::prefix('brands')->group(function () {
+            Route::get('/', [AdminBrandController::class, 'index']);
+            Route::get('/{brand}', [AdminBrandController::class, 'show']);
+            Route::post('/', [AdminBrandController::class, 'store']);
+            Route::put('/{brand}', [AdminBrandController::class, 'update']);
+            Route::delete('/{brand}', [AdminBrandController::class, 'destroy']);
+        });
 
-    Route::prefix('collections')->middleware(['auth:admin'])->group(function () {
-        Route::get('/', [AdminCollectionController::class, 'index']);
-        Route::get('/{collection}', [AdminCollectionController::class, 'show']);
-        Route::post('/', [AdminCollectionController::class, 'store']);
-        Route::put('/{collection}', [AdminCollectionController::class, 'update']);
-        Route::delete('/{collection}', [AdminCollectionController::class, 'destroy']);
+        Route::prefix('collections')->group(function () {
+            Route::get('/', [AdminCollectionController::class, 'index']);
+            Route::get('/{collection}', [AdminCollectionController::class, 'show']);
+            Route::post('/', [AdminCollectionController::class, 'store']);
+            Route::put('/{collection}', [AdminCollectionController::class, 'update']);
+            Route::delete('/{collection}', [AdminCollectionController::class, 'destroy']);
+        });
     });
 
 

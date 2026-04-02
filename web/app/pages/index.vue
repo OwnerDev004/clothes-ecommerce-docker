@@ -3,7 +3,7 @@ import { useRouter } from 'nuxt/app'
 import { useInfiniteScroll } from '@vueuse/core'
 import { Loading } from '@element-plus/icons-vue'
 import { computed, onMounted, ref } from 'vue'
-
+import { useCartStore } from '~/stores/cartStore'
 const router = useRouter()
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
@@ -51,7 +51,7 @@ type DressTypeApi = {
   slug?: string
   image_url?: string
 }
-
+const cartStore = useCartStore()
 const products = ref<ProductCard[]>([])
 const isLoadingProducts = ref(false)
 const productError = ref('')
@@ -337,6 +337,7 @@ onMounted(async () => {
         </SwiperSlide>
       </Swiper>
     </section>
+    <p>{{ cartStore.items }}</p>
 
     <!-- ALL PRODUCTS -->
     <section class="px-5 desktop:container py-10">

@@ -1,17 +1,18 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 
-type UserProfile = {
+type AdminProfile = {
   id?: number | string
   email?: string
-  name?: string
+  user_name?: string
+  full_name?: string
   [key: string]: unknown
 }
 
-export const useAuthStore = defineStore(
-  'auth',
+export const useAdminAuthStore = defineStore(
+  'admin-auth',
   () => {
-    const accessToken = useCookie<string | null>('auth_access_token', {
+    const accessToken = useCookie<string | null>('admin_access_token', {
       default: () => null,
       sameSite: 'lax',
       secure: import.meta.env.PROD,
@@ -19,7 +20,7 @@ export const useAuthStore = defineStore(
       maxAge: 60 * 60 * 24 * 30,
     })
 
-    const userProfile = useCookie<UserProfile | null>('auth_user_profile', {
+    const adminProfile = useCookie<AdminProfile | null>('admin_profile', {
       default: () => null,
       sameSite: 'lax',
       secure: import.meta.env.PROD,
@@ -27,7 +28,7 @@ export const useAuthStore = defineStore(
       maxAge: 60 * 60 * 24 * 30,
     })
 
-    const isAuthenticated = computed(() => Boolean(accessToken.value || userProfile.value))
+    const isAuthenticated = computed(() => Boolean(accessToken.value || adminProfile.value))
 
     const setAuthenticated = (value: boolean) => {
       if (value) {
@@ -35,7 +36,7 @@ export const useAuthStore = defineStore(
       }
 
       if (!accessToken.value) {
-        userProfile.value = null
+        adminProfile.value = null
       }
     }
 
@@ -43,22 +44,22 @@ export const useAuthStore = defineStore(
       accessToken.value = token
     }
 
-    const setUserProfile = (profile: UserProfile | null) => {
-      userProfile.value = profile
+    const setAdminProfile = (profile: AdminProfile | null) => {
+      adminProfile.value = profile
     }
 
     const resetAuth = () => {
       accessToken.value = null
-      userProfile.value = null
+      adminProfile.value = null
     }
 
     return {
       isAuthenticated,
       accessToken,
-      userProfile,
+      adminProfile,
       setAuthenticated,
       setAccessToken,
-      setUserProfile,
+      setAdminProfile,
       resetAuth,
     }
   }

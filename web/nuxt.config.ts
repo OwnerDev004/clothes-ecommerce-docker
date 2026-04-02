@@ -2,15 +2,14 @@
 const isProduction = process.env.NODE_ENV === 'production'
 
 export default defineNuxtConfig({
-  
   compatibilityDate: '2024-04-03',
-    app: {
+  app: {
     pageTransition: { name: 'page', mode: 'out-in' },
   },
   future: {
     compatibilityVersion: 4,
   },
-  ssr:true,
+  ssr: true,
 
   // experimental: {
   //   sharedPrerenderData: false,
@@ -27,8 +26,8 @@ export default defineNuxtConfig({
 
   unhead: {
     renderSSRHeadOptions: {
-      omitLineBreaks: false
-    }
+      omitLineBreaks: false,
+    },
   },
   devtools: { enabled: true },
   modules: [
@@ -40,11 +39,7 @@ export default defineNuxtConfig({
     'nuxt-swiper',
     '@element-plus/nuxt',
     'pinia-plugin-persistedstate/nuxt',
-    'nuxt-vitalizer',
   ],
-  vitalizer:{
-      disableStylesheets: 'entry'
-  },
   swiper: {
     // Swiper options
     //----------------------
@@ -57,27 +52,30 @@ export default defineNuxtConfig({
   },
   elementPlus: { /** Options */ },
   googleFonts: {
-    families:{
-      "Poppins": true,
-      "Lato": true
-    }
+    families: {
+      Poppins: true,
+      Lato: true,
+    },
   },
   runtimeConfig: {
     public: {
-      appName: process.env.NUXT_PUBLIC_APP_NAME || "Docker-Ecommerce",
+      appName: process.env.NUXT_PUBLIC_APP_NAME || 'Docker-Ecommerce',
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api/v1',
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
       facebookAppId: process.env.NUXT_PUBLIC_FACEBOOK_APP_ID || '',
-      facebookGraphVersion: process.env.NUXT_PUBLIC_FACEBOOK_GRAPH_VERSION || 'v19.0'
-    }
-  },
-  piniaPluginPersistedstate: {
-    storage: 'cookies',
-    cookieOptions: {
-      path: '/',
-      sameSite: 'lax',
-      secure: isProduction,
-      maxAge: 60 * 60 * 24 * 30,
+      facebookGraphVersion: process.env.NUXT_PUBLIC_FACEBOOK_GRAPH_VERSION || 'v19.0',
     },
   },
+  // piniaPluginPersistedstate: {
+  //   storage: 'cookies',
+  //   cookieOptions: {
+  //     path: '/',
+  //     sameSite: 'lax',
+  //     secure: isProduction,
+  //     maxAge: 60 * 60 * 24 * 30,
+  //   },
+  // },
+  routeRules: {
+    '/admin/**': { ssr: false },
+  }
 })

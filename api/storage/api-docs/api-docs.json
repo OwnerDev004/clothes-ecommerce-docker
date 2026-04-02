@@ -613,6 +613,28 @@
                 ]
             }
         },
+        "/api/v1/admin/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin/Dashboard"
+                ],
+                "summary": "Get admin dashboard summary",
+                "operationId": "4d1ed083cd153b05cc9ca6a09e3f746f",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard summary"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/orders": {
             "get": {
                 "tags": [
@@ -2945,6 +2967,10 @@
         {
             "name": "Admin/Collections",
             "description": "Admin/Collections"
+        },
+        {
+            "name": "Admin/Dashboard",
+            "description": "Admin/Dashboard"
         },
         {
             "name": "Admin/Orders",

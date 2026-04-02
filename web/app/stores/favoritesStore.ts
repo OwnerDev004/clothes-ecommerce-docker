@@ -113,5 +113,8 @@ export const useFavoritesStore = defineStore('favorites', () => {
     isFavorite,
   }
 }, {
-  persist: true,
+  persist: {
+    key: 'favorites',
+    storage: piniaPluginPersistedstate.localStorage(),
+  },
 })

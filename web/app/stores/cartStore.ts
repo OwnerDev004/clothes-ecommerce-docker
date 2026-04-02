@@ -116,5 +116,8 @@ export const useCartStore = defineStore('cart', () => {
     getItem,
   }
 }, {
-  persist: true,
+  persist: {
+    key: 'cart',
+    storage: piniaPluginPersistedstate.localStorage(),
+  },
 })
