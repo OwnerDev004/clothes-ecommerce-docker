@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
+import ElementPlus from 'unplugin-element-plus/vite';
 
 export default defineConfig({
     plugins: [

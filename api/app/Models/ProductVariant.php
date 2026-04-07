@@ -10,7 +10,8 @@ class ProductVariant extends Model
 {
     protected $fillable = [
         "product_id",
-        "color_id",
+        "sku",
+        "color",
         "size_id",
         "stock_quantity",
         "sell_price",
@@ -22,16 +23,11 @@ class ProductVariant extends Model
         'cost_price' => 'decimal:2',
     ];
 
-    public function product(): BelongsTo
+    public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function color(): BelongsTo
-    {
-        return $this->belongsTo(Color::class);
-
-    }
     public function size(): BelongsTo
     {
         return $this->belongsTo(Size::class);

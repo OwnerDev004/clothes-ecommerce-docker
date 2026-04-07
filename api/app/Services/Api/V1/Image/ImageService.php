@@ -49,8 +49,7 @@ class ImageService
     ): void {
         $hasExistingImagesPayload = $existingImages !== null;
         $hasNewImagesPayload = $newImages !== null;
-        $shouldSync = $clearImages || $hasExistingImagesPayload || $hasNewImagesPayload;
-        if (!$shouldSync) {
+        if (!$clearImages && !$hasExistingImagesPayload && !$hasNewImagesPayload) {
             return;
         }
 
@@ -65,10 +64,8 @@ class ImageService
 
         $currentImages = $product->images()->get(['id', 'image_url', 'cloudinary_public_id']);
         $publicIdsToDelete = [];
-        // If client explicitly sends new_images but no valid files, treat as replace-with-empty.
-        $replaceAllImages = $clearImages || !empty($validNewImages) || ($hasNewImagesPayload && empty($validNewImages));
 
-        if ($replaceAllImages) {
+        if ($clearImages) {
             $publicIdsToDelete = $currentImages
                 ->map(function ($image) {
                     return $image->cloudinary_public_id ?: $this->extractPublicIdFromUrl($image->image_url);
@@ -124,6 +121,16 @@ class ImageService
                         ->update($updatePayload);
                 }
             }
+        } elseif ($hasNewImagesPayload) {
+            $publicIdsToDelete = $currentImages
+                ->map(function ($image) {
+                    return $image->cloudinary_public_id ?: $this->extractPublicIdFromUrl($image->image_url);
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            $product->images()->delete();
         }
 
         if (!empty($publicIdsToDelete)) {

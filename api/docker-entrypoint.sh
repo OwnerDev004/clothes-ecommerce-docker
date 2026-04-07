@@ -13,8 +13,13 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Generate application key if it doesn't exist
-if [ -z "$(grep '^APP_KEY=' .env | grep -v '=$')" ]; then
-    php artisan key:generate
+if [ ! -f .env ]; then
+    touch .env
+fi
+
+if ! grep -q '^APP_KEY=' .env; then
+    APP_KEY_VALUE="$(php artisan key:generate --show)"
+    printf '\nAPP_KEY=%s\n' "$APP_KEY_VALUE" >> .env
 fi
 
 # Run migrations if the database is ready

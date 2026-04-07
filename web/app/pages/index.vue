@@ -275,15 +275,16 @@ const getBrandRoute = (id: number | string) => {
 }
 
 onMounted(async () => {
+
   await Promise.all([fetchBrands(), fetchCategories(), fetchDressTypes()])
   await fetchProducts(true)
 })
 </script>
 <template>
-  <main>
+  <div>
     <!-- Slide Section -->
     <section class="">
-      <Swiper :modules="[SwiperAutoplay]" :space-between="1" :loop="true" :autoplay="{
+      <Swiper :modules="[SwiperAutoplay]" :space-between="1" :loop="false" :autoplay="{
         delay: 5000,
         disableOnInteraction: false,
       }">
@@ -319,7 +320,7 @@ onMounted(async () => {
       <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
         640: { slidesPerView: 3, spaceBetween: 10 },
         1024: { slidesPerView: 4, spaceBetween: 12 },
-      }" :loop="true" :autoplay="{
+      }" :loop="false" :autoplay="{
         delay: 5000,
         disableOnInteraction: true
       }">
@@ -467,7 +468,7 @@ onMounted(async () => {
             slidesPerView: 4.1,
             spaceBetween: 20,
           },
-        }" :loop="true" :centered-slides="true" @slideChange="onSlideChange" autoplay>
+        }" :loop="false" :centered-slides="true" @slideChange="onSlideChange" autoplay>
           <SwiperSlide v-for="(slide, index) in 10" :key="index">
             <div class="p-4 bg-gray flex justify-center flex-col">
               <SharesRating :stars-num="5" :rating-amount="0" />
@@ -482,7 +483,7 @@ onMounted(async () => {
         </Swiper>
       </ClientOnly>
     </section>
-  </main>
+  </div>
 </template>
 
 <style scoped>

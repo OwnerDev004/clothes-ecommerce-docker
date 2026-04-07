@@ -50,7 +50,73 @@ export default defineNuxtConfig({
   icon: {
     fetchTimeout: 5000, // 15 seconds
   },
-  elementPlus: { /** Options */ },
+  tailwindcss: {
+    configPath: '~/tailwind.config.ts',
+     cssPath: './assets/css/tailwind.css'
+  },
+  elementPlus: {
+    importStyle: 'scss',
+    themeChalk: {
+      $colors: {
+        primary: {
+          base: '#111827',
+        },
+        success: {
+          base: '#16A34A',
+        },
+        warning: {
+          base: '#F59E0B',
+        },
+        danger: {
+          base: '#DC2626',
+        },
+        error: {
+          base: '#DC2626',
+        },
+        info: {
+          base: '#0F172A',
+        },
+      },
+      '$text-color': {
+        primary: '#0F172A',
+        regular: '#334155',
+        secondary: '#64748B',
+        placeholder: '#94A3B8',
+        disabled: '#CBD5E1',
+      },
+      '$bg-color': {
+        '': '#FFFFFF',
+        page: '#F8FAFC',
+        overlay: '#FFFFFF',
+      },
+      '$border-color': {
+        '': '#E2E8F0',
+        light: '#E2E8F0',
+        lighter: '#F1F5F9',
+        'extra-light': '#F8FAFC',
+        dark: '#CBD5E1',
+        darker: '#94A3B8',
+        surface: '#F6F6F6',
+      },
+      '$fill-color': {
+        '': '#F8FAFC',
+        light: '#E2E8F0',
+        lighter: '#F8FAFC',
+        'extra-light': '#FFFFFF',
+        dark: '#CBD5E1',
+        darker: '#94A3B8',
+        surface: '#F6F6F6',
+        blank: '#FFFFFF',
+      },
+      '$border-radius': {
+        base: '12px',
+        small: '8px',
+        round: '9999px',
+        circle: '9999px',
+      },
+    },
+  },
+
   googleFonts: {
     families: {
       Poppins: true,

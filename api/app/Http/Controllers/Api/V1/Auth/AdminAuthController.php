@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\Auth\AdminRegisterRequest;
 use App\Http\Requests\Api\V1\Auth\AdminLoginRequest;
 use App\Repositories\Admin\AdminRepository;
 use App\Traits\ApiResponse;
+use Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use OpenApi\Attributes as OA;
 
@@ -18,6 +19,16 @@ class AdminAuthController extends Controller
     {
         $this->adminRepository = $adminRepo;
 
+    }
+
+    public function show(Request $request)
+    {
+        $admin = auth()->guard('admin')->user();
+        if (!$admin) {
+            return $this->error('Unauthorize', 401);
+        }
+        $adminByEmail = $this->adminRepository->findByEmail($admin->email);
+        return $this->success($adminByEmail, '', 200);
     }
 
     #[OA\Post(
@@ -40,7 +51,7 @@ class AdminAuthController extends Controller
         }
 
         $customer = $this->adminRepository->create($request->validated());
-        return $this->created($customer, 'Customer registered successfully');
+        return $this->created($customer, 'User registered successfully');
     }
     #[OA\Post(
         path: '/api/v1/admin/login',
@@ -63,6 +74,7 @@ class AdminAuthController extends Controller
 
         return $this->success([
             // 'customer' => $customer->makeHidden(['password', 'created_at', 'updated_at']),
+            'admin_data' => $admin,
             'admin_access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => auth('admin')->factory()->getTTL() * 60,

@@ -53,7 +53,7 @@ class ProductStoreRequest extends FormRequest
             "category_id" => "required|integer|exists:categories,id",
             "sub_category_id" => "nullable|integer|exists:sub_categories,id",
             "brand_id" => "nullable|integer|exists:brands,id",
-            "collection_ids" => "required|array|min:1",
+            "collection_ids" => "nullable|array",
             "collection_ids.*" => "integer|exists:collections,id",
             "images" => "nullable|array",
             "images.*.file" => "required|image|mimes:jpeg,png,jpg,gif,webp|max:5120",

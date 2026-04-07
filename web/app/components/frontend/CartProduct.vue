@@ -68,7 +68,7 @@ watch(() => props.quantity, (value) => {
 }, { immediate: true })
 </script>
 <template>
-  <div class="p-4 border-b border-b-gray">
+  <div class="p-4 border-b">
     <div class="flex gap-4">
       <NuxtImg :src="displayImg"
         class="max-w-[80px] sm:max-w-[120px] md:max-w-[140px] lg:max-w-[150px] h-auto rounded-2xl" />
@@ -77,28 +77,28 @@ watch(() => props.quantity, (value) => {
         <div class="flex">
           <div>
             <h1 class="text-md font-bold">{{ name }}</h1>
-            <p class="text-xs md:text-sm">
-              Size: <span>{{ size }}</span>
+            <p class="text-xs md:text-xs">
+              Size: <span class="text-muted">{{ size }}</span>
             </p>
-            <p class="text-xs md:text-sm">
-              Color: <span>{{ color }}</span>
+            <p class="text-xs md:text-xs">
+              Color: <span class="text-muted">{{ color }}</span>
             </p>
           </div>
           <Icon name="ep:delete-filled" class="text-red ml-auto cursor-pointer " @click="removeProduct" />
         </div>
-        <div class="flex justify-between">
+        <div class="flex justify-between mt-12">
           <h3 class="text-xl font-semibold">${{ price.toFixed(2) }}</h3>
 
-          <div class="flex gap-3 items-center bg-gray rounded-2xl">
+          <div class="flex gap-3 items-center border rounded-2xl">
             <button
-              class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-l-2xl cursor-pointer"
+              class="bg-surface-2 hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-l-2xl cursor-pointer"
               @click="decrement">
               <Icon name="ic:baseline-minus" class="text-base" />
             </button>
             <p class="mx-2">{{ qtyAmount }}</p>
             <!-- You can replace "1" with a variable to represent the count -->
             <button
-              class="bg-gray hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-r-2xl cursor-pointer"
+              class="bg-surface-2 hover:bg-slate-200 flex items-center justify-center px-5 py-3 rounded-r-2xl cursor-pointer"
               @click="increment">
               <Icon name="ic:round-plus" class="text-base" />
             </button>

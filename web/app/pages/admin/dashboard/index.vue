@@ -139,7 +139,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">This week revenue</span>
           <strong class="mt-1 block text-lg text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-            }}</strong>
+          }}</strong>
         </div>
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">Customers</span>
@@ -200,7 +200,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
             <div class="text-right">
               <span class="block text-sm text-slate-500">Sales velocity</span>
               <strong class="text-[1.15rem] text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-                }}</strong>
+              }}</strong>
             </div>
           </div>
 

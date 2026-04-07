@@ -571,6 +571,8 @@ const viewProduct = (id: number | string) => {
   router.push(`/frontend/product_detail/${id}`)
 }
 
+let resizeListenerBound = false
+
 const checkScreenSize = () => {
   if (!import.meta.client) return
   if (window.innerWidth >= 720) isToggleFilter.value = false
@@ -604,11 +606,14 @@ onMounted(async () => {
   if (import.meta.client) {
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
+    resizeListenerBound = true
   }
 })
 
 onBeforeUnmount(() => {
-  if (import.meta.client) window.removeEventListener('resize', checkScreenSize)
+  if (!resizeListenerBound || !import.meta.client) return
+  window.removeEventListener('resize', checkScreenSize)
+  resizeListenerBound = false
 })
 </script>
 

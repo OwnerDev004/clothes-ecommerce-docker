@@ -16,17 +16,18 @@ class ProductVariantStoreRequest extends FormRequest
     {
         return [
             "product_id" => ["required", "integer", "exists:products,id"],
-            "color_id" => [
-                "required",
-                "integer",
-                "exists:colors,id",
-                Rule::unique("product_variants", "color_id")->where(function ($query) {
+            "sku" => ["nullable", "string", "max:255", "unique:product_variants,sku"],
+            "color" => [
+                "nullable",
+                "string",
+                "max:64",
+                Rule::unique("product_variants", "color")->where(function ($query) {
                     return $query
                         ->where("product_id", $this->input("product_id"))
                         ->where("size_id", $this->input("size_id"));
                 }),
             ],
-            "size_id" => ["required", "integer", "exists:sizes,id"],
+            "size_id" => ["nullable", "integer", "exists:sizes,id"],
             "stock_quantity" => ["nullable", "integer", "min:0"],
             "sell_price" => ["required", "numeric", "min:0"],
             "cost_price" => ["required", "numeric", "min:0"],

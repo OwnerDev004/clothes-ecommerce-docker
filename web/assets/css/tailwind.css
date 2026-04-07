@@ -1,20 +1,100 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* add the code bellow */ 
-@layer utilities {
-    body{
-        background-color: red;
-    }
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-   /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+@layer components {
+  .admin-theme .el-card {
+    background-color: var(--el-fill-color-blank);
+    border-color: var(--el-border-color-lighter);
+    border-radius: 16px;
+  }
+
+  .admin-theme .el-input__wrapper,
+  .admin-theme .el-select__wrapper,
+  .admin-theme .el-textarea__inner,
+  .admin-theme .el-date-editor .el-input__wrapper,
+  .admin-theme .el-cascader .el-input__wrapper {
+    background-color: var(--el-fill-color-surface);
+    border-color: var(--el-border-color-surface);
+    border-radius: 12px;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .admin-theme .el-input__wrapper:hover,
+  .admin-theme .el-select__wrapper:hover,
+  .admin-theme .el-textarea__inner:hover,
+  .admin-theme .el-date-editor .el-input__wrapper:hover,
+  .admin-theme .el-cascader .el-input__wrapper:hover,
+  .admin-theme .el-input__wrapper:focus-within,
+  .admin-theme .el-select__wrapper:focus-within,
+  .admin-theme .el-textarea__inner:focus,
+  .admin-theme .el-date-editor .el-input__wrapper:focus-within,
+  .admin-theme .el-cascader .el-input__wrapper:focus-within {
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.1) inset !important;
+  }
+
+  .admin-theme .el-input__wrapper.is-focus,
+  .admin-theme .el-select__wrapper.is-focused,
+  .admin-theme .el-select__wrapper.is-focus,
+  .admin-theme .el-cascader .el-input__wrapper.is-focus {
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12) inset !important;
+  }
+
+  .admin-theme .el-button {
+    border-radius: 12px;
+  }
+
+  .admin-theme .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info) {
+    background-color: var(--el-fill-color-blank);
+    border-color: var(--el-border-color-light);
+    color: var(--el-text-color-primary);
+    box-shadow: none;
+  }
+
+  .admin-theme .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info):hover {
+    background-color: var(--el-fill-color-light);
+    border-color: var(--el-border-color);
+    color: var(--el-text-color-primary);
+  }
+
+
+
+  .admin-theme .el-table {
+    --el-table-bg-color: var(--el-bg-color);
+    --el-table-tr-bg-color: var(--el-bg-color);
+    --el-table-header-bg-color: var(--el-fill-color-lighter);
+    --el-table-border-color: var(--el-border-color-lighter);
+    --el-table-text-color: var(--el-text-color-primary);
+    --el-table-header-text-color: var(--el-text-color-secondary);
+    --el-table-row-hover-bg-color: var(--el-fill-color-lighter);
+  }
+
+  .admin-theme .admin-table-shell {
+    overflow: hidden;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 16px;
+    background-color: var(--el-bg-color);
+  }
+
+  .admin-theme .admin-table-shell .el-table {
+    border-radius: 16px;
+  }
+
+  .admin-theme .admin-card .el-card__header,
+  .admin-theme .admin-card .el-card__body {
+    padding: 0;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
-

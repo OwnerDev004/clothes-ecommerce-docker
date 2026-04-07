@@ -173,12 +173,11 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        $colors = DB::table('colors as c')
-            ->select('c.id', 'c.name', 'c.hex_code')
-            ->join('product_variants as pv', 'pv.color_id', '=', 'c.id')
+        $colors = DB::table('product_variants as pv')
+            ->selectRaw('DISTINCT pv.color as id, pv.color as name, pv.color as hex_code')
             ->whereIn('pv.product_id', $productIdsQuery)
-            ->distinct()
-            ->orderBy('c.name')
+            ->whereNotNull('pv.color')
+            ->orderBy('pv.color')
             ->get();
 
         $sizes = DB::table('sizes as s')

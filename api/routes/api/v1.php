@@ -147,6 +147,10 @@ Route::prefix('admin')->group(function () {
     Route::post("/login", [AdminAuthController::class, 'login']);
     Route::post("/register", [AdminAuthController::class, 'register']);
     Route::middleware(['auth:admin'])->group(function () {
+        Route::prefix('auth')->group(function () {
+            Route::get('/profile', [AdminAuthController::class, 'show']);
+        });
+
         // dashboard
         Route::prefix('dashboard')->group(function () {
             Route::get('/', [AdminDashboardController::class, 'index']);

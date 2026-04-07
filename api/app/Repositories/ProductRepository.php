@@ -41,6 +41,7 @@ class ProductRepository extends BaseRepository
             $size = $filters['size'] ?? null;
             $brand = $filters['brand'] ?? null;
             $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
+            $sortBy = trim((string) ($filters['sort_by'] ?? 'latest'));
 
             $query = $this->model->newQuery()->select('products.*')->with([
                 'thumbnail:id,product_id,image_url,image_type,sort_order',
@@ -130,16 +131,8 @@ class ProductRepository extends BaseRepository
                 $query->whereExists(function (Builder $sub) use ($color) {
                     $sub->selectRaw('1')
                         ->from('product_variants')
-                        ->join('colors', 'colors.id', '=', 'product_variants.color_id')
                         ->whereColumn('product_variants.product_id', 'products.id')
-                        ->where(function ($w) use ($color) {
-                            if (is_numeric($color)) {
-                                $w->where('colors.id', (int) $color);
-                            } else {
-                                $w->where('colors.name', 'like', '%' . $color . '%')
-                                    ->orWhere('colors.hex_code', $color);
-                            }
-                        });
+                        ->where('product_variants.color', 'like', '%' . $color . '%');
                 });
             }
 
@@ -170,6 +163,15 @@ class ProductRepository extends BaseRepository
             if (!is_null($priceMax) && $priceMax !== '') {
                 $query->where('products.price', '<=', (float) $priceMax);
             }
+
+            match ($sortBy) {
+                'oldest' => $query->orderBy('products.id'),
+                'price_low' => $query->orderBy('products.price'),
+                'price_high' => $query->orderByDesc('products.price'),
+                'name_asc' => $query->orderBy('products.name'),
+                'name_desc' => $query->orderByDesc('products.name'),
+                default => $query->orderByDesc('products.id'),
+            };
 
             $perPage = (int) ($filters['per_page'] ?? 12);
             if ($perPage < 1) {
@@ -235,9 +237,8 @@ class ProductRepository extends BaseRepository
                         ->orderBy('sort_order');
                 },
                 'variants' => function ($q) {
-                    $q->select('id', 'product_id', 'color_id', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
+                    $q->select('id', 'product_id', 'color', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
                         ->with([
-                            'color:id,name,hex_code',
                             'size:id,name,sort_order',
                         ]);
                 },

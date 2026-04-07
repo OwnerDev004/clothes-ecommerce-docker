@@ -35,7 +35,7 @@ class ProductController extends Controller
         $filters = $request->validated();
 
         $products = $this->productRepository->getAll($filters);
-        return $this->success("success get products", $products, 200);
+        return $this->paginate($products, "success get products");
     }
 
     /**
@@ -55,7 +55,7 @@ class ProductController extends Controller
     {
         $products = $this->productRepository->storeProduct($request->validated());
 
-        return $this->success("success creadted product.", $products, 200);
+        return $this->success($products, "success created product.", 200);
     }
 
     /**
@@ -80,7 +80,7 @@ class ProductController extends Controller
         if (!$product) {
             return $this->error("Product not exist", 404);
         }
-        return $this->success("success filter Product", $product, 200);
+        return $this->success($product, "success filter Product", 200);
     }
 
     /**
@@ -116,7 +116,7 @@ class ProductController extends Controller
 
         $product = $this->productRepository->updateProduct($id, $payload);
 
-        return $this->success("success updated product.", $product, 200);
+        return $this->success($product, "success updated product.", 200);
     }
 
     /**
@@ -138,6 +138,6 @@ class ProductController extends Controller
     public function destroy(int $id)
     {
         $this->productRepository->deleteProduct($id); // throws 404 if not found
-        return $this->success("Product deleted", null, 200);
+        return $this->success(null, "Product deleted", 200);
     }
 }

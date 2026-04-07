@@ -1,7 +1,7 @@
 <template>
   <div class="font-Poppins">
     <NuxtLayout>
-      <NuxtLoadingIndicator :throttle="0" />
+      <NuxtLoadingIndicator color="red" :throttle="0" />
       <NuxtPage />
     </NuxtLayout>
   </div>

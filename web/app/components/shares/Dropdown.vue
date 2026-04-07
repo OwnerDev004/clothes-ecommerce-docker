@@ -1,32 +1,32 @@
-<template>
- <select class="select w-full max-w-xs rounded-3xl bg-gray">
-    <option value="" v-for="option in options" :key="option.id">
-        {{ option.label }}
-    </option>
-</select>
-</template>
+<script setup lang="ts">
+defineOptions({ inheritAttrs: false })
 
-<script setup>
-const props = defineProps({
-  modelValue: [String, Number],
-  options: {
-    type: Array,
-    required: true,
+type SelectOption = {
+  id: string | number
+  label: string
+}
+
+withDefaults(
+  defineProps<{
+    options: SelectOption[]
+    placeholder?: string
+  }>(),
+  {
+    placeholder: 'Select an option',
   },
-  label: {
-    type: String,
-    default: "",
-  },
-  placeholder: {
-    type: String,
-    default: "Select an option",
-  },
-  name: {
-    type: String,
-    default: "custom-select",
-  },
-});
+)
+
+const model = defineModel<string | number | null>()
 </script>
+
+<template>
+  <select v-model="model" class="select w-full max-w-xs rounded-3xl bg-gray" v-bind="$attrs">
+    <option value="">{{ placeholder }}</option>
+    <option v-for="option in options" :key="option.id" :value="option.id">
+      {{ option.label }}
+    </option>
+  </select>
+</template>
 
 <style scoped>
 /* Additional custom styles (if needed) */

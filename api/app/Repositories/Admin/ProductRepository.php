@@ -6,7 +6,7 @@ use App\Models\Product;
 use App\Repositories\BaseRepository;
 use App\Repositories\ProductRepository as PublicProductRepository;
 use App\Services\Api\V1\Image\ImageService;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +27,25 @@ class ProductRepository extends BaseRepository
         $this->image_service = $image_service;
     }
 
-    public function getAll(array $filters = []): Collection
+    private function adminProductRelations(): array
+    {
+        return [
+            'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
+            'images' => function ($query) {
+                $query->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
+                    ->orderBy('sort_order')
+                    ->orderBy('id');
+            },
+            'variants' => function ($query) {
+                $query->select('id', 'product_id', 'sku', 'color', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
+                    ->with(['size:id,name,sort_order']);
+            },
+            'subCategory:id,category_id,name,slug',
+            'collections:id,name,slug',
+        ];
+    }
+
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
         $normalized = array_filter($filters, function ($value) {
             return $value !== null && $value !== '';
@@ -35,9 +53,10 @@ class ProductRepository extends BaseRepository
         ksort($normalized);
         $cacheVersion = self::getAdminListCacheVersion();
         $cacheKey = 'products:admin:getAll:v' . $cacheVersion . ':' . md5(json_encode($normalized));
-        $ttlSeconds = self::ADMIN_LIST_TTL_SECONDS;
+        $requestedPage = (int) ($filters['page'] ?? 1);
+        $shouldCache = $requestedPage === 1;
 
-        return Cache::remember($cacheKey, $ttlSeconds, function () use ($filters) {
+        $queryBuilder = function () use ($filters) {
             $searchText = trim((string) ($filters['search_txt'] ?? ''));
             $category = $filters['category'] ?? null;
             $subCategory = $filters['sub_category'] ?? null;
@@ -48,16 +67,9 @@ class ProductRepository extends BaseRepository
             $size = $filters['size'] ?? null;
             $brand = $filters['brand'] ?? null;
             $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
+            $sortBy = trim((string) ($filters['sort_by'] ?? 'latest'));
 
-            $query = $this->product_model->newQuery()->select('products.*')->with([
-                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
-                'images' => function ($q) {
-                    $q->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
-                        ->orderBy('sort_order');
-                },
-                'subCategory:id,category_id,name,slug',
-                'collections:id,name,slug',
-            ]);
+            $query = $this->product_model->newQuery()->select('products.*')->with($this->adminProductRelations());
 
 
             if ($searchText !== '') {
@@ -140,15 +152,9 @@ class ProductRepository extends BaseRepository
                 $query->whereExists(function (Builder $sub) use ($color) {
                     $sub->selectRaw('1')
                         ->from('product_variants')
-                        ->join('colors', 'colors.id', '=', 'product_variants.color_id')
                         ->whereColumn('product_variants.product_id', 'products.id')
                         ->where(function ($w) use ($color) {
-                            if (is_numeric($color)) {
-                                $w->where('colors.id', (int) $color);
-                            } else {
-                                $w->where('colors.name', 'like', '%' . $color . '%')
-                                    ->orWhere('colors.hex_code', $color);
-                            }
+                            $w->where('product_variants.color', 'like', '%' . $color . '%');
                         });
                 });
             }
@@ -181,8 +187,38 @@ class ProductRepository extends BaseRepository
                 $query->where('products.price', '<=', (float) $priceMax);
             }
 
-            return $query->orderByDesc('products.id')->get();
-        });
+            match ($sortBy) {
+                'oldest' => $query->orderBy('products.id'),
+                'price_low' => $query->orderBy('products.price'),
+                'price_high' => $query->orderByDesc('products.price'),
+                'name_asc' => $query->orderBy('products.name'),
+                'name_desc' => $query->orderByDesc('products.name'),
+                default => $query->orderByDesc('products.id'),
+            };
+
+            $perPage = (int) ($filters['per_page'] ?? 12);
+            if ($perPage < 1) {
+                $perPage = 12;
+            }
+            if ($perPage > 50) {
+                $perPage = 50;
+            }
+
+            return $query->paginate($perPage);
+        };
+
+        if (!$shouldCache) {
+            return $queryBuilder();
+        }
+
+        $cached = Cache::get($cacheKey);
+        if (!is_null($cached)) {
+            return $cached;
+        }
+
+        $result = $queryBuilder();
+        Cache::put($cacheKey, $result, self::ADMIN_LIST_TTL_SECONDS);
+        return $result;
     }
 
     //Store Products
@@ -205,13 +241,7 @@ class ProductRepository extends BaseRepository
                 PublicProductRepository::bumpPublicListCacheVersion();
             });
 
-            return $product->load([
-                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
-                'images' => function ($query) {
-                    $query->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
-                        ->orderBy('sort_order');
-                },
-            ]);
+            return $product->load($this->adminProductRelations());
         });
     }
 
@@ -252,13 +282,7 @@ class ProductRepository extends BaseRepository
                 PublicProductRepository::bumpPublicListCacheVersion();
             });
 
-            return $product->load([
-                'thumbnail:id,product_id,image_url,cloudinary_public_id,image_type,sort_order',
-                'images' => function ($query) {
-                    $query->select('id', 'product_id', 'image_url', 'cloudinary_public_id', 'image_type', 'sort_order')
-                        ->orderBy('sort_order');
-                },
-            ]);
+            return $product->load($this->adminProductRelations());
         });
 
     }
@@ -301,7 +325,7 @@ class ProductRepository extends BaseRepository
     public function findById($id)
     {
         $product = $this->product_model
-            ->with(['category', 'subCategory', 'collections', 'images', 'variants'])
+            ->with($this->adminProductRelations())
             ->find($id);
         return $product;
     }

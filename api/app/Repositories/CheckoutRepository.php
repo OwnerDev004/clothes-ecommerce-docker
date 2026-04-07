@@ -44,7 +44,6 @@ class CheckoutRepository
             foreach ($cartItems as $cartItem) {
                 $variant = ProductVariant::with([
                     'product:id,name,slug',
-                    'color:id,name,hex_code',
                     'size:id,name',
                 ])->whereKey($cartItem->product_variant_id)
                     ->lockForUpdate()
@@ -150,7 +149,6 @@ class CheckoutRepository
 
             $order->load([
                 'items.variant.product:id,name,slug',
-                'items.variant.color:id,name,hex_code',
                 'items.variant.size:id,name',
                 'voucher:id,code,name',
             ]);

@@ -73,6 +73,8 @@ export const useAdminDashboard = () => {
     {
       server: false,
       immediate: true,
+      watch: [accessToken],
+      getCachedData: () => undefined,
     }
   )
 

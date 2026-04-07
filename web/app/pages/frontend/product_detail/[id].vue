@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessage } from 'element-plus'
 import type { TabsPaneContext } from 'element-plus'
@@ -12,12 +12,6 @@ type ProductImage = {
   image_url?: string
 }
 
-type ColorOption = {
-  id: number
-  name: string
-  hex_code?: string
-}
-
 type SizeOption = {
   id: number
   name: string
@@ -27,7 +21,7 @@ type ProductVariant = {
   id: number
   sell_price?: number | string
   stock_quantity?: number
-  color?: ColorOption
+  color?: string | null
   size?: SizeOption
 }
 
@@ -83,19 +77,20 @@ const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
 
 const product = ref<ProductDetail | null>(null)
-const loading = ref(false)
-const errorMessage = ref('')
 const relatedProducts = ref<ProductCard[]>([])
 const qtyAmount = ref(1)
 const selectedImage = ref('')
-const selectedColorId = ref<number | null>(null)
+const selectedColor = ref<string | null>(null)
 const selectedSizeId = ref<number | null>(null)
 const sortBy = ref('')
-const activeIndex = ref(1)
+const activeIndex = ref()
 const productDeatil = ref<ProductDetailSection[]>([])
 const ratingAndReviews = ref<ProductReview[]>([])
 const faqsDetail = ref<ProductFaq[]>([])
-const detailsLoading = ref(false)
+const pageLoading = ref(true)
+const pageErrorState = ref('')
+const sectionLoading = ref(false)
+const loadRequestId = ref(0)
 const reviewStats = ref({
   total_reviews: 0,
   average_rating: 0,
@@ -113,11 +108,46 @@ const reviewForm = reactive({
   comment: '',
 })
 
+// Add a ref to track if initial load is done
+const initialLoadDone = ref(false)
+
+const resolveRouteId = () => {
+  const rawId = route.params.id
+  return Array.isArray(rawId) ? rawId[0] : rawId
+}
+
+const normalizeProductPayload = (response: any): ProductDetail | null => {
+  const payload = response?.data?.data || response?.data || response
+  return payload && typeof payload === 'object' ? (payload as ProductDetail) : null
+}
+
+const fetchWithTimeout = async <T>(url: string, options: Record<string, any> = {}, timeoutMs = 15000): Promise<T> => {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null
+  const controller = new AbortController()
+  const signal = controller.signal
+
+  try {
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        controller.abort()
+        reject(new Error(`Request timed out after ${timeoutMs}ms`))
+      }, timeoutMs)
+    })
+
+    const fetchPromise = $fetch<T>(url, { ...options, signal })
+
+    return await Promise.race([fetchPromise, timeoutPromise])
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle)
+    }
+  }
+}
 
 const tablists = ref([
-  { id: 1, name: 'Product Details' },
-  { id: 2, name: 'Rating & Reviews' },
-  { id: 3, name: 'FAQs' },
+  { id: 1, lable: "Product Details", name: 'pro_detail' },
+  { id: 2, lable: "Rating & Reviews", name: 'rate_review' },
+  { id: 3, lable: "FAQs", name: 'faqs' },
 ])
 
 const dropdownOptions = ref([
@@ -153,19 +183,19 @@ const imageList = computed(() => {
 })
 
 const colorOptions = computed(() => {
-  const map = new Map<number, ColorOption>()
+  const set = new Set<string>()
   for (const variant of product.value?.variants || []) {
-    if (variant.color?.id) {
-      map.set(variant.color.id, variant.color)
+    if (variant.color) {
+      set.add(String(variant.color))
     }
   }
-  return Array.from(map.values())
+  return Array.from(set.values())
 })
 
 const sizeOptions = computed(() => {
   const map = new Map<number, SizeOption>()
   for (const variant of product.value?.variants || []) {
-    if (selectedColorId.value && variant.color?.id !== selectedColorId.value) {
+    if (selectedColor.value && variant.color !== selectedColor.value) {
       continue
     }
     if (variant.size?.id) {
@@ -177,7 +207,7 @@ const sizeOptions = computed(() => {
 
 const selectedVariant = computed(() => {
   return (product.value?.variants || []).find((variant) => {
-    const colorOk = selectedColorId.value ? variant.color?.id === selectedColorId.value : true
+    const colorOk = selectedColor.value ? variant.color === selectedColor.value : true
     const sizeOk = selectedSizeId.value ? variant.size?.id === selectedSizeId.value : true
     return colorOk && sizeOk
   }) || null
@@ -212,8 +242,8 @@ const decrement = () => {
   qtyAmount.value = qtyAmount.value > 1 ? qtyAmount.value - 1 : 1
 }
 
-const chooseColor = (colorId: number) => {
-  selectedColorId.value = colorId
+const chooseColor = (color: string) => {
+  selectedColor.value = color
   const availableSizes = sizeOptions.value
   if (!availableSizes.some((size) => size.id === selectedSizeId.value)) {
     selectedSizeId.value = availableSizes[0]?.id || null
@@ -222,6 +252,21 @@ const chooseColor = (colorId: number) => {
 
 const chooseSize = (sizeId: number) => {
   selectedSizeId.value = sizeId
+}
+
+const getDefaultVariantSelection = (currentProduct: ProductDetail | null) => {
+  const firstVariant = currentProduct?.variants?.[0] || null
+  selectedColor.value = firstVariant?.color || null
+  selectedSizeId.value = firstVariant?.size?.id || null
+}
+
+const getProductImagePreview = (currentProduct: ProductDetail | null) => {
+  const rows = [
+    currentProduct?.thumbnail?.image_url || '',
+    ...((currentProduct?.images || []).map((img) => img.image_url || '')),
+  ].filter(Boolean)
+  const uniqueRows = Array.from(new Set(rows))
+  return uniqueRows.map((path) => resolveImageUrl(path))
 }
 
 const getAuthHeaders = () => {
@@ -248,7 +293,7 @@ const addToCart = async () => {
   }
 
   try {
-    await $fetch(`${apiBase}/cart/items`, {
+    await fetchWithTimeout(`${apiBase}/cart/items`, {
       method: 'POST',
       credentials: 'include',
       headers: getAuthHeaders(),
@@ -263,7 +308,7 @@ const addToCart = async () => {
       price: Number(displayPrice.value || 0),
       image: selectedImage.value || '',
       size: selectedVariant.value?.size?.name,
-      color: selectedVariant.value?.color?.name,
+      color: selectedVariant.value?.color || undefined,
     }, qtyAmount.value)
     ElMessage.success('Added to cart.')
     await router.push('/frontend/cart')
@@ -293,77 +338,51 @@ const mapCardProduct = (item: any): ProductCard => {
   }
 }
 
-const fetchRelatedProducts = async () => {
+const fetchProductById = async (id: string | number) => {
+  const response: any = await fetchWithTimeout(`${apiBase}/products/${id}`, { method: 'GET' })
+  return normalizeProductPayload(response)
+}
+
+const fetchRelatedProducts = async (currentProduct: ProductDetail | null) => {
   try {
-    const response: any = await $fetch(`${apiBase}/products`, {
+    const response: any = await fetchWithTimeout(`${apiBase}/products`, {
       method: 'GET',
       query: {
-        category: product.value?.category_id,
+        category: currentProduct?.category_id,
         page: 1,
         per_page: 8,
       },
     })
 
     const rows = Array.isArray(response?.data) ? response.data : []
-    relatedProducts.value = rows
-      .filter((row: any) => Number(row?.id) !== Number(product.value?.id))
+    return rows
+      .filter((row: any) => Number(row?.id) !== Number(currentProduct?.id))
       .slice(0, 4)
       .map((row: any) => mapCardProduct(row))
   } catch {
-    relatedProducts.value = []
+    return []
   }
 }
 
-// fetch Products
-const fetchProduct = async () => {
-  loading.value = true
-  errorMessage.value = ''
-
+const fetchDetailSections = async (id: string | number) => {
   try {
-    const id = route.params.id
-    const response: any = await $fetch(`${apiBase}/products/${id}`, { method: 'GET' })
-    product.value = (response?.data || null) as ProductDetail | null
-
-    const images = imageList.value
-    selectedImage.value = images[0] || '/img/products/default_image.webp'
-
-    selectedColorId.value = colorOptions.value[0]?.id || null
-    selectedSizeId.value = sizeOptions.value[0]?.id || null
-
-    await fetchRelatedProducts()
-  } catch (error: any) {
-    errorMessage.value = error?.data?.message || 'Failed to load product detail.'
-    product.value = null
-    relatedProducts.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-const fetDetailProduct = async () => {
-  detailsLoading.value = true
-  try {
-    const response: any = await $fetch(`${apiBase}/products/${route.params.id}/detail-sections`, {
+    const response: any = await fetchWithTimeout(`${apiBase}/products/${id}/detail-sections`, {
       method: 'GET',
     })
-    const payload = response?.data || {}
-    productDeatil.value = Array.isArray(payload?.product_detail) ? payload.product_detail : []
-    faqsDetail.value = Array.isArray(payload?.faqs_detail) ? payload.faqs_detail : []
-    await fetchRatingAndReviews()
-  } catch {
-    productDeatil.value = []
-    ratingAndReviews.value = []
-    faqsDetail.value = []
-    reviewStats.value = {
-      total_reviews: 0,
-      average_rating: 0,
+    const payload = response?.data?.data || response?.data || response || {}
+    return {
+      product_detail: Array.isArray(payload?.product_detail) ? payload.product_detail : [],
+      faqs_detail: Array.isArray(payload?.faqs_detail) ? payload.faqs_detail : [],
     }
-  } finally {
-    detailsLoading.value = false
+  } catch {
+    return {
+      product_detail: [] as ProductDetailSection[],
+      faqs_detail: [] as ProductFaq[],
+    }
   }
 }
 
-const fetchRatingAndReviews = async () => {
+const fetchRatingAndReviews = async (id: string | number) => {
   try {
     const query: Record<string, string | number> = {
       sort_by: reviewFilters.sort_by,
@@ -375,7 +394,7 @@ const fetchRatingAndReviews = async () => {
       query.mine_only = 1
     }
 
-    const response: any = await $fetch(`${apiBase}/products/${route.params.id}/reviews`, {
+    const response: any = await fetchWithTimeout(`${apiBase}/products/${id}/reviews`, {
       method: 'GET',
       credentials: 'include',
       headers: getAuthHeaders(),
@@ -383,20 +402,145 @@ const fetchRatingAndReviews = async () => {
     })
 
     const payload = response?.data || {}
-    ratingAndReviews.value = Array.isArray(payload?.reviews) ? payload.reviews : []
-    reviewStats.value = {
+    return {
+      reviews: Array.isArray(payload?.reviews) ? payload.reviews : [],
       total_reviews: Number(payload?.total_reviews || 0),
       average_rating: Number(payload?.average_rating || 0),
     }
   } catch (error: any) {
+    return {
+      reviews: [] as ProductReview[],
+      total_reviews: 0,
+      average_rating: 0,
+    }
+  }
+}
+
+const loadProductExtras = async (id: string | number, currentProduct: ProductDetail, requestId: number) => {
+  console.log("loadProductExtras");
+
+  sectionLoading.value = true
+  try {
+    const [relatedRowsResult, detailRowsResult, reviewRowsResult] = await Promise.allSettled([
+      fetchRelatedProducts(currentProduct),
+      fetchDetailSections(id),
+      fetchRatingAndReviews(id),
+    ])
+
+    if (requestId !== loadRequestId.value) {
+      return
+    }
+
+    if (relatedRowsResult.status === 'fulfilled') {
+      relatedProducts.value = relatedRowsResult.value
+    }
+
+    if (detailRowsResult.status === 'fulfilled') {
+      productDeatil.value = detailRowsResult.value.product_detail
+      faqsDetail.value = detailRowsResult.value.faqs_detail
+    }
+
+    if (reviewRowsResult.status === 'fulfilled') {
+      ratingAndReviews.value = reviewRowsResult.value.reviews
+      reviewStats.value = {
+        total_reviews: reviewRowsResult.value.total_reviews,
+        average_rating: reviewRowsResult.value.average_rating,
+      }
+    }
+  } catch (error) {
+    console.error('Error loading product extras:', error)
+  } finally {
+    if (requestId === loadRequestId.value) {
+      sectionLoading.value = false
+    }
+  }
+}
+
+const loadProductPage = async () => {
+  console.log('first Init product');
+
+  // Don't reload if already loading and initial load is done
+  if (pageLoading.value && initialLoadDone.value) {
+    return
+  }
+
+  const requestId = ++loadRequestId.value
+  pageLoading.value = true
+  pageErrorState.value = ''
+  sectionLoading.value = false
+  initialLoadDone.value = false
+
+  const id = resolveRouteId()
+  if (!id) {
+    pageErrorState.value = 'Missing product id.'
+    pageLoading.value = false
+    return
+  }
+
+  try {
+    const currentProduct = await fetchProductById(id)
+    console.log(currentProduct);
+
+    if (requestId !== loadRequestId.value) {
+      return
+    }
+
+    if (!currentProduct) {
+      pageErrorState.value = 'Failed to load product detail.'
+      product.value = null
+      relatedProducts.value = []
+      productDeatil.value = []
+      faqsDetail.value = []
+      ratingAndReviews.value = []
+      reviewStats.value = {
+        total_reviews: 0,
+        average_rating: 0,
+      }
+      pageLoading.value = false
+      return
+    }
+
+    product.value = currentProduct
+    getDefaultVariantSelection(currentProduct)
+    const previewImages = getProductImagePreview(currentProduct)
+    selectedImage.value = previewImages[0] || '/img/products/default_image.webp'
+
+    // Load extras in background without waiting
+    loadProductExtras(id, currentProduct, requestId).finally(() => {
+      initialLoadDone.value = true
+    })
+  } catch (error: any) {
+    if (requestId !== loadRequestId.value) {
+      return
+    }
+    pageErrorState.value = error?.data?.message || error?.message || 'Failed to load product detail.'
+    product.value = null
+    relatedProducts.value = []
+    productDeatil.value = []
+    faqsDetail.value = []
     ratingAndReviews.value = []
     reviewStats.value = {
       total_reviews: 0,
       average_rating: 0,
     }
-    if (reviewFilters.mine_only) {
-      ElMessage.error(error?.data?.message || 'Failed to filter reviews.')
+  } finally {
+    if (requestId === loadRequestId.value) {
+      pageLoading.value = false
     }
+  }
+}
+
+const refreshReviews = async () => {
+  const id = resolveRouteId()
+  if (!id) {
+    return
+  }
+
+  const reviewRows = await fetchRatingAndReviews(id)
+  ratingAndReviews.value = reviewRows.reviews
+  reviewStats.value = {
+    total_reviews: reviewRows.total_reviews,
+    average_rating: reviewRows.average_rating,
   }
 }
 
@@ -411,7 +555,7 @@ const applyReviewFilter = async () => {
     return
   }
   reviewFilterDialogOpen.value = false
-  await fetchRatingAndReviews()
+  await refreshReviews()
 }
 
 const openWriteReviewDialog = async () => {
@@ -426,7 +570,7 @@ const openWriteReviewDialog = async () => {
 const submitReview = async () => {
   submittingReview.value = true
   try {
-    await $fetch(`${apiBase}/products/${route.params.id}/reviews`, {
+    await fetchWithTimeout(`${apiBase}/products/${route.params.id}/reviews`, {
       method: 'POST',
       credentials: 'include',
       headers: getAuthHeaders(),
@@ -439,7 +583,7 @@ const submitReview = async () => {
     writeReviewDialogOpen.value = false
     reviewForm.rating = 5
     reviewForm.comment = ''
-    await fetchRatingAndReviews()
+    await refreshReviews()
   } catch (error: any) {
     const statusCode = error?.statusCode ?? error?.status
     if (statusCode === 401 || statusCode === 403) {
@@ -458,10 +602,31 @@ const viewProduct = (id: number | string) => {
   router.push(`/frontend/product_detail/${id}`)
 }
 
-watch(() => route.params.id, () => {
-  fetchProduct()
-  fetDetailProduct()
-}, { immediate: true })
+// Use onMounted for initial load
+onMounted(() => {
+  loadProductPage()
+})
+
+// Watch for route param changes
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    // Only reload if the ID actually changed and it's not the initial load
+    if (newId !== oldId && oldId !== undefined) {
+      // Reset all data when changing products
+      product.value = null
+      relatedProducts.value = []
+      productDeatil.value = []
+      faqsDetail.value = []
+      ratingAndReviews.value = []
+      selectedColor.value = null
+      selectedSizeId.value = null
+      qtyAmount.value = 1
+      initialLoadDone.value = false
+      loadProductPage()
+    }
+  }
+)
 </script>
 
 <template>
@@ -471,16 +636,43 @@ watch(() => route.params.id, () => {
       <el-breadcrumb-item>Product Detail</el-breadcrumb-item>
     </BaseBreadcrumb>
 
-    <div v-if="loading" class="py-16 text-center text-gray-500">Loading product...</div>
+    <div v-if="pageLoading" class="animate-pulse py-10">
+      <div class="grid gap-8 desktop:grid-cols-[440px_1fr]">
+        <div class="flex gap-3">
+          <div class="hidden desktop:flex flex-col gap-3">
+            <div v-for="n in 3" :key="n" class="h-[96px] w-[96px] rounded-2xl bg-gray-200"></div>
+          </div>
+          <div class="h-[360px] w-full rounded-3xl bg-gray-200 desktop:h-[530px]"></div>
+        </div>
 
-    <div v-else-if="errorMessage" class="py-16 text-center">
-      <p class="text-red-600">{{ errorMessage }}</p>
-      <button class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white" @click="fetchProduct">
+        <div class="space-y-4">
+          <div class="h-10 w-3/4 rounded-2xl bg-gray-200"></div>
+          <div class="h-6 w-1/3 rounded-full bg-gray-200"></div>
+          <div class="h-8 w-40 rounded-full bg-gray-200"></div>
+          <div class="space-y-3 pt-4">
+            <div class="h-4 w-full rounded-full bg-gray-200"></div>
+            <div class="h-4 w-5/6 rounded-full bg-gray-200"></div>
+            <div class="h-4 w-2/3 rounded-full bg-gray-200"></div>
+          </div>
+          <div class="flex gap-3 pt-4">
+            <div v-for="n in 4" :key="n" class="h-10 w-10 rounded-full bg-gray-200"></div>
+          </div>
+          <div class="flex gap-3 pt-4">
+            <div v-for="n in 4" :key="`size-${n}`" class="h-12 w-24 rounded-3xl bg-gray-200"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="pageErrorState" class="py-16 text-center">
+      <p class="text-red-600">{{ pageErrorState }}</p>
+      <button class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white" @click="loadProductPage">
         Retry
       </button>
     </div>
 
     <div v-else-if="product" class="flex items-center gap-16 flex-col desktop:flex-row mb-10">
+      <!-- Rest of your product display template remains the same -->
       <div class="flex gap-14 flex-col-reverse desktop:flex-row items-center">
         <div class="grid grid-cols-3 desktop:grid-cols-1 gap-3">
           <button v-for="(image, imageIndex) in imageList" :key="imageIndex"
@@ -507,11 +699,10 @@ watch(() => route.params.id, () => {
         <section class="border-b py-4 border-b-black">
           <h2 class="pb-2">Select Colors</h2>
           <div class="flex gap-4">
-            <button v-for="color in colorOptions" :key="color.id"
-              :style="{ backgroundColor: color.hex_code || '#9ca3af' }"
+            <button v-for="color in colorOptions" :key="color" :style="{ backgroundColor: color || '#9ca3af' }"
               class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer hover:opacity-80 relative"
-              @click="chooseColor(color.id)">
-              <span v-if="selectedColorId === color.id"
+              @click="chooseColor(color)">
+              <span v-if="selectedColor === color"
                 class="text-white font-bold absolute inset-0 flex items-center justify-center">
                 ✓
               </span>
@@ -555,11 +746,12 @@ watch(() => route.params.id, () => {
       </div>
     </div>
 
-    <div role="tablist" class="tabs tabs-bordered mt-6">
-      <el-tabs v-model="activeIndex" class="demo-tabs" @tab-click="tabClick">
-        <el-tab-pane v-for="tab in tablists" :key="tab.id" :label="tab.name" :name="tab.id">
+    <!-- Rest of your template remains the same (tabs, related products, dialogs) -->
+    <div v-if="product && !pageLoading" role="tablist" class="tabs tabs-bordered mt-6">
+      <el-tabs v-model="activeIndex" class="demo-tabs" @tab-click="tabClick" default-value="pro_detail">
+        <el-tab-pane v-for="tab in tablists" :key="tab.name" :label="tab.lable" :name="tab.name">
           <div class="w-full">
-            <div class="p-3" v-if="tab.id === 1">
+            <div class="p-3">
               <h1>Product details</h1>
               <ul v-if="productDeatil.length" class="space-y-2">
                 <li v-for="item in productDeatil" :key="item.key" class="text-sm leading-6">
@@ -569,7 +761,7 @@ watch(() => route.params.id, () => {
               </ul>
               <p v-else class="text-sm text-gray-500">No product details available.</p>
             </div>
-            <div class="p-3" v-if="tab.id === 2">
+            <div class="p-3">
               <div class="flex justify-between">
                 <h1 class="text-lg sm:text-2xl">
                   All Reviews ({{ reviewStats.total_reviews }}) - Avg {{ reviewStats.average_rating }}/5
@@ -590,14 +782,13 @@ watch(() => route.params.id, () => {
                 <li v-for="review in ratingAndReviews" :key="review.id" class="rounded-lg border p-3">
                   <p class="font-semibold">{{ review.customer_name }}
                     <el-rate v-model="review.rating" :max="5" disabled />
-
                   </p>
                   <p class="text-sm text-gray-700">{{ review.comment }}</p>
                 </li>
               </ul>
               <p v-else class="mt-4 text-sm text-gray-500">No reviews yet.</p>
             </div>
-            <div class="bg-gray p-3" v-if="tab.id === 3">
+            <div class="bg-gray p-3">
               <h1>FAQs</h1>
               <ul v-if="faqsDetail.length" class="space-y-3">
                 <li v-for="faq in faqsDetail" :key="faq.id" class="rounded-lg bg-white p-3">
@@ -607,7 +798,7 @@ watch(() => route.params.id, () => {
               </ul>
               <p v-else class="text-sm text-gray-500">No FAQs available.</p>
             </div>
-            <p v-if="detailsLoading" class="text-sm text-gray-500">Loading section content...</p>
+            <p v-if="sectionLoading" class="text-sm text-gray-500">Loading section content...</p>
           </div>
         </el-tab-pane>
       </el-tabs>

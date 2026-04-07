@@ -23,18 +23,19 @@ class ProductVariantUpdateRequest extends FormRequest
 
         return [
             "product_id" => ["sometimes", "required", "integer", "exists:products,id"],
-            "color_id" => [
+            "sku" => ["sometimes", "nullable", "string", "max:255", Rule::unique("product_variants", "sku")->ignore($variantId)],
+            "color" => [
                 "sometimes",
-                "required",
-                "integer",
-                "exists:colors,id",
-                Rule::unique("product_variants", "color_id")->where(function ($query) use ($productId, $sizeId) {
+                "nullable",
+                "string",
+                "max:64",
+                Rule::unique("product_variants", "color")->where(function ($query) use ($productId, $sizeId) {
                     return $query
                         ->where("product_id", $productId)
                         ->where("size_id", $sizeId);
                 })->ignore($variantId),
             ],
-            "size_id" => ["sometimes", "required", "integer", "exists:sizes,id"],
+            "size_id" => ["sometimes", "nullable", "integer", "exists:sizes,id"],
             "stock_quantity" => ["sometimes", "nullable", "integer", "min:0"],
             "sell_price" => ["sometimes", "required", "numeric", "min:0"],
             "cost_price" => ["sometimes", "required", "numeric", "min:0"],

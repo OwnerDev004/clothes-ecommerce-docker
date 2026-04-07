@@ -49,7 +49,7 @@
           <div class="relative flex-1">
             <Icon name="mdi:search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
             <input ref="desktopSearchTriggerInput" v-model="desktopSearchKeyword" type="text"
-              class="w-full rounded-full bg-gray-100 pl-12 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all"
+              class="w-full rounded-element bg-gray-100 pl-12 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all"
               placeholder="Search for products..." @focus="openDesktopSearch" @keyup.enter="submitDesktopSearch" />
           </div>
         </div>
@@ -88,11 +88,11 @@
             <button v-else type="button"
               class="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               @click.stop="toggleAccountMenu">
-              <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-100">
+              <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full">
                 <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="Account avatar" class="h-full w-full object-cover">
                 <div v-else
                   class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
-                  {{ userInitials }}
+                  {{ userInitialsHelper(userDisplayName) }}
                 </div>
               </div>
               <span class="max-w-[120px] truncate text-sm font-medium text-gray-700 group-hover:text-black">
@@ -109,7 +109,7 @@
               leave-from-class="opacity-100 translate-y-0 scale-100" leave-to-class="opacity-0 -translate-y-2 scale-95">
               <div v-if="isAuthenticated && accountMenuOpen"
                 class="absolute right-0 mt-3 w-72 origin-top-right rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-xl z-50">
-                <div class="mb-3 rounded-xl bg-gradient-to-r from-gray-900 to-gray-700 px-3 py-2 text-black">
+                <div class="mb-3 rounded-xl bg-surface-2 px-3 py-2 text-black">
                   <p class="text-xs text-black/80">Signed in as</p>
                   <p class="truncate text-sm font-semibold">{{ userDisplayName }}</p>
                 </div>
@@ -426,23 +426,10 @@ const userDisplayName = computed(() => {
   )
 })
 
-const userInitials = computed(() => {
-  const normalized = userDisplayName.value.trim()
-  if (!normalized) {
-    return 'AC'
-  }
-
-  const parts = normalized.split(/\s+/).filter(Boolean)
-  if (parts.length === 1) {
-    return parts[0]?.slice(0, 2).toUpperCase()
-  }
-
-  return `${parts?.[0]?.[0]}${parts?.[1]?.[0]}`.toUpperCase()
-})
 
 const accountActionClass = computed(() => [
   'group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium transition-all duration-200',
-  'bg-gray-50 text-gray-700 hover:bg-black hover:text-white',
+  'bg-surface text-gray-700 hover:bg-black hover:text-white',
   'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100 disabled:hover:text-gray-400',
 ])
 const userAvatarUrl = computed(() => {
@@ -665,20 +652,30 @@ const logout = async () => {
   await router.push('/auth/login')
 }
 
+let headerListenersBound = false
+
 // Set up event listeners
 onMounted(() => {
+  if (!import.meta.client) {
+    return
+  }
   hydrateProfile()
   fetchCategories()
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('scroll', handleScroll)
   document.addEventListener('click', handleClickOutside)
+  headerListenersBound = true
 })
 
 // Clean up event listeners
 onBeforeUnmount(() => {
+  if (!headerListenersBound || !import.meta.client) {
+    return
+  }
   window.removeEventListener('keydown', onKeydown)
   window.removeEventListener('scroll', handleScroll)
   document.removeEventListener('click', handleClickOutside)
+  headerListenersBound = false
 })
 
 watch(accessToken, (token) => {

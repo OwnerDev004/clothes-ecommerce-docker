@@ -148,7 +148,7 @@ class DashboardService
     protected function buildLowStockItems(): array
     {
         return ProductVariant::query()
-            ->with(['product:id,name,slug', 'size:id,name', 'color:id,name'])
+            ->with(['product:id,name,slug', 'size:id,name'])
             ->where('stock_quantity', '<=', self::LOW_STOCK_THRESHOLD)
             ->orderBy('stock_quantity')
             ->limit(10)
@@ -159,7 +159,7 @@ class DashboardService
                     'product_id' => $variant->product_id,
                     'product_name' => $variant->product?->name ?? 'Product',
                     'size' => $variant->size?->name,
-                    'color' => $variant->color?->name,
+                    'color' => $variant->color,
                     'stock_quantity' => (int) $variant->stock_quantity,
                     'sell_price' => (float) $variant->sell_price,
                 ];

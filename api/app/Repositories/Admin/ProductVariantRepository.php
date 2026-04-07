@@ -37,7 +37,6 @@ class ProductVariantRepository extends BaseRepository
                 ->select('product_variants.*')
                 ->with([
                     'product:id,name,sku,slug',
-                    'color:id,name,hex_code',
                     'size:id,name,sort_order',
                 ]);
 
@@ -46,19 +45,7 @@ class ProductVariantRepository extends BaseRepository
             }
 
             if (!is_null($color) && $color !== '') {
-                if (is_numeric($color)) {
-                    $query->where('product_variants.color_id', (int) $color);
-                } else {
-                    $query->whereExists(function (Builder $sub) use ($color) {
-                        $sub->selectRaw('1')
-                            ->from('colors')
-                            ->whereColumn('colors.id', 'product_variants.color_id')
-                            ->where(function (Builder $w) use ($color) {
-                                $w->where('colors.name', 'like', '%' . $color . '%')
-                                    ->orWhere('colors.hex_code', $color);
-                            });
-                    });
-                }
+                $query->where('product_variants.color', 'like', '%' . $color . '%');
             }
 
             if (!is_null($size) && $size !== '') {
@@ -88,7 +75,6 @@ class ProductVariantRepository extends BaseRepository
             $variant = $this->product_variant_model->create($data);
             return $variant->load([
                 'product:id,name,sku,slug',
-                'color:id,name,hex_code',
                 'size:id,name,sort_order',
             ]);
         });
@@ -101,7 +87,6 @@ class ProductVariantRepository extends BaseRepository
             $variant->update($data);
             return $variant->load([
                 'product:id,name,sku,slug',
-                'color:id,name,hex_code',
                 'size:id,name,sort_order',
             ]);
         });
@@ -117,7 +102,6 @@ class ProductVariantRepository extends BaseRepository
         return $this->product_variant_model
             ->with([
                 'product:id,name,sku,slug',
-                'color:id,name,hex_code',
                 'size:id,name,sort_order',
             ])
             ->find($id);

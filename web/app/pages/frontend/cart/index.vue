@@ -82,7 +82,7 @@
               placeholder="Add Promo Code" />
           </div>
           <el-button class="bg-black rounded-3xl text-white p-3 lg:w-[110px]" :disabled="applyingCoupon"
-            @click="applyCoupon">
+            @click="applyCoupon()">
             {{ applyingCoupon ? 'Applying...' : 'Apply' }}
           </el-button>
         </div>

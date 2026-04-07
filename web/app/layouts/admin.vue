@@ -16,7 +16,6 @@ import {
     User,
 } from '@element-plus/icons-vue'
 import { useAdminAuthStore } from '~/stores/adminAuthStore'
-
 const router = useRouter()
 const adminAuthStore = useAdminAuthStore()
 const isAuthenticated = computed(() => adminAuthStore.isAuthenticated || Boolean(adminAuthStore.accessToken))
@@ -25,6 +24,7 @@ const handleLogout = async () => {
     adminAuthStore.resetAuth()
     await router.push('/admin/login')
 }
+const adminProfile = toRef(adminAuthStore.adminProfile);
 
 type NavItem = {
     index: string
@@ -72,7 +72,7 @@ const navigationGroups: NavGroup[] = [
 </script>
 
 <template>
-    <div class="h-[100dvh] overflow-hidden bg-slate-50">
+    <div class="admin-theme h-[100dvh] overflow-hidden">
         <div class="flex h-full min-h-0 flex-col xl:flex-row">
             <aside
                 class="scroll-shell scroll-smooth flex h-72 w-full flex-none flex-col overflow-y-auto border-b border-white/10 bg-[linear-gradient(180deg,rgba(7,14,28,0.98),rgba(10,17,34,0.92)),linear-gradient(160deg,#18243f,#0c1221_64%)] px-4 py-5 text-white shadow-[0_30px_80px_rgba(2,6,23,0.25)] xl:h-full xl:w-[286px] xl:border-b-0 xl:border-r xl:border-white/10 xl:px-[18px] xl:py-6">
@@ -140,10 +140,9 @@ const navigationGroups: NavGroup[] = [
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <header
-                    class="sticky top-0 z-20 flex flex-col gap-5 border-b border-slate-200/70 bg-[rgba(244,246,251,0.92)] px-2 py-5 backdrop-blur-md sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-7">
+                    class="sticky top-0 z-20 flex flex-col gap-5 border-b border-slate-200/70  px-2 py-5 backdrop-blur-md sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-7">
                     <div class="flex items-center gap-3">
-                        <el-input class="admin-search-input !w-full sm:!w-[360px]"
-                            placeholder="Search products, orders, customers">
+                        <el-input class="!w-full sm:!w-[360px]" placeholder="Search products, orders, customers">
                             <template #prefix>
                                 <el-icon>
                                     <Search />
@@ -153,31 +152,30 @@ const navigationGroups: NavGroup[] = [
                     </div>
 
                     <section class="flex items-center gap-3">
-                        <el-button circle
-                            class="!h-11 !w-11 !rounded-[14px] !border !border-slate-200 !bg-white !shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
+                        <el-button circle class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-surface-2 ">
                             <el-icon>
                                 <Bell />
                             </el-icon>
                         </el-button>
 
-                        <div
-                            class="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-                            <el-avatar :size="34">AD</el-avatar>
+                        <div class="flex items-center gap-3  px-3 py-2 ">
+                            <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                             <div>
-                                <strong class="block text-sm text-slate-950">Admin</strong>
+                                <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
+                                }}</strong>
                                 <!-- <span class="block text-xs text-slate-500">Super user</span> -->
                             </div>
                         </div>
 
                         <button v-if="isAuthenticated" type="button"
-                            class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-950"
+                            class="rounded-2xl border border-surface-2 bg-surface-2 px-4 py-3 text-sm font-semibold text-slate-700  transition hover:border-slate-300 hover:text-slate-950"
                             @click="handleLogout">
                             Logout
                         </button>
                     </section>
                 </header>
 
-                <main class="scroll-shell min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
+                <main class="scroll-shell min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 bg-surface-2">
 
                     <slot />
                 </main>
@@ -221,19 +219,5 @@ const navigationGroups: NavGroup[] = [
 
 .scroll-shell:hover::-webkit-scrollbar-thumb:hover {
     background-color: rgba(100, 116, 139, 0.9);
-}
-
-.admin-search-input {
-    overflow: hidden;
-}
-
-.admin-search-input :deep(.el-input__wrapper) {
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-    padding: 12px;
-}
-
-.admin-search-input :deep(.el-input__wrapper.is-focus) {
-    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.5), 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 </style>

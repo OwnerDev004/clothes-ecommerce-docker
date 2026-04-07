@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
-use App\Models\Color;
 use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -53,18 +52,6 @@ class CatalogSeeder extends Seeder
             ];
         }, $collections);
         DB::table('collections')->upsert($collections, ['slug'], ['category_id', 'name', 'desc', 'sort_order', 'img', 'updated_at']);
-
-        $colors = [
-            ['name' => 'Black', 'hex_code' => '#000000'],
-            ['name' => 'White', 'hex_code' => '#FFFFFF'],
-            ['name' => 'Red', 'hex_code' => '#E53935'],
-            ['name' => 'Blue', 'hex_code' => '#1E88E5'],
-            ['name' => 'Green', 'hex_code' => '#43A047'],
-        ];
-        $colors = array_map(function ($row) use ($now) {
-            return $row + ['created_at' => $now, 'updated_at' => $now];
-        }, $colors);
-        DB::table('colors')->upsert($colors, ['hex_code'], ['name', 'updated_at']);
 
         $sizes = [
             ['name' => 'XS', 'sort_order' => 1],
@@ -259,23 +246,22 @@ class CatalogSeeder extends Seeder
                 ['updated_at']
             );
         }
-        $colorsByName = Color::whereIn('name', array_column($colors, 'name'))->get()->keyBy('name');
         $sizesByName = Size::whereIn('name', array_column($sizes, 'name'))->get()->keyBy('name');
 
         $variantCombos = [
-            ['Black', 'S'],
-            ['Black', 'M'],
-            ['White', 'M'],
-            ['White', 'L'],
+            ['#000000', 'S'],
+            ['#000000', 'M'],
+            ['#ffffff', 'M'],
+            ['#ffffff', 'L'],
         ];
 
         $variants = [];
         foreach ($productRows as $row) {
             $product = $productsBySlug[$row['slug']];
-            foreach ($variantCombos as [$colorName, $sizeName]) {
+            foreach ($variantCombos as [$colorValue, $sizeName]) {
                 $variants[] = [
                     'product_id' => $product->id,
-                    'color_id' => $colorsByName[$colorName]->id,
+                    'color' => $colorValue,
                     'size_id' => $sizesByName[$sizeName]->id,
                     'stock_quantity' => 20,
                     'sell_price' => $product->price,
@@ -288,7 +274,7 @@ class CatalogSeeder extends Seeder
 
         DB::table('product_variants')->upsert(
             $variants,
-            ['product_id', 'color_id', 'size_id'],
+            ['product_id', 'color', 'size_id'],
             ['stock_quantity', 'sell_price', 'cost_price', 'updated_at']
         );
     }
