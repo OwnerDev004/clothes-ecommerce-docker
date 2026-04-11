@@ -21,7 +21,7 @@
                         </div>
 
                         <div class="grid gap-3 xl:grid-cols-4">
-                            <BaseSelect v-model="filters.status" :options="statusOption" placeholder="All Categories"
+                            <BaseSelect v-model="filters.status" :options="statusOption" placeholder="All Status"
                                 class="w-full" />
                             <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
                                 class="w-full" />

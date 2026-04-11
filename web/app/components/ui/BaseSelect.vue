@@ -1,12 +1,11 @@
 <script setup lang="ts">
 type SelectOption = {
-    id: string | number | null
+    id: string | number
     label: string
     disabled?: boolean
 }
 
 defineOptions({ inheritAttrs: false })
-
 withDefaults(
     defineProps<{
         options: SelectOption[]

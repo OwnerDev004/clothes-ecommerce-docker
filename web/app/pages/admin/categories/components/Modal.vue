@@ -43,7 +43,7 @@
                         </el-form-item>
 
                         <el-form-item label="Status" prop="status">
-                            <BaseSelect v-model="statusSelectValue" :options="statusOptions" placeholder="Select status"
+                            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="Select status"
                                 class="w-full" />
                         </el-form-item>
 
@@ -115,12 +115,7 @@ const statusOptions = [
     { id: 0, label: 'Unactive' },
 ]
 
-const statusSelectValue = computed<number>({
-    get: () => (form.status ? 1 : 0),
-    set: (value) => {
-        form.status = 1
-    },
-})
+
 
 const imagePreview = ref('')
 const selectedImageFile = ref<File | null>(null)

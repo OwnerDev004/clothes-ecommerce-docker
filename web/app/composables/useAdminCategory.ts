@@ -61,7 +61,7 @@ export const useAdminCategory = () => {
     })
 const filters = reactive({
     search_txt: '',
-    status: 1,
+    status: null,
     sort_by: '',
     page: 1,
     per_page: 10
@@ -161,7 +161,7 @@ const categoryFetching = async() => {
 //reset Filters
 const resetFilters = () => {
 filters.search_txt = ''
-filters.status = 1
+filters.status = null
 filters.sort_by = ''
 }
 //add Category
