@@ -1,225 +1,45 @@
 <script setup lang="ts">
-import { useRouter } from 'nuxt/app'
-import { useInfiniteScroll } from '@vueuse/core'
 import { Loading } from '@element-plus/icons-vue'
-import { computed, onMounted, ref } from 'vue'
-import { useCartStore } from '~/stores/cartStore'
+import { onMounted } from 'vue'
+import { useHomeProducts } from '~/composables/useHomeProducts'
+
 const router = useRouter()
-const config = useRuntimeConfig()
-const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
-const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
-
-type ProductImage = {
-  image_url?: string
-}
-
-type ProductApi = {
-  id: number | string
-  name?: string
-  price?: number | string
-  thumbnail?: ProductImage | null
-  images?: ProductImage[]
-}
-
-type ProductCard = {
-  id: number | string
-  title: string
-  price: number
-  img: string
-  discount_amount: number
-  discount_type: number | undefined
-  stars_num: number
-  rating_amount: number
-}
-
-type BrandApi = {
-  id: number | string
-  name?: string
-  image_url?: string
-}
-
-type CategoryApi = {
-  id: number | string
-  name?: string
-  slug?: string
-  image_url?: string
-}
-
-type DressTypeApi = {
-  id: number | string
-  name?: string
-  slug?: string
-  image_url?: string
-}
-const cartStore = useCartStore()
-const products = ref<ProductCard[]>([])
-const isLoadingProducts = ref(false)
-const productError = ref('')
-const currentPage = ref(1)
-const hasMoreProducts = ref(true)
-const perPage = 8
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-
-const brands = ref<BrandApi[]>([])
-const categories = ref<CategoryApi[]>([])
-const collections = ref<DressTypeApi[]>([])
+const {
+  products,
+  brands,
+  collections,
+  isLoadingProducts,
+  productError,
+  loadMoreTrigger,
+  topSellingProducts,
+  collectionItems,
+  fetchProducts,
+  loadInitialHomeData,
+  getCollectionSpanClass,
+  resolveVisualImage,
+} = useHomeProducts()
 
 const onSlideChange = (swiper: any) => {
-  const totalSlides = swiper.slides.length;
+  const totalSlides = swiper.slides.length
 
   swiper.slides.forEach((slide: any) => {
-    slide.style.opacity = 1; // Reset opacity for all slides
-  });
+    slide.style.opacity = 1
+  })
 
-  const firstVisibleSlide = swiper.activeIndex - 2;
-  const lastVisibleSlide = firstVisibleSlide + 4;
+  const firstVisibleSlide = swiper.activeIndex - 2
+  const lastVisibleSlide = firstVisibleSlide + 4
 
   if (swiper.slides[firstVisibleSlide]) {
-    swiper.slides[firstVisibleSlide].style.opacity = 0.4;
+    swiper.slides[firstVisibleSlide].style.opacity = 0.4
   }
   if (swiper.slides[lastVisibleSlide] && lastVisibleSlide < totalSlides) {
-    swiper.slides[lastVisibleSlide].style.opacity = 0.4;
-  }
-};
-
-const topSellingProducts = computed(() => products.value.slice(0, 4))
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const resolveImageUrl = (input?: string) => {
-  if (!input) {
-    return '/img/products/default_image.webp'
-  }
-  if (/^https?:\/\//i.test(input)) {
-    return input
-  }
-  if (input.startsWith('/')) {
-    return `${backendOrigin}${input}`
-  }
-  return `${backendOrigin}/${input}`
-}
-
-const resolveVisualImage = (input?: string, fallback = '/img/products/default_image.webp') => {
-  if (!input) {
-    return fallback
-  }
-  return resolveImageUrl(input)
-}
-
-
-const collectionItems = computed(() => {
-  if (collections.value.length) {
-    return collections.value.slice(0, 4) as DressTypeApi[]
-  }
-})
-
-const getCollectionSpanClass = (index: number) => {
-  const position = index % 4
-  return position === 1 || position === 2 ? 'md:col-span-2' : ''
-}
-
-const mapProductToCard = (item: ProductApi): ProductCard => {
-  const thumbnail = item.thumbnail?.image_url || item.images?.[0]?.image_url || ''
-  const price = Number(item.price || 0)
-  return {
-    id: item.id,
-    title: String(item.name || 'Untitled product'),
-    price: Number.isFinite(price) ? price : 0,
-    img: resolveImageUrl(thumbnail),
-    discount_amount: 0,
-    discount_type: undefined,
-    stars_num: 5,
-    rating_amount: 0,
+    swiper.slides[lastVisibleSlide].style.opacity = 0.4
   }
 }
-
-const fetchProducts = async (reset = false) => {
-  if (isLoadingProducts.value) {
-    return
-  }
-  if (!hasMoreProducts.value && !reset) {
-    return
-  }
-
-  if (reset) {
-    currentPage.value = 1
-    hasMoreProducts.value = true
-    products.value = []
-  }
-
-  isLoadingProducts.value = true
-  productError.value = ''
-
-  try {
-    // Keep loading visible briefly during infinite-scroll fetches.
-    if (!reset) {
-      await sleep(500)
-    }
-
-    const response: any = await $fetch(`${apiBase}/products`, {
-      method: 'GET',
-      query: {
-        page: currentPage.value,
-        per_page: perPage,
-      }
-    })
-
-    const rows = Array.isArray(response?.data) ? response.data : []
-    const mapped = rows.map((row: ProductApi) => mapProductToCard(row))
-    products.value.push(...mapped)
-
-    const current = Number(response?.meta?.current_page || currentPage.value)
-    const last = Number(response?.meta?.last_page || current)
-    hasMoreProducts.value = current < last
-    currentPage.value = current + 1
-  } catch (error: any) {
-    productError.value = error?.data?.message || 'Failed to load products.'
-  } finally {
-    isLoadingProducts.value = false
-  }
-}
-
-const fetchBrands = async () => {
-  try {
-    const response: any = await $fetch(`${apiBase}/brands`, { method: 'GET' })
-    brands.value = Array.isArray(response?.data) ? response.data : []
-  } catch {
-    brands.value = []
-  }
-}
-
-const fetchCategories = async () => {
-  try {
-    const response: any = await $fetch(`${apiBase}/categories`, { method: 'GET' })
-    categories.value = Array.isArray(response?.data) ? response.data : []
-  } catch {
-    categories.value = []
-  }
-}
-
-const fetchDressTypes = async () => {
-  try {
-    const response: any = await $fetch(`${apiBase}/collections`, { method: 'GET' })
-    collections.value = Array.isArray(response?.data) ? response.data : []
-  } catch {
-    collections.value = []
-  }
-}
-
-useInfiniteScroll(
-  loadMoreTrigger,
-  () => {
-    fetchProducts()
-  },
-  {
-    distance: 200,
-    canLoadMore: () => hasMoreProducts.value && !isLoadingProducts.value,
-  }
-)
 
 const viewProduct = (id: number | string) => {
-  router.push('/frontend/product_detail/' + id);
+  router.push(`/frontend/product_detail/${id}`)
 }
-
 
 const viewCollection = (slug: string | number | null | undefined) => {
   const normalizedSlug = String(slug || '').trim()
@@ -244,11 +64,10 @@ const viewCollection = (slug: string | number | null | undefined) => {
   })
 }
 
-// shopNow
 const shopNow = () => {
   router.push('/frontend/categories')
 }
-//  viewAllProduct
+
 const viewAllProduct = () => {
   router.push({
     path: '/frontend/categories',
@@ -264,10 +83,12 @@ const viewAllProduct = () => {
     },
   })
 }
+
 const getBrandRoute = (id: number | string) => {
   if (String(id) === 'placeholder') {
     return { path: '/frontend/categories' }
   }
+
   return {
     path: '/frontend/categories',
     query: { brand: String(id), brand_only: '1' },
@@ -275,70 +96,73 @@ const getBrandRoute = (id: number | string) => {
 }
 
 onMounted(async () => {
-
-  await Promise.all([fetchBrands(), fetchCategories(), fetchDressTypes()])
-  await fetchProducts(true)
+  await loadInitialHomeData()
 })
 </script>
 <template>
-  <div>
+  <main>
     <!-- Slide Section -->
     <section class="">
-      <Swiper :modules="[SwiperAutoplay]" :space-between="1" :loop="false" :autoplay="{
-        delay: 5000,
-        disableOnInteraction: false,
-      }">
-        <SwiperSlide v-for="slide in 10" :key="slide" class="bg-gray">
-          <div class="px-5  desktop:container flex flex-col lg:flex-row items-center gap-4 sm:gap-6 pt-5">
-            <!-- Text Section -->
-            <div class="w-full lg:w-1/2 xl:w-2/5 flex flex-col justify-center">
-              <p class="font-Poppins text-5xl md:text-5xl font-bold leading-tight">
-                FIND CLOTHES THAT MATCH YOUR STYLE
-              </p>
-              <p class="font-Lato font-thin mt-2">
-                Browse through our diverse range of meticulously crafted
-                garments, designed to bring out your individuality and cater to
-                your sense of style.
-              </p>
-              <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]" @click="shopNow">
-                Shop Now
-              </button>
-            </div>
 
-            <!-- Image Section -->
-            <div class="w-full desktop:w-1/2 flex justify-center ml-auto">
-              <NuxtImg sizes="sm:100vw md:400px lg:650px" src="/img/slide-1.png" format="webp" densities="x1"
-                alt="Fashion Clothing" />
+      <ClientOnly>
+        <Swiper :modules="[SwiperAutoplay]" :space-between="1" :autoplay="{
+          delay: 5000,
+          disableOnInteraction: false,
+        }">
+          <SwiperSlide v-for="slide in 10" :key="slide" class="bg-gray">
+            <div class="px-5  desktop:container flex flex-col lg:flex-row items-center gap-4 sm:gap-6 pt-5">
+              <!-- Text Section -->
+              <div class="w-full lg:w-1/2 xl:w-2/5 flex flex-col justify-center">
+                <p class="font-Poppins text-5xl md:text-5xl font-bold leading-tight">
+                  FIND CLOTHES THAT MATCH YOUR STYLE
+                </p>
+                <p class="font-Lato font-thin mt-2">
+                  Browse through our diverse range of meticulously crafted
+                  garments, designed to bring out your individuality and cater to
+                  your sense of style.
+                </p>
+                <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]"
+                  @click="shopNow">
+                  Shop Now
+                </button>
+              </div>
+
+              <!-- Image Section -->
+              <div class="w-full desktop:w-1/2 flex justify-center ml-auto">
+                <NuxtImg sizes="sm:100vw md:400px lg:650px" src="/img/slide-1.png" format="webp" densities="x1"
+                  alt="Fashion Clothing" />
+              </div>
             </div>
-          </div>
-        </SwiperSlide>
-      </Swiper>
+          </SwiperSlide>
+        </Swiper>
+      </ClientOnly>
     </section>
 
     <!-- Brand Section -->
     <section class="py-10 bg-black">
-      <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
-        640: { slidesPerView: 3, spaceBetween: 10 },
-        1024: { slidesPerView: 4, spaceBetween: 12 },
-      }" :loop="false" :autoplay="{
-        delay: 5000,
-        disableOnInteraction: true
-      }">
-        <SwiperSlide
-          v-for="slide in brands.length ? brands : [{ id: 'placeholder', name: 'Brand', image_url: '/img/brand/brand1.png' }]"
-          :key="slide.id">
-          <NuxtLink :to="getBrandRoute(slide.id)" class="block rounded-xl bg-gray-200 h-[96px] md:h-[110px]">
-            <div class="w-full h-full px-3 md:px-4 flex items-center justify-center">
-              <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/default_image.webp')"
-                :alt="slide.name"
-                class="w-full h-full max-w-[170px] md:max-w-[220px] max-h-[64px] md:max-h-[72px] object-contain object-center"
-                format="webp" densities="x1" />
-            </div>
-          </NuxtLink>
-        </SwiperSlide>
-      </Swiper>
+      <ClientOnly>
+        <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
+          640: { slidesPerView: 3, spaceBetween: 10 },
+          1024: { slidesPerView: 4, spaceBetween: 12 },
+        }" :autoplay="{
+          delay: 5000,
+          disableOnInteraction: true
+        }">
+          <SwiperSlide
+            v-for="slide in brands.length ? brands : [{ id: 'placeholder', name: 'Brand', image_url: '/img/brand/brand1.png' }]"
+            :key="slide.id">
+            <NuxtLink :to="getBrandRoute(slide.id)" class="block rounded-xl bg-gray-200 h-[96px] md:h-[110px]">
+              <div class="w-full h-full px-3 md:px-4 flex items-center justify-center">
+                <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/default_image.webp')"
+                  :alt="slide.name"
+                  class="w-full h-full max-w-[170px] md:max-w-[220px] max-h-[64px] md:max-h-[72px] object-contain object-center"
+                  format="webp" densities="x1" />
+              </div>
+            </NuxtLink>
+          </SwiperSlide>
+        </Swiper>
+      </ClientOnly>
     </section>
-    <p>{{ cartStore.items }}</p>
 
     <!-- ALL PRODUCTS -->
     <section class="px-5 desktop:container py-10">
@@ -468,7 +292,7 @@ onMounted(async () => {
             slidesPerView: 4.1,
             spaceBetween: 20,
           },
-        }" :loop="false" :centered-slides="true" @slideChange="onSlideChange" autoplay>
+        }" :centered-slides="true" @slideChange="onSlideChange" autoplay>
           <SwiperSlide v-for="(slide, index) in 10" :key="index">
             <div class="p-4 bg-gray flex justify-center flex-col">
               <SharesRating :stars-num="5" :rating-amount="0" />
@@ -483,7 +307,7 @@ onMounted(async () => {
         </Swiper>
       </ClientOnly>
     </section>
-  </div>
+  </main>
 </template>
 
 <style scoped>

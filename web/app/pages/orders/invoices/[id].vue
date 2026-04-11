@@ -52,7 +52,7 @@
 
       <div class="actions">
         <button class="btn" @click="printInvoice">Print</button>
-        <NuxtLink class="btn ghost" to="/">Back to home</NuxtLink>
+        <NuxtLink class="btn ghost" to="/"><span>Back to home</span></NuxtLink>
       </div>
     </div>
   </div>

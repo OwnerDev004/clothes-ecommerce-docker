@@ -82,7 +82,7 @@
 
       <div class="text-center">
         <NuxtLink to="/auth/login" class="font-medium text-indigo-600 hover:text-indigo-500">
-          Back to login
+          <span>Back to login</span>
         </NuxtLink>
       </div>
     </div>

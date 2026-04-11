@@ -48,7 +48,9 @@
 
       <p class="text-sm text-gray-600 mt-4">
         Already have an account?
-        <NuxtLink to="/auth/login" class="text-indigo-600 font-medium hover:text-indigo-700">Sign in</NuxtLink>
+        <NuxtLink to="/auth/login" class="text-indigo-600 font-medium hover:text-indigo-700">
+          <span>Sign in</span>
+        </NuxtLink>
       </p>
     </div>
   </div>

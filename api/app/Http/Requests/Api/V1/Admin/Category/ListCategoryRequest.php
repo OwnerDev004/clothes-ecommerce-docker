@@ -15,6 +15,8 @@ class ListCategoryRequest extends FormRequest
     {
         return [
             'search_txt' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'boolean'],
+            'sort_by' => ['nullable', 'string', 'in:latest,oldest,name_asc,name_desc'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
         ];
     }

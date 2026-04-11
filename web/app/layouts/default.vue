@@ -1,10 +1,8 @@
 <script setup lang="ts"></script>
 <template>
-    <div>
-        <FrontendBaseNotificationHeader />
-        <FrontendHeader />
-        <slot />
-        <FrontendFooter />
-    </div>
+    <FrontendBaseNotificationHeader />
+    <FrontendHeader />
+    <slot />
+    <FrontendFooter />
 </template>
 <style></style>

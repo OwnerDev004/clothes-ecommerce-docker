@@ -89,8 +89,8 @@ onMounted(() => {
       <div class="w-full text-center">
         <p>
           Sign up and get {{ offerDiscountLabel }} off your first order.
-          <NuxtLink to="/auth/signup" class="underline text-sm desktop:text-base" @click="trackCtaClick">Sign Up
-            Now</NuxtLink>
+          <NuxtLink to="/auth/signup" class="underline text-sm desktop:text-base" @click="trackCtaClick"><span>Sign Up
+              Now</span></NuxtLink>
         </p>
       </div>
 

@@ -115,7 +115,7 @@
                 <span class="checkbox-checkmark"></span>
                 <span class="checkbox-label">Remember me for 30 days</span>
               </label>
-              <NuxtLink to="/auth/forgot-password" class="forgot-link">Forgot password?</NuxtLink>
+              <NuxtLink to="/auth/forgot-password" class="forgot-link"><span>Forgot password?</span></NuxtLink>
             </div>
 
             <div v-if="errorMessage" class="form-error">{{ errorMessage }}</div>
@@ -181,7 +181,7 @@
             <!-- Sign Up Link -->
             <div class="signup-link">
               <span>Don't have an account?</span>
-              <NuxtLink to="/auth/signup" class="signup-button">Create account</NuxtLink>
+              <NuxtLink to="/auth/signup" class="signup-button"><span>Create account</span></NuxtLink>
             </div>
           </form>
 

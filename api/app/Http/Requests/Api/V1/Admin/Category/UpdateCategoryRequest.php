@@ -74,6 +74,7 @@ class UpdateCategoryRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('categories', 'name')->ignore($categoryId)],
             'des' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'status' => ['sometimes', 'boolean'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'remove_image' => ['sometimes', 'boolean'],
         ];

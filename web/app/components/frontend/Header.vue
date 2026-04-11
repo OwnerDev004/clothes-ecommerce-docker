@@ -25,7 +25,7 @@
           <!-- New Arrivals Link -->
           <li class="relative group py-2">
             <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
-              New Arrivals
+              <span>New Arrivals</span>
               <span
                 class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
             </NuxtLink>
@@ -33,11 +33,13 @@
 
           <!-- Brands Link -->
           <li class="relative group py-2">
-            <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
-              Brands
-              <span
-                class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
-            </NuxtLink>
+            <ClientOnly>
+              <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
+                <span>Brands</span>
+                <span
+                  class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
+              </NuxtLink>
+            </ClientOnly>
           </li>
         </ul>
       </div>
@@ -62,21 +64,26 @@
         <div class="flex items-center gap-3 sm:gap-4 desktop:gap-6 pl-2 sm:pl-4">
           <!-- Wishlist -->
           <NuxtLink to="/frontend/favorites" class="relative">
-            <Icon name="mdi:heart"
-              class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
-            <span v-if="favoriteCount > 0"
-              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-              {{ favoriteCount }}
-            </span>
+            <ClientOnly>
+              <Icon name="mdi:heart"
+                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
+              <span v-if="favoriteCount > 0"
+                class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                {{ favoriteCount }}
+              </span>
+            </ClientOnly>
           </NuxtLink>
 
           <!-- Cart -->
           <NuxtLink to="/frontend/cart" class="relative">
-            <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
-            <span v-if="cartCount > 0"
-              class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
-              {{ cartCount }}
-            </span>
+            <ClientOnly>
+              <Icon name="mdi:cart"
+                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
+              <span v-if="cartCount > 0"
+                class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                {{ cartCount }}
+              </span>
+            </ClientOnly>
           </NuxtLink>
           <!-- Account -->
           <div class="relative hidden sm:block account-menu-root">
@@ -336,11 +343,14 @@
           </div> -->
         </div>
         <div class="border-b pb-4">
-          <NuxtLink to="/" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu">New Arrivals
+          <NuxtLink to="/" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu"><span>New
+              Arrivals</span>
           </NuxtLink>
         </div>
         <div class="pb-4">
-          <NuxtLink to="/" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu">Brands</NuxtLink>
+          <NuxtLink to="/" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu">
+            <span>Brands</span>
+          </NuxtLink>
         </div>
       </div>
     </div>

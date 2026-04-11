@@ -24,6 +24,7 @@ class CategoryService
         $payload = [
             'name' => $validated['name'],
             'des' => $validated['des'] ?? null,
+            'status' => $validated['status'] ?? true,
         ];
 
         if ($image) {
@@ -47,6 +48,9 @@ class CategoryService
         }
         if (array_key_exists('des', $validated)) {
             $payload['des'] = $validated['des'];
+        }
+        if (array_key_exists('status', $validated)) {
+            $payload['status'] = $validated['status'];
         }
 
         $shouldRemoveImage = ($validated['remove_image'] ?? false)

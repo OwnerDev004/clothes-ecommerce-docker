@@ -1,148 +1,50 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch, onMounted, onUnmounted } from 'vue'
-import { storeToRefs } from 'pinia'
-import { ElMessage } from 'element-plus'
 import type { TabsPaneContext } from 'element-plus'
-import { useAuthStore } from '~/stores/authStore'
-import { useCartStore } from '~/stores/cartStore'
 import { ArrowRight } from '@element-plus/icons-vue'
+import { ref } from 'vue'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 
-type ProductImage = {
-  image_url?: string
-}
-
-type SizeOption = {
-  id: number
-  name: string
-}
-
-type ProductVariant = {
-  id: number
-  sell_price?: number | string
-  stock_quantity?: number
-  color?: string | null
-  size?: SizeOption
-}
-
-type ProductDetail = {
-  id: number
-  name?: string
-  desc?: string
-  price?: number | string
-  thumbnail?: ProductImage | null
-  images?: ProductImage[]
-  category_id?: number
-  variants?: ProductVariant[]
-}
-
-type ProductDetailSection = {
-  key: string
-  label: string
-  value: string | number
-}
-
-type ProductReview = {
-  id: number
-  customer_name: string
-  rating: number
-  comment: string
-  created_at: string | null
-}
-
-type ProductFaq = {
-  id: number
-  question: string
-  answer: string
-}
-
-type ProductCard = {
-  id: number | string
-  title: string
-  price: number
-  img: string
-  discount_amount: number
-  discount_type?: number
-  stars_num: number
-  rating_amount: number
-}
-
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
-const { accessToken, isAuthenticated } = storeToRefs(authStore)
-const cartStore = useCartStore()
-const config = useRuntimeConfig()
-const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
-const backendOrigin = apiBase.replace(/\/api\/v\d+\/?$/, '')
-
-const product = ref<ProductDetail | null>(null)
-const relatedProducts = ref<ProductCard[]>([])
-const qtyAmount = ref(1)
-const selectedImage = ref('')
-const selectedColor = ref<string | null>(null)
-const selectedSizeId = ref<number | null>(null)
-const sortBy = ref('')
-const activeIndex = ref()
-const productDeatil = ref<ProductDetailSection[]>([])
-const ratingAndReviews = ref<ProductReview[]>([])
-const faqsDetail = ref<ProductFaq[]>([])
-const pageLoading = ref(true)
-const pageErrorState = ref('')
-const sectionLoading = ref(false)
-const loadRequestId = ref(0)
-const reviewStats = ref({
-  total_reviews: 0,
-  average_rating: 0,
-})
-const reviewFilterDialogOpen = ref(false)
-const writeReviewDialogOpen = ref(false)
-const submittingReview = ref(false)
-const reviewFilters = reactive({
-  sort_by: 'latest',
-  rating: null as number | null,
-  mine_only: false,
-})
-const reviewForm = reactive({
-  rating: 5,
-  comment: '',
-})
-
-// Add a ref to track if initial load is done
-const initialLoadDone = ref(false)
-
-const resolveRouteId = () => {
-  const rawId = route.params.id
-  return Array.isArray(rawId) ? rawId[0] : rawId
-}
-
-const normalizeProductPayload = (response: any): ProductDetail | null => {
-  const payload = response?.data?.data || response?.data || response
-  return payload && typeof payload === 'object' ? (payload as ProductDetail) : null
-}
-
-const fetchWithTimeout = async <T>(url: string, options: Record<string, any> = {}, timeoutMs = 15000): Promise<T> => {
-  let timeoutHandle: ReturnType<typeof setTimeout> | null = null
-  const controller = new AbortController()
-  const signal = controller.signal
-
-  try {
-    const timeoutPromise = new Promise<T>((_, reject) => {
-      timeoutHandle = setTimeout(() => {
-        controller.abort()
-        reject(new Error(`Request timed out after ${timeoutMs}ms`))
-      }, timeoutMs)
-    })
-
-    const fetchPromise = $fetch<T>(url, { ...options, signal })
-
-    return await Promise.race([fetchPromise, timeoutPromise])
-  } finally {
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle)
-    }
-  }
-}
+const {
+  product,
+  relatedProducts,
+  qtyAmount,
+  selectedImage,
+  selectedColor,
+  selectedSizeId,
+  activeIndex,
+  productDeatil,
+  ratingAndReviews,
+  faqsDetail,
+  pageLoading,
+  pageErrorState,
+  sectionLoading,
+  reviewStats,
+  reviewFilterDialogOpen,
+  writeReviewDialogOpen,
+  submittingReview,
+  reviewFilters,
+  reviewForm,
+  sortBy,
+  imageList,
+  colorOptions,
+  sizeOptions,
+  selectedVariant,
+  displayPrice,
+  stockLabel,
+  canAddToCart,
+  increment,
+  decrement,
+  chooseColor,
+  chooseSize,
+  addToCart,
+  openReviewFilterDialog,
+  applyReviewFilter,
+  openWriteReviewDialog,
+  submitReview,
+  refreshReviews,
+  refreshProductDetail,
+  viewProduct,
+} = useProductDetail()
 
 const tablists = ref([
   { id: 1, lable: "Product Details", name: 'pro_detail' },
@@ -156,477 +58,8 @@ const dropdownOptions = ref([
 ])
 
 const tabClick = (tab: TabsPaneContext) => {
-  activeIndex.value = Number(tab.paneName)
+  activeIndex.value = String(tab.paneName)
 }
-
-const resolveImageUrl = (input?: string) => {
-  if (!input) {
-    return '/img/products/default_image.webp'
-  }
-  if (/^https?:\/\//i.test(input)) {
-    return input
-  }
-  if (input.startsWith('/')) {
-    return `${backendOrigin}${input}`
-  }
-  return `${backendOrigin}/${input}`
-}
-
-const imageList = computed(() => {
-  const rows = [
-    product.value?.thumbnail?.image_url || '',
-    ...((product.value?.images || []).map((img) => img.image_url || '')),
-  ].filter(Boolean)
-
-  const uniqueRows = Array.from(new Set(rows))
-  return uniqueRows.map((path) => resolveImageUrl(path))
-})
-
-const colorOptions = computed(() => {
-  const set = new Set<string>()
-  for (const variant of product.value?.variants || []) {
-    if (variant.color) {
-      set.add(String(variant.color))
-    }
-  }
-  return Array.from(set.values())
-})
-
-const sizeOptions = computed(() => {
-  const map = new Map<number, SizeOption>()
-  for (const variant of product.value?.variants || []) {
-    if (selectedColor.value && variant.color !== selectedColor.value) {
-      continue
-    }
-    if (variant.size?.id) {
-      map.set(variant.size.id, variant.size)
-    }
-  }
-  return Array.from(map.values())
-})
-
-const selectedVariant = computed(() => {
-  return (product.value?.variants || []).find((variant) => {
-    const colorOk = selectedColor.value ? variant.color === selectedColor.value : true
-    const sizeOk = selectedSizeId.value ? variant.size?.id === selectedSizeId.value : true
-    return colorOk && sizeOk
-  }) || null
-})
-
-const displayPrice = computed(() => {
-  const variantPrice = Number(selectedVariant.value?.sell_price || 0)
-  if (variantPrice > 0) {
-    return variantPrice
-  }
-  return Number(product.value?.price || 0)
-})
-
-const stockLabel = computed(() => {
-  const stock = selectedVariant.value?.stock_quantity ?? null
-  if (stock === null || stock === undefined) {
-    return 'Stock: N/A'
-  }
-  return `Stock: ${stock}`
-})
-
-const canAddToCart = computed(() => {
-  const stock = Number(selectedVariant.value?.stock_quantity ?? 0)
-  return Boolean(selectedVariant.value?.id) && qtyAmount.value > 0 && qtyAmount.value <= stock
-})
-
-const increment = () => {
-  qtyAmount.value += 1
-}
-
-const decrement = () => {
-  qtyAmount.value = qtyAmount.value > 1 ? qtyAmount.value - 1 : 1
-}
-
-const chooseColor = (color: string) => {
-  selectedColor.value = color
-  const availableSizes = sizeOptions.value
-  if (!availableSizes.some((size) => size.id === selectedSizeId.value)) {
-    selectedSizeId.value = availableSizes[0]?.id || null
-  }
-}
-
-const chooseSize = (sizeId: number) => {
-  selectedSizeId.value = sizeId
-}
-
-const getDefaultVariantSelection = (currentProduct: ProductDetail | null) => {
-  const firstVariant = currentProduct?.variants?.[0] || null
-  selectedColor.value = firstVariant?.color || null
-  selectedSizeId.value = firstVariant?.size?.id || null
-}
-
-const getProductImagePreview = (currentProduct: ProductDetail | null) => {
-  const rows = [
-    currentProduct?.thumbnail?.image_url || '',
-    ...((currentProduct?.images || []).map((img) => img.image_url || '')),
-  ].filter(Boolean)
-  const uniqueRows = Array.from(new Set(rows))
-  return uniqueRows.map((path) => resolveImageUrl(path))
-}
-
-const getAuthHeaders = () => {
-  return accessToken.value
-    ? { Authorization: `Bearer ${accessToken.value}` }
-    : undefined
-}
-
-const addToCart = async () => {
-  if (!selectedVariant.value?.id) {
-    ElMessage.error('Please select color and size first.')
-    return
-  }
-
-  if (!isAuthenticated.value && !accessToken.value) {
-    ElMessage.warning('Please login first.')
-    await router.push('/auth/login')
-    return
-  }
-
-  if (!canAddToCart.value) {
-    ElMessage.error('Quantity exceeds stock.')
-    return
-  }
-
-  try {
-    await fetchWithTimeout(`${apiBase}/cart/items`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: getAuthHeaders(),
-      body: {
-        variant_id: selectedVariant.value.id,
-        quantity: qtyAmount.value,
-      }
-    })
-    cartStore.addItem({
-      id: selectedVariant.value.id,
-      name: String(product.value?.name || 'Product'),
-      price: Number(displayPrice.value || 0),
-      image: selectedImage.value || '',
-      size: selectedVariant.value?.size?.name,
-      color: selectedVariant.value?.color || undefined,
-    }, qtyAmount.value)
-    ElMessage.success('Added to cart.')
-    await router.push('/frontend/cart')
-  } catch (error: any) {
-    const statusCode = error?.statusCode ?? error?.status
-    if (statusCode === 401 || statusCode === 403) {
-      authStore.resetAuth()
-      ElMessage.error('Session expired. Please login again.')
-      await router.push('/auth/login')
-      return
-    }
-    ElMessage.error(error?.data?.message || 'Failed to add to cart.')
-  }
-}
-
-const mapCardProduct = (item: any): ProductCard => {
-  const thumbnail = item?.thumbnail?.image_url || item?.images?.[0]?.image_url || ''
-  return {
-    id: item?.id,
-    title: String(item?.name || 'Untitled product'),
-    price: Number(item?.price || 0),
-    img: resolveImageUrl(thumbnail),
-    discount_amount: 0,
-    discount_type: undefined,
-    stars_num: 5,
-    rating_amount: 0,
-  }
-}
-
-const fetchProductById = async (id: string | number) => {
-  const response: any = await fetchWithTimeout(`${apiBase}/products/${id}`, { method: 'GET' })
-  return normalizeProductPayload(response)
-}
-
-const fetchRelatedProducts = async (currentProduct: ProductDetail | null) => {
-  try {
-    const response: any = await fetchWithTimeout(`${apiBase}/products`, {
-      method: 'GET',
-      query: {
-        category: currentProduct?.category_id,
-        page: 1,
-        per_page: 8,
-      },
-    })
-
-    const rows = Array.isArray(response?.data) ? response.data : []
-    return rows
-      .filter((row: any) => Number(row?.id) !== Number(currentProduct?.id))
-      .slice(0, 4)
-      .map((row: any) => mapCardProduct(row))
-  } catch {
-    return []
-  }
-}
-
-const fetchDetailSections = async (id: string | number) => {
-  try {
-    const response: any = await fetchWithTimeout(`${apiBase}/products/${id}/detail-sections`, {
-      method: 'GET',
-    })
-    const payload = response?.data?.data || response?.data || response || {}
-    return {
-      product_detail: Array.isArray(payload?.product_detail) ? payload.product_detail : [],
-      faqs_detail: Array.isArray(payload?.faqs_detail) ? payload.faqs_detail : [],
-    }
-  } catch {
-    return {
-      product_detail: [] as ProductDetailSection[],
-      faqs_detail: [] as ProductFaq[],
-    }
-  }
-}
-
-const fetchRatingAndReviews = async (id: string | number) => {
-  try {
-    const query: Record<string, string | number> = {
-      sort_by: reviewFilters.sort_by,
-    }
-    if (reviewFilters.rating !== null) {
-      query.rating = reviewFilters.rating
-    }
-    if (reviewFilters.mine_only) {
-      query.mine_only = 1
-    }
-
-    const response: any = await fetchWithTimeout(`${apiBase}/products/${id}/reviews`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: getAuthHeaders(),
-      query,
-    })
-
-    const payload = response?.data || {}
-    return {
-      reviews: Array.isArray(payload?.reviews) ? payload.reviews : [],
-      total_reviews: Number(payload?.total_reviews || 0),
-      average_rating: Number(payload?.average_rating || 0),
-    }
-  } catch (error: any) {
-    return {
-      reviews: [] as ProductReview[],
-      total_reviews: 0,
-      average_rating: 0,
-    }
-  }
-}
-
-const loadProductExtras = async (id: string | number, currentProduct: ProductDetail, requestId: number) => {
-  console.log("loadProductExtras");
-
-  sectionLoading.value = true
-  try {
-    const [relatedRowsResult, detailRowsResult, reviewRowsResult] = await Promise.allSettled([
-      fetchRelatedProducts(currentProduct),
-      fetchDetailSections(id),
-      fetchRatingAndReviews(id),
-    ])
-
-    if (requestId !== loadRequestId.value) {
-      return
-    }
-
-    if (relatedRowsResult.status === 'fulfilled') {
-      relatedProducts.value = relatedRowsResult.value
-    }
-
-    if (detailRowsResult.status === 'fulfilled') {
-      productDeatil.value = detailRowsResult.value.product_detail
-      faqsDetail.value = detailRowsResult.value.faqs_detail
-    }
-
-    if (reviewRowsResult.status === 'fulfilled') {
-      ratingAndReviews.value = reviewRowsResult.value.reviews
-      reviewStats.value = {
-        total_reviews: reviewRowsResult.value.total_reviews,
-        average_rating: reviewRowsResult.value.average_rating,
-      }
-    }
-  } catch (error) {
-    console.error('Error loading product extras:', error)
-  } finally {
-    if (requestId === loadRequestId.value) {
-      sectionLoading.value = false
-    }
-  }
-}
-
-const loadProductPage = async () => {
-  console.log('first Init product');
-
-  // Don't reload if already loading and initial load is done
-  if (pageLoading.value && initialLoadDone.value) {
-    return
-  }
-
-  const requestId = ++loadRequestId.value
-  pageLoading.value = true
-  pageErrorState.value = ''
-  sectionLoading.value = false
-  initialLoadDone.value = false
-
-  const id = resolveRouteId()
-  if (!id) {
-    pageErrorState.value = 'Missing product id.'
-    pageLoading.value = false
-    return
-  }
-
-  try {
-    const currentProduct = await fetchProductById(id)
-    console.log(currentProduct);
-
-    if (requestId !== loadRequestId.value) {
-      return
-    }
-
-    if (!currentProduct) {
-      pageErrorState.value = 'Failed to load product detail.'
-      product.value = null
-      relatedProducts.value = []
-      productDeatil.value = []
-      faqsDetail.value = []
-      ratingAndReviews.value = []
-      reviewStats.value = {
-        total_reviews: 0,
-        average_rating: 0,
-      }
-      pageLoading.value = false
-      return
-    }
-
-    product.value = currentProduct
-    getDefaultVariantSelection(currentProduct)
-    const previewImages = getProductImagePreview(currentProduct)
-    selectedImage.value = previewImages[0] || '/img/products/default_image.webp'
-
-    // Load extras in background without waiting
-    loadProductExtras(id, currentProduct, requestId).finally(() => {
-      initialLoadDone.value = true
-    })
-  } catch (error: any) {
-    if (requestId !== loadRequestId.value) {
-      return
-    }
-    pageErrorState.value = error?.data?.message || error?.message || 'Failed to load product detail.'
-    product.value = null
-    relatedProducts.value = []
-    productDeatil.value = []
-    faqsDetail.value = []
-    ratingAndReviews.value = []
-    reviewStats.value = {
-      total_reviews: 0,
-      average_rating: 0,
-    }
-  } finally {
-    if (requestId === loadRequestId.value) {
-      pageLoading.value = false
-    }
-  }
-}
-
-const refreshReviews = async () => {
-  const id = resolveRouteId()
-  if (!id) {
-    return
-  }
-
-  const reviewRows = await fetchRatingAndReviews(id)
-  ratingAndReviews.value = reviewRows.reviews
-  reviewStats.value = {
-    total_reviews: reviewRows.total_reviews,
-    average_rating: reviewRows.average_rating,
-  }
-}
-
-const openReviewFilterDialog = () => {
-  reviewFilterDialogOpen.value = true
-}
-
-const applyReviewFilter = async () => {
-  if (reviewFilters.mine_only && !isAuthenticated.value && !accessToken.value) {
-    ElMessage.warning('Please login first to filter your own reviews.')
-    await router.push('/auth/login')
-    return
-  }
-  reviewFilterDialogOpen.value = false
-  await refreshReviews()
-}
-
-const openWriteReviewDialog = async () => {
-  if (!isAuthenticated.value && !accessToken.value) {
-    ElMessage.warning('Please login first to write a review.')
-    await router.push('/auth/login')
-    return
-  }
-  writeReviewDialogOpen.value = true
-}
-
-const submitReview = async () => {
-  submittingReview.value = true
-  try {
-    await fetchWithTimeout(`${apiBase}/products/${route.params.id}/reviews`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: getAuthHeaders(),
-      body: {
-        rating: reviewForm.rating,
-        comment: reviewForm.comment.trim(),
-      },
-    })
-    ElMessage.success('Review submitted successfully.')
-    writeReviewDialogOpen.value = false
-    reviewForm.rating = 5
-    reviewForm.comment = ''
-    await refreshReviews()
-  } catch (error: any) {
-    const statusCode = error?.statusCode ?? error?.status
-    if (statusCode === 401 || statusCode === 403) {
-      authStore.resetAuth()
-      ElMessage.error('Session expired. Please login again.')
-      await router.push('/auth/login')
-      return
-    }
-    ElMessage.error(error?.data?.message || 'Failed to submit review.')
-  } finally {
-    submittingReview.value = false
-  }
-}
-
-const viewProduct = (id: number | string) => {
-  router.push(`/frontend/product_detail/${id}`)
-}
-
-// Use onMounted for initial load
-onMounted(() => {
-  loadProductPage()
-})
-
-// Watch for route param changes
-watch(
-  () => route.params.id,
-  (newId, oldId) => {
-    // Only reload if the ID actually changed and it's not the initial load
-    if (newId !== oldId && oldId !== undefined) {
-      // Reset all data when changing products
-      product.value = null
-      relatedProducts.value = []
-      productDeatil.value = []
-      faqsDetail.value = []
-      ratingAndReviews.value = []
-      selectedColor.value = null
-      selectedSizeId.value = null
-      qtyAmount.value = 1
-      initialLoadDone.value = false
-      loadProductPage()
-    }
-  }
-)
 </script>
 
 <template>
@@ -635,7 +68,12 @@ watch(
       <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
       <el-breadcrumb-item>Product Detail</el-breadcrumb-item>
     </BaseBreadcrumb>
-
+    <div>
+      <h1>Hello</h1>
+      <p>
+        {{ selectedImage }}
+      </p>
+    </div>
     <div v-if="pageLoading" class="animate-pulse py-10">
       <div class="grid gap-8 desktop:grid-cols-[440px_1fr]">
         <div class="flex gap-3">
@@ -646,6 +84,7 @@ watch(
         </div>
 
         <div class="space-y-4">
+
           <div class="h-10 w-3/4 rounded-2xl bg-gray-200"></div>
           <div class="h-6 w-1/3 rounded-full bg-gray-200"></div>
           <div class="h-8 w-40 rounded-full bg-gray-200"></div>
@@ -666,7 +105,7 @@ watch(
 
     <div v-else-if="pageErrorState" class="py-16 text-center">
       <p class="text-red-600">{{ pageErrorState }}</p>
-      <button class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white" @click="loadProductPage">
+      <button class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white" @click="refreshProductDetail">
         Retry
       </button>
     </div>
@@ -751,7 +190,7 @@ watch(
       <el-tabs v-model="activeIndex" class="demo-tabs" @tab-click="tabClick" default-value="pro_detail">
         <el-tab-pane v-for="tab in tablists" :key="tab.name" :label="tab.lable" :name="tab.name">
           <div class="w-full">
-            <div class="p-3">
+            <div class="p-3" v-if="activeIndex == 'pro_detail'">
               <h1>Product details</h1>
               <ul v-if="productDeatil.length" class="space-y-2">
                 <li v-for="item in productDeatil" :key="item.key" class="text-sm leading-6">
@@ -761,7 +200,7 @@ watch(
               </ul>
               <p v-else class="text-sm text-gray-500">No product details available.</p>
             </div>
-            <div class="p-3">
+            <div class="p-3" v-else-if="activeIndex == 'rate_review'">
               <div class="flex justify-between">
                 <h1 class="text-lg sm:text-2xl">
                   All Reviews ({{ reviewStats.total_reviews }}) - Avg {{ reviewStats.average_rating }}/5
@@ -788,7 +227,7 @@ watch(
               </ul>
               <p v-else class="mt-4 text-sm text-gray-500">No reviews yet.</p>
             </div>
-            <div class="bg-gray p-3">
+            <div class="bg-gray p-3" v-else>
               <h1>FAQs</h1>
               <ul v-if="faqsDetail.length" class="space-y-3">
                 <li v-for="faq in faqsDetail" :key="faq.id" class="rounded-lg bg-white p-3">

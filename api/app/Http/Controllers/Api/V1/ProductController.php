@@ -161,7 +161,7 @@ class ProductController extends Controller
 
         $productIdsQuery = DB::table('products as p')->select('p.id');
         $applyProductFilters($productIdsQuery);
-
+        // Categories Query
         $categories = DB::table('categories as c')
             ->select('c.id', 'c.name', 'c.slug', 'c.image_url')
             ->whereExists(function ($sub) use ($productIdsQuery) {
@@ -173,6 +173,7 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Colors Query
         $colors = DB::table('product_variants as pv')
             ->selectRaw('DISTINCT pv.color as id, pv.color as name, pv.color as hex_code')
             ->whereIn('pv.product_id', $productIdsQuery)
@@ -180,6 +181,7 @@ class ProductController extends Controller
             ->orderBy('pv.color')
             ->get();
 
+        //Sizes Query
         $sizes = DB::table('sizes as s')
             ->select('s.id', 's.name', 's.sort_order')
             ->join('product_variants as pv', 'pv.size_id', '=', 's.id')
@@ -189,6 +191,7 @@ class ProductController extends Controller
             ->orderBy('s.name')
             ->get();
 
+        //Collection Query
         $collections = DB::table('collections as d')
             ->select('d.id', 'd.category_id', 'd.name', 'd.slug', 'd.sort_order', 'd.image_url')
             ->whereExists(function ($sub) use ($productIdsQuery) {
@@ -202,6 +205,7 @@ class ProductController extends Controller
             ->orderBy('d.name')
             ->get();
 
+        //SubCategory Query
         $subCategoryGrouped = DB::table('sub_categories as sc')
             ->join('products as p', 'p.sub_category_id', '=', 'sc.id')
             ->whereIn('p.id', $productIdsQuery)

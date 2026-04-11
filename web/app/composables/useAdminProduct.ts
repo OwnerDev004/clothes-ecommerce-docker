@@ -18,10 +18,10 @@ export type AdminProductVariantRecord = {
 }
 
 export type AdminProductRecord = {
-  id: number | string
   sku?: string | null
   slug?: string | null
   name: string
+  id: number | string
   desc?: string | null
   price?: number | string | null
   category_id?: number | string | null
