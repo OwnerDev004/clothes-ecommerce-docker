@@ -12,7 +12,7 @@ class CollectionRepository
         $query = Collection::query()
             ->with(['category:id,name,slug'])
             ->withCount('products')
-            ->select('id', 'category_id', 'name', 'slug', 'desc', 'sort_order', 'image_url', 'image_public_id', 'created_at', 'updated_at');
+            ->select('id', 'category_id', 'name', 'slug', 'desc', 'sort_order', 'status', 'image_url', 'image_public_id', 'created_at', 'updated_at');
 
         $search = trim((string) ($filters['search_txt'] ?? ''));
         if ($search !== '') {

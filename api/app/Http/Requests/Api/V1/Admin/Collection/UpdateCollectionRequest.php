@@ -21,6 +21,7 @@ class UpdateCollectionRequest extends FormRequest
             'category_id' => ['sometimes', 'integer', 'exists:categories,id'],
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('collections', 'name')->ignore($collectionId)],
             'desc' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'status' => ['sometimes', 'in:draft,published'],
             'sort_order' => ['sometimes', 'integer'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'remove_image' => ['sometimes', 'boolean'],
@@ -29,4 +30,3 @@ class UpdateCollectionRequest extends FormRequest
         ];
     }
 }
-

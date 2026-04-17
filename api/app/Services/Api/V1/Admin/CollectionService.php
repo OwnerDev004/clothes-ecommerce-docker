@@ -33,6 +33,7 @@ class CollectionService
             'category_id' => (int) $validated['category_id'],
             'name' => $validated['name'],
             'desc' => $validated['desc'] ?? null,
+            'status' => $validated['status'] ?? 'draft',
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
         ];
 
@@ -65,6 +66,9 @@ class CollectionService
         }
         if (array_key_exists('desc', $validated)) {
             $payload['desc'] = $validated['desc'];
+        }
+        if (array_key_exists('status', $validated)) {
+            $payload['status'] = $validated['status'];
         }
         if (array_key_exists('sort_order', $validated)) {
             $payload['sort_order'] = (int) $validated['sort_order'];
@@ -108,4 +112,3 @@ class CollectionService
         $this->collectionRepository->delete($collection);
     }
 }
-

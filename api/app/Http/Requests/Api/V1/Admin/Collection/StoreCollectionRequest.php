@@ -17,6 +17,7 @@ class StoreCollectionRequest extends FormRequest
             'category_id' => ['required', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255', 'unique:collections,name'],
             'desc' => ['nullable', 'string', 'max:1000'],
+            'status' => ['nullable', 'in:draft,published'],
             'sort_order' => ['nullable', 'integer'],
             'image' => ['nullable', 'image', 'max:5120'],
             'product_ids' => ['nullable', 'array'],
@@ -24,4 +25,3 @@ class StoreCollectionRequest extends FormRequest
         ];
     }
 }
-

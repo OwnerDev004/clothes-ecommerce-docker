@@ -1,6 +1,6 @@
 <script setup lang="ts">
 type SelectOption = {
-    id: string | number
+    id: string | number | null
     label: string
     disabled?: boolean
 }

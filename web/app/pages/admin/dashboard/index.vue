@@ -10,6 +10,7 @@ import {
   Tickets,
   WarningFilled,
 } from '@element-plus/icons-vue'
+import BaseButton from '~/components/ui/BaseButton.vue'
 
 import { useAdminDashboard, type AdminDashboardSummary } from '~/composables/useAdminDashboard'
 
@@ -139,7 +140,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">This week revenue</span>
           <strong class="mt-1 block text-lg text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-          }}</strong>
+            }}</strong>
         </div>
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">Customers</span>
@@ -154,11 +155,10 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           <strong class="block">Dashboard failed to load.</strong>
           <p class="m-0 mt-1 text-sm">{{ error?.message || 'Please try again.' }}</p>
         </div>
-        <button type="button"
-          class="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+        <BaseButton
+          class="rounded-2xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
           @click="refresh">
-          Retry
-        </button>
+          Retry</BaseButton>
       </div>
     </section>
 
@@ -200,7 +200,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
             <div class="text-right">
               <span class="block text-sm text-slate-500">Sales velocity</span>
               <strong class="text-[1.15rem] text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-              }}</strong>
+                }}</strong>
             </div>
           </div>
 

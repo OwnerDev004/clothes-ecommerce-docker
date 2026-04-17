@@ -16,6 +16,7 @@ class ListCollectionRequest extends FormRequest
         return [
             'search_txt' => ['nullable', 'string', 'max:255'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'status' => ['nullable', 'integer', 'in:[1, 2]'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
         ];
     }

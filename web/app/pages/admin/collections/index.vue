@@ -1,37 +1,38 @@
 <template>
     <div>
-        <HeaderBreadCrumb title="Categories">
+        <HeaderBreadCrumb title="Collections">
             <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">Dashboard</el-breadcrumb-item>
-            <el-breadcrumb-item :to="{ path: '/admin/categories' }">Categories</el-breadcrumb-item>
-            <el-breadcrumb-item>All Categories</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: '/admin/collections' }">Collections</el-breadcrumb-item>
+            <el-breadcrumb-item>All Collections</el-breadcrumb-item>
         </HeaderBreadCrumb>
+
         <section class="space-y-6">
             <BaseCard>
                 <template #header>
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div class="w-full lg:w-[360px]">
-                                <BaseInput v-model="filters.search_txt" placeholder="Search products..." clearable />
+                                <BaseInput v-model="filters.search_txt" placeholder="Search collections..." clearable />
                             </div>
 
                             <div class="flex flex-wrap gap-3">
-                                <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-                                <BaseButton type="primary" @click="addCategory">Add Category</BaseButton>
+                                <!-- <BaseButton @click="s">Reset Filters</BaseButton> -->
+                                <BaseButton type="primary" @click="addCollection">Add Collection</BaseButton>
                             </div>
                         </div>
-
                         <div class="grid gap-3 xl:grid-cols-4">
-                            <BaseSelect v-model="filters.status" :options="statusOption" placeholder="All Status"
+                            <BaseSelect v-model="filters.category" :options="categoriesOptions"
+                                placeholder="All Categories" class="w-full" />
+                            <BaseSelect v-model="filters.status" :options="statusOptions" placeholder="All Status"
                                 class="w-full" />
-                            <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
-                                class="w-full" />
+
                         </div>
+
                     </div>
                 </template>
-
                 <div class="space-y-5">
-                    <BaseTable :table-data="dataTable.data">
-                        <el-table-column fixed="left" label="Brand">
+                    <BaseTable :table-data="collectionsData.data">
+                        <el-table-column fixed="left" label="Name">
                             <template #default="scope">
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
@@ -47,23 +48,33 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column prop="des" label="Description" />
-
-                        <el-table-column label="Status" width="120">
+                        <el-table-column prop="desc" label="Description" />
+                        <el-table-column fixed="left" label="Category">
                             <template #default="scope">
-                                <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-                                    {{ categoryStatus(scope.row.status) }}
-                                </el-tag>
+                                <div class="flex items-center gap-2">
+                                    <div class="min-w-0">
+                                        <p class="truncate font-semibold text-slate-950">{{ scope.row.category?.name }}
+                                        </p>
+                                    </div>
+                                </div>
                             </template>
                         </el-table-column>
 
+
+                        <el-table-column label="Status">
+                            <template #default="scope">
+                                <el-tag :type="scope.row.status === 'published' ? 'success' : 'danger'">
+                                    {{ scope.row.status }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
                         <el-table-column fixed="right" label="Action">
                             <template #default="scope">
                                 <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
-                                    @click="deleteCategory(scope.row.id)">
+                                    @click="deleteCollection(scope.row.id)">
                                     <Icon name="ic:twotone-delete-forever" class="text-base" />
                                 </BaseButton>
-                                <BaseButton link type="primary" size="default" @click="editCategory(scope.row)">
+                                <BaseButton link type="primary" size="default" @click="editCollection(scope.row)">
                                     <Icon name="ic:outline-edit" class="text-base" />
                                 </BaseButton>
                             </template>
@@ -72,7 +83,7 @@
 
                     <section class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="m-0 text-sm text-slate-500">
-                            Showing {{ dataTable.data.length }} of {{ pagination.total }} products
+                            Showing {{ collectionsData.data.length }} of {{ pagination.total }} products
                         </p>
 
                         <el-pagination v-model:current-page="filters.page" v-model:page-size="filters.per_page"
@@ -82,7 +93,7 @@
                 </div>
             </BaseCard>
         </section>
-        <CategoryModal v-model="isFormModal" :mode="modalMode" :category="selectedCategory" :loading="saving"
+        <CollectionModal v-model="isCollectionModal" :mode="modalMode" :collection="selectedData" :loading="saving"
             @submit="submitForm" />
     </div>
 </template>
@@ -94,33 +105,41 @@ import BaseCard from '~/components/ui/BaseCard.vue';
 import BaseInput from '~/components/ui/BaseInput.vue';
 import BaseSelect from '~/components/ui/BaseSelect.vue';
 import BaseTable from '~/components/ui/BaseTable.vue';
-import { useAdminCategory } from '~/composables/useAdminCategory';
-import CategoryModal from './components/Modal.vue'
-// pageMeta
+import { useAdminCollections } from '~/composables/useAdminCollections'
+import CollectionModal from './components/Modal.vue'
 definePageMeta({
     layout: 'admin',
-    middleware: ['admin-auth']
+    middleware: ['admin-auth'],
 })
+
 const {
     filters,
+    collectionsData,
+    selectedData,
     pagination,
+    statusOptions,
     deletingId,
-    statusOption,
-    sortOptions,
-    dataTable,
-    isFormModal,
-    modalMode,
     saving,
-    selectedCategory,
-    categoryStatus,
-    pending,
-    error,
+    isCollectionModal,
+    modalMode,
+    addCollection,
+    deleteCollection,
+    editCollection,
+    fetchCollections,
     submitForm,
-    resetFilters,
-    addCategory,
-    deleteCategory,
-    editCategory
-} = useAdminCategory()
+} = useAdminCollections()
+
+const { categoriesResponse } = useAdminCategory()
+const categoriesOptions = computed(() => {
+    return categoriesResponse.value.data.map((e) => ({ id: e.id, label: e.name }))
+})
+
+// functions
+
+// const resetFilters = () => {
+//     Object.assign(filters, ...[defaultFilter]);
+// }
+
 
 </script>
 

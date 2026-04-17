@@ -3,7 +3,7 @@ import BaseButton from './BaseButton.vue';
 
 defineOptions({ inheritAttrs: false })
 
-const model = defineModel<boolean>()
+const model = defineModel<Boolean | undefined>()
 
 withDefaults(
     defineProps<{

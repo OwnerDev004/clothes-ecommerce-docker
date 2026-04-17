@@ -6,7 +6,6 @@
             <div class="grid gap-6 px-6 pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
                 <section class="p-6 rounded-3xl border border-dashed border-muted bg-surface-2/10 ">
                     <h3 class="category-panel__title">Category Image</h3>
-
                     <BaseImageUpload v-model="imagePreview" class-name="mx-auto" width="260px" height="260px"
                         @change="handleAvatarChange">
                         <template #file="{ file, handlePictureCardPreview, handleRemove, disabled }">
@@ -76,7 +75,7 @@ const model = defineModel<boolean>()
 const props = withDefaults(
     defineProps<{
         mode?: 'add' | 'create' | 'edit',
-        category?: AdminCategoryRecord | null,
+        category: AdminCategoryRecord | null,
         loading?: boolean
     }
     >(),
@@ -124,7 +123,7 @@ const initialImagePreview = ref('')
 const syncFromCategory = () => {
     form.name = props.category?.name || ''
     form.desc = props.category?.des || ''
-    form.status = Number(props.category?.status)
+    form.status = props.category ? Number(props.category?.status) : 1
     selectedImageFile.value = null
     initialImagePreview.value = props.category?.image_url || ''
     imagePreview.value = initialImagePreview.value
@@ -134,19 +133,7 @@ const handleAvatarChange = (file: File | null) => {
     selectedImageFile.value = file
 }
 
-const submitForm = async () => {
-    emit('submit', {
-        mode: props.mode === 'edit' ? 'edit' : 'create',
-        categoryId: props.category?.id ?? null,
-        form: {
-            name: form.name.trim(),
-            desc: form.desc.trim(),
-            status: Number(form.status),
-        },
-        image: selectedImageFile.value,
-        remove_image: Boolean(initialImagePreview.value && !imagePreview.value && !selectedImageFile.value),
-    })
-}
+
 
 const closeModal = () => {
     model.value = false

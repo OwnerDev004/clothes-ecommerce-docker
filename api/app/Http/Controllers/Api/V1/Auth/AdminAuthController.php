@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\Auth\AdminRegisterRequest;
 use App\Http\Requests\Api\V1\Auth\AdminLoginRequest;
 use App\Repositories\Admin\AdminRepository;
 use App\Traits\ApiResponse;
+
 use Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use OpenApi\Attributes as OA;
@@ -57,6 +58,16 @@ class AdminAuthController extends Controller
         path: '/api/v1/admin/login',
         tags: ['Admin/Auth'],
         summary: 'Login admin',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string, email'),
+                    new OA\Property(property: 'password', type: 'string', minLength: 6)
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Login successful'),
             new OA\Response(response: 401, description: 'Credentials invalid'),
@@ -67,6 +78,7 @@ class AdminAuthController extends Controller
     {
         $credentials = $request->only('email', 'password');
         $admin = $this->adminRepository->findByEmail($request->email);
+
         // Generate JWT token
         if (!$admin || !$token = auth('admin')->attempt($credentials)) {
             return $this->error('Credentials invalid', 401);

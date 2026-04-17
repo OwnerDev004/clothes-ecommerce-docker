@@ -16,6 +16,7 @@ class CollectionResource extends JsonResource
             'slug' => $this->slug,
             'desc' => $this->desc,
             'sort_order' => $this->sort_order,
+            'status' => $this->status,
             'image_url' => $this->image_url,
             'products_count' => isset($this->products_count) ? (int) $this->products_count : null,
             'category' => $this->whenLoaded('category', function () {

@@ -32,12 +32,12 @@ class CatalogSeeder extends Seeder
         $categoriesBySlug = Category::whereIn('slug', array_column($categories, 'slug'))->get()->keyBy('slug');
 
         $collections = [
-            ['category_slug' => 'men', 'name' => 'Men Essentials', 'desc' => 'Core menswear staples', 'slug' => 'men-essentials', 'sort_order' => 1, 'img' => 'default_empty'],
-            ['category_slug' => 'men', 'name' => 'Men Active', 'desc' => 'Sport and training', 'slug' => 'men-active', 'sort_order' => 2, 'img' => 'default_empty'],
-            ['category_slug' => 'women', 'name' => 'Women Essentials', 'desc' => 'Core womenswear staples', 'slug' => 'women-essentials', 'sort_order' => 1, 'img' => 'default_empty'],
-            ['category_slug' => 'women', 'name' => 'Women Party', 'desc' => 'Event and celebration outfits', 'slug' => 'women-party', 'sort_order' => 2, 'img' => 'default_empty'],
-            ['category_slug' => 'boys', 'name' => 'Boys Play', 'desc' => 'Everyday playwear', 'slug' => 'boys-play', 'sort_order' => 1, 'img' => 'default_empty'],
-            ['category_slug' => 'girls', 'name' => 'Girls Play', 'desc' => 'Everyday playwear', 'slug' => 'girls-play', 'sort_order' => 1, 'img' => 'default_empty'],
+            ['category_slug' => 'men', 'name' => 'Men Essentials', 'desc' => 'Core menswear staples', 'slug' => 'men-essentials', 'sort_order' => 0, 'status' => 'published', 'img' => 'default_empty'],
+            ['category_slug' => 'men', 'name' => 'Men Active', 'desc' => 'Sport and training', 'slug' => 'men-active', 'sort_order' => 1, 'status' => 'published', 'img' => 'default_empty'],
+            ['category_slug' => 'women', 'name' => 'Women Essentials', 'desc' => 'Core womenswear staples', 'slug' => 'women-essentials', 'sort_order' => 2, 'status' => 'published', 'img' => 'default_empty'],
+            ['category_slug' => 'women', 'name' => 'Women Party', 'desc' => 'Event and celebration outfits', 'slug' => 'women-party', 'sort_order' => 3, 'status' => 'draft', 'img' => 'default_empty'],
+            ['category_slug' => 'boys', 'name' => 'Boys Play', 'desc' => 'Everyday playwear', 'slug' => 'boys-play', 'sort_order' => 4, 'status' => 'draft', 'img' => 'default_empty'],
+            ['category_slug' => 'girls', 'name' => 'Girls Play', 'desc' => 'Everyday playwear', 'slug' => 'girls-play', 'sort_order' => 5, 'status' => 'published', 'img' => 'default_empty'],
         ];
         $collections = array_map(function ($row) use ($now, $categoriesBySlug) {
             return [
@@ -46,6 +46,7 @@ class CatalogSeeder extends Seeder
                 'desc' => $row['desc'],
                 'slug' => $row['slug'],
                 'sort_order' => $row['sort_order'],
+                'status' => $row['status'],
                 'img' => $row['img'],
                 'created_at' => $now,
                 'updated_at' => $now,

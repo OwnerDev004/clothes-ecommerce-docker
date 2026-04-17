@@ -26,13 +26,17 @@ const props = defineProps({
     ratingAmount: {
         type: Number,
         default: 0
+    },
+    bgCard: {
+        type: String,
+        default: 'bg-surface'
     }
 });
 
 
 </script>
 <template>
-    <div class="bg-surface p-4 rounded-2xl border border-border shadow-sm transition hover:shadow-md">
+    <div class="p-4 rounded-2xl border border-border shadow-sm transition hover:shadow-md" :class="[bgCard]">
         <section class="rounded-2xl cursor-pointer hover:scale-95 translate-all duration-300">
             <div class="w-full aspect-[4/5] overflow-hidden rounded-xl bg-white/40">
                 <NuxtImg sizes="sm:100vw md:500px" :src="img" format="webp" densities="x1"

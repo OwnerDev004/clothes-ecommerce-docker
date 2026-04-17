@@ -1,9 +1,9 @@
-import { useAdminAuthStore } from '~/stores/adminAuthStore'
+import { useAdminAuthStore } from "~/stores/adminAuthStore";
 
 export default defineNuxtRouteMiddleware(() => {
-  const adminAuthStore = useAdminAuthStore()
+  const adminAuthStore = useAdminAuthStore();
 
   if (adminAuthStore.isAuthenticated || adminAuthStore.accessToken) {
-    return navigateTo('/admin')
+    return navigateTo("/admin/dashboard");
   }
-})
+});

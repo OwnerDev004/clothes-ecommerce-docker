@@ -14,9 +14,10 @@ return new class extends Migration {
             $table->id();
             $table->string('name')->unique();
             $table->string('desc')->nullable();
-            $table->integer('sort_order')->default(0);
+            $table->integer('sort_order')->default(0)->unique();
             $table->string('slug')->unique();
             $table->string('img')->nullable()->default('default_empty');
+            $table->enum('status', ['draft', 'published'])->default('draft');
             $table->timestamps();
         });
     }

@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+definePageMeta({
+    layout: false,
+    middleware: ['admin-auth'],
+})
 import {
     ArrowRight,
     Bell,
@@ -47,8 +51,8 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Catalog',
         items: [
-            { index: '/admin/products', label: 'Products', icon: Box },
-            { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Soon', disabled: true },
+            { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live' },
+            { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live' },
             { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Soon', disabled: true },
         ],
     },
@@ -57,7 +61,7 @@ const navigationGroups: NavGroup[] = [
         items: [
             { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', disabled: true },
             { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Soon', disabled: true },
-            { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Soon', disabled: true },
+            { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live' },
         ],
     },
     {
