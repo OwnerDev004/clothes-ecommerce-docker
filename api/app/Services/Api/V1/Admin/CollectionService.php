@@ -74,17 +74,11 @@ class CollectionService
             $payload['sort_order'] = (int) $validated['sort_order'];
         }
 
-        if (($validated['remove_image'] ?? false) && $collection->image_public_id) {
+        if ((($validated['remove_image'] ?? false) || $image) && $collection->image_public_id) {
             Cloudinary::uploadApi()->destroy($collection->image_public_id);
-            $payload['image_url'] = null;
-            $payload['image_public_id'] = null;
         }
 
         if ($image) {
-            if ($collection->image_public_id) {
-                Cloudinary::uploadApi()->destroy($collection->image_public_id);
-            }
-
             $upload = Cloudinary::uploadApi()->upload(
                 $image->getRealPath(),
                 ['folder' => 'clothes_ecommerce/collections']
@@ -92,6 +86,9 @@ class CollectionService
 
             $payload['image_url'] = $upload['secure_url'] ?? null;
             $payload['image_public_id'] = $upload['public_id'] ?? null;
+        } else if (($validated['remove_image'] ?? false)) {
+            $payload['image_url'] = null;
+            $payload['image_public_id'] = null;
         }
 
         $this->collectionRepository->update($collection, $payload);

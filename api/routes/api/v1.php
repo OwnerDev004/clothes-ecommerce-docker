@@ -195,6 +195,13 @@ Route::prefix('admin')->group(function () {
             Route::put('/{category:id}', [AdminCategoryController::class, 'update']);
             Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
         });
+        Route::prefix('customers')->group(function () {
+            Route::get('/', [AdminCategoryController::class, 'index']);
+            Route::get('/{customer:id}', [AdminCategoryController::class, 'show']);
+            Route::post('/', [AdminCategoryController::class, 'store']);
+            Route::put('/{customer:id}', [AdminCategoryController::class, 'update']);
+            Route::delete('/{customer:id}', [AdminCategoryController::class, 'destroy']);
+        });
 
         Route::prefix('brands')->group(function () {
             Route::get('/', [AdminBrandController::class, 'index']);
