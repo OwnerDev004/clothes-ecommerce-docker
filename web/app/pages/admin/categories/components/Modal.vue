@@ -133,7 +133,19 @@ const handleAvatarChange = (file: File | null) => {
     selectedImageFile.value = file
 }
 
-
+const submitForm = async () => {
+    emit('submit', {
+        mode: props.mode === 'edit' ? 'edit' : 'create',
+        categoryId: props.category?.id ?? null,
+        form: {
+            name: form.name.trim(),
+            desc: form.desc.trim(),
+            status: form.status,
+        },
+        image: selectedImageFile.value,
+        remove_image: Boolean(initialImagePreview.value && !imagePreview.value && !selectedImageFile.value),
+    })
+}
 
 const closeModal = () => {
     model.value = false

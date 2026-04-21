@@ -10,15 +10,21 @@ class CustomerRepository
 
     public function pagination(array $filters = []): LengthAwarePaginator
     {
-        $query = Customer::query()->select('full_name', 'gender', 'dob', 'user_name', 'email', 'phone', 'address', 'avatar_url');
+        $query = Customer::query()
+            ->with([
+                'oauthAccounts' => function ($query) {
+                    $query->select('id', 'customer_id', 'provider', 'provider_user_id', 'expires_at');
+                }
+            ])
+            ->select('id', 'full_name', 'gender', 'dob', 'user_name', 'email', 'phone', 'address', 'avatar_url', 'telegram_username', 'enable_telegram_alerts', 'status');
         $search = trim((string) ($filters['search_txt'] ?? ''));
         $sortBy = trim((string) ($filters['sort_by'] ?? 'latest'));
+        $perPage = (int) ($filters['per_page'] ?? 10);
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', '%', $search, '%');
-                $q->where('address', 'like', $search, '%');
-                $q->where('user_name', 'like', $search, '%');
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('user_name', 'like', '%' . $search . '%');
             });
         }
         match ($sortBy) {
@@ -28,7 +34,6 @@ class CustomerRepository
             default => $query->orderByDesc('customers.id'),
         };
 
-        $perPage = (int) ($filters['per_page'] ?? 20);
 
         return $query->paginate($perPage);
 
@@ -48,7 +53,7 @@ class CustomerRepository
     // delete 
     public function delete(Customer $customer)
     {
-        $customer->delete();
+        $customer->update(['status' => false]);
     }
 
 }

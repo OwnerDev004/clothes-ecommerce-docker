@@ -12,6 +12,24 @@ class StoreCustomerRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('enable_telegram_alerts') && $this->input('enable_telegram_alerts') !== '') {
+            $this->merge([
+                'enable_telegram_alerts' => $this->normalizeBoolean($this->input('enable_telegram_alerts')),
+            ]);
+        }
+    }
+
+    private function normalizeBoolean(mixed $value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    }
+
     public function rules()
     {
         return [
@@ -19,7 +37,7 @@ class StoreCustomerRequest extends FormRequest
             'gender' => ['sometimes', 'string', 'in:male,female'],
             'dob' => ['nullable', 'string'],
             'user_name' => ['required', 'string', 'max:100', 'unique:customers,user_name'],
-            'email' => ['required', 'email', 'max:255', 'unique:customers,email'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:customers,email'],
             'phone' => ['required', 'string', 'max:20', 'unique:customers,phone'],
             'address' => ['nullable', 'string', 'max:255'],
             'profile' => ['nullable', 'image', 'max:5120'],

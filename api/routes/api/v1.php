@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\Admin\VoucherController as AdminVoucherControlle
 use App\Http\Controllers\Api\V1\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\CollectionController as AdminCollectionController;
+use App\Http\Controllers\Api\V1\Admin\CustomerController as AdminCustomerController;
 
 
 //** Customers */ 
@@ -196,11 +197,11 @@ Route::prefix('admin')->group(function () {
             Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
         });
         Route::prefix('customers')->group(function () {
-            Route::get('/', [AdminCategoryController::class, 'index']);
-            Route::get('/{customer:id}', [AdminCategoryController::class, 'show']);
-            Route::post('/', [AdminCategoryController::class, 'store']);
-            Route::put('/{customer:id}', [AdminCategoryController::class, 'update']);
-            Route::delete('/{customer:id}', [AdminCategoryController::class, 'destroy']);
+            Route::get('/', [AdminCustomerController::class, 'index']);
+            Route::get('/{customer:id}', [AdminCustomerController::class, 'show']);
+            Route::post('/{customer:id}/send-reset-link', [AdminCustomerController::class, 'sendResetLink']);
+            Route::put('/{customer:id}', [AdminCustomerController::class, 'update']);
+            Route::delete('/{customer:id}', [AdminCustomerController::class, 'destroy']);
         });
 
         Route::prefix('brands')->group(function () {

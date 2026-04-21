@@ -613,6 +613,286 @@
                 ]
             }
         },
+        "/api/v1/admin/customers": {
+            "get": {
+                "tags": [
+                    "Admin/Customers"
+                ],
+                "description": "Get All Customers",
+                "operationId": "8aa2e8e84b2e743c92620b2589856bd3",
+                "parameters": [
+                    {
+                        "name": "search_txt",
+                        "in": "query",
+                        "description": "Search by fullname, address, user_name",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Filter by sort field secifict",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest",
+                                "name_asc",
+                                "name_desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 200,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Get All Customers"
+                    },
+                    "401": {
+                        "description": "Unauthorized Customer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": ""
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/customers/{customer}": {
+            "get": {
+                "tags": [
+                    "Admin/Customers"
+                ],
+                "description": "Get Customer By Id",
+                "operationId": "4258ba2e17e715165a5a1fb6aef29b7c",
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "description": "Customer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Get Customer By ID"
+                    },
+                    "404": {
+                        "description": "Customer Undefined By ID"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin/Customers"
+                ],
+                "description": "Update customer information, including account status.",
+                "operationId": "74eecd4c295f5cbe68408705a56cb918",
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "description": "Customer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Test Customer",
+                                        "nullable": true,
+                                        "maxLength": 100,
+                                        "minLength": 5
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "example": "male",
+                                        "nullable": true,
+                                        "enum": [
+                                            "male",
+                                            "female"
+                                        ]
+                                    },
+                                    "dob": {
+                                        "type": "string",
+                                        "example": "2001-10-04",
+                                        "nullable": true
+                                    },
+                                    "user_name": {
+                                        "type": "string",
+                                        "example": "test@001",
+                                        "maxLength": 100
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "test@gmail.com",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0292929833",
+                                        "maxLength": 20
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Phnom Penh",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "profile": {
+                                        "description": "Max 5 MB",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "telegram_username": {
+                                        "type": "string",
+                                        "example": "phnompenh",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "enable_telegram_alerts": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "remove_image": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Customer updated"
+                    },
+                    "404": {
+                        "description": "Customer not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin/Customers"
+                ],
+                "description": "Deactivate a customer by setting status to false.",
+                "operationId": "16a09da0200048418fa72176d5b9316f",
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "description": "Customer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Customer deactivated"
+                    },
+                    "404": {
+                        "description": "Customer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/customers/{customer}/send-reset-link": {
+            "post": {
+                "tags": [
+                    "Admin/Customers"
+                ],
+                "description": "Send a customer password reset link for support purposes.",
+                "operationId": "a935ed5dbc55bd117c09d9d24e527130",
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "description": "Customer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reset link sent"
+                    },
+                    "400": {
+                        "description": "Customer has no email address"
+                    },
+                    "404": {
+                        "description": "Customer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/dashboard": {
             "get": {
                 "tags": [
@@ -2990,6 +3270,10 @@
         {
             "name": "Admin/Collections",
             "description": "Admin/Collections"
+        },
+        {
+            "name": "Admin/Customers",
+            "description": "Admin/Customers"
         },
         {
             "name": "Admin/Dashboard",

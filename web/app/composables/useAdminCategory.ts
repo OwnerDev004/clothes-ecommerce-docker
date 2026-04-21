@@ -15,6 +15,12 @@ export type AdminCategoryRecord = {
   image_url?: string | null;
   created_at?: string;
 };
+export type MetaPage = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+};
 export type AdminCategoryRecordTable = AdminCategoryRecord & {
   preview_image: string[];
 };
@@ -22,12 +28,7 @@ export type AdminCategoryListResponse = {
   data: AdminCategoryRecord[];
   meta: MetaPage;
 };
-export type MetaPage = {
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-};
+
 export type CategorySubmitPayload = {
   mode: "create" | "edit";
   categoryId: string | number | null;
@@ -71,7 +72,7 @@ export const useAdminCategory = () => {
     per_page: 10,
   });
   // pagination
-  const pagination = reactive({
+  const pagination = reactive<MetaPage>({
     current_page: 1,
     last_page: 1,
     per_page: 10,

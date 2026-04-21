@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Services\Api\V1\Admin;
+
 use App\Models\Customer;
 use App\Repositories\Admin\CustomerRepository;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -23,37 +25,9 @@ class CustomerService
     public function show(Customer $customer): Customer
     {
         return $customer->load([
-            'oauthAccounts:id,customer_id,provider,provider_id',
+            'oauthAccounts:id,customer_id,provider,provider_user_id,email,avatar_url,expires_at',
             'cart:id,customer_id',
         ]);
-    }
-
-    // store
-    public function store(array $validated, ?UploadedFile $image): Customer
-    {
-        $payload = [
-            'full_name' => $validated['full_name'] ?? null,
-            'gender' => $validated['gender'],
-            'dob' => $validated['dob'] ?? null,
-            'user_name' => $validated['user_name'],
-            'email' => $validated['email'] ?? null,
-            'phone' => $validated['phone'],
-            'address' => $validated['address'] ?? null,
-            'telegram_username' => $validated['telegram_username'] ?? null
-        ];
-        if ($image) {
-            $image_profile = Cloudinary::uploadApi()->upload(
-                $image->getRealPath(),
-                [
-                    'folder' => 'clothes_ecommerce/customers/profile'
-                ]
-            );
-            $payload['avatar_url'] = $image_profile['secure_url'] ?? null;
-            $payload['avatar_public_id'] = $image_profile['public_id'] ?? null;
-
-        }
-
-        return $this->customerRepostitory->create($payload);
 
     }
 
@@ -85,6 +59,12 @@ class CustomerService
         if (array_key_exists('telegram_username', $validated)) {
             $payload['telegram_username'] = $validated['telegram_username'];
         }
+        if (array_key_exists('enable_telegram_alerts', $validated)) {
+            $payload['enable_telegram_alerts'] = $validated['enable_telegram_alerts'];
+        }
+        if (array_key_exists('status', $validated)) {
+            $payload['status'] = $validated['status'];
+        }
 
 
         if (($image || ($validated['remove_image'] ?? false)) && $customer->avatar_public_id) {
@@ -113,7 +93,7 @@ class CustomerService
         if ($customer['avatar_public_id']) {
             Cloudinary::uploadApi()->destroy($customer['avatar_public_id']);
         }
-        $this->customerRepostitory->delete($customer);
+        $customer->update(['status' => false]);
     }
 
 }

@@ -115,6 +115,9 @@ class CustomerAuthController extends Controller
         $credentials = $request->only('user_name', 'password');
         $customer = $this->customerRepository->findByUsername($request->user_name);
         // Generate JWT token
+        if ($customer && !$customer->status) {
+            return $this->error('Customer account is inactive.', 403);
+        }
         if (!$customer || !$token = auth('customer')->attempt($credentials)) {
             return $this->error('Credentials invalid', 401);
         }

@@ -12,6 +12,31 @@ class UpdateCustomerRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $booleanFields = ['enable_telegram_alerts', 'status', 'remove_image'];
+        $normalized = [];
+
+        foreach ($booleanFields as $field) {
+            if ($this->has($field) && $this->input($field) !== '') {
+                $normalized[$field] = $this->normalizeBoolean($this->input($field));
+            }
+        }
+
+        if ($normalized !== []) {
+            $this->merge($normalized);
+        }
+    }
+
+    private function normalizeBoolean(mixed $value): ?bool
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    }
+
     public function rules(): array
     {
         $customer = $this->route('customer');
@@ -28,6 +53,7 @@ class UpdateCustomerRequest extends FormRequest
             'profile' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'telegram_username' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('customers', 'telegram_username')->ignore($customerId)],
             'enable_telegram_alerts' => ['sometimes', 'boolean'],
+            'status' => ['sometimes', 'boolean'],
             'remove_image' => ['sometimes', 'boolean'],
         ];
     }

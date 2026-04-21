@@ -31,6 +31,11 @@ class Customer extends Authenticatable implements JWTSubject
         "telegram_chat_id",
         "telegram_username",
         "enable_telegram_alerts",
+        "status",
+    ];
+
+    protected $casts = [
+        'enable_telegram_alerts' => 'boolean',
     ];
 
     /**

@@ -20,8 +20,19 @@ class CustomerResource extends JsonResource
             'address' => $this->address,
             'avatar_url' => $this->avatar_url,
             'avatar_public_id' => $this->avatar_public_id,
+            'oauth_accounts' => $this->whenLoaded('oauthAccounts', function () {
+                return $this->oauthAccounts->map(fn($account) => [
+                    'id' => $account->id,
+                    'provider' => $account->provider,
+                    'provider_user_id' => $account->provider_user_id,
+                    'email' => $account->email,
+                    'avatar_url' => $account->avatar_url,
+                    'expires_at' => $account->expires_at,
+                ])->values();
+            }),
             'telegram_username' => $this->telegram_username,
             'enable_telegram_alerts' => (bool) $this->enable_telegram_alerts,
+            'status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

@@ -168,8 +168,7 @@ class SocialRedirectController extends Controller
         ?string $redirect = null,
         bool $success = false,
         ?string $customer = null
-    ): string
-    {
+    ): string {
         $frontendBase = rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/');
         $target = $redirect ?: $frontendBase . '/auth/login';
 

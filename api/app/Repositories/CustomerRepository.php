@@ -34,7 +34,7 @@ class CustomerRepository extends BaseRepository
   public function delete($id)
   {
     $customer = $this->find($id);
-    $customer->delete();
+    $customer->update(['status' => false]);
     return true;
   }
 

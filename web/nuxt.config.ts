@@ -11,25 +11,15 @@ export default defineNuxtConfig({
   },
   ssr: true,
 
-  // experimental: {
-  //   sharedPrerenderData: false,
-  //   compileTemplate: true,
-  //   resetAsyncDataToUndefined: true,
-  //   templateUtils: true,
-  //   relativeWatchPaths: true,
-  //   defaults: {
-  //     useAsyncData: {
-  //       deep: true
-  //     }
-  //   }
-  // },
-
   unhead: {
     renderSSRHeadOptions: {
       omitLineBreaks: false,
     },
   },
   devtools: { enabled: true },
+  imports: {
+    dirs: ["enum"],
+  },
   modules: [
     "@pinia/nuxt",
     "@nuxtjs/tailwindcss",

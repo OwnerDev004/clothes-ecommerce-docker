@@ -61,6 +61,11 @@ type CollectionSubmitPayload = {
   remove_image: boolean;
   productIds: Array<string | number>;
 };
+type SelectOption = {
+  id: string | number | null;
+  label: string;
+  disabled?: boolean;
+};
 
 export const useAdminCollections = () => {
   const config = useRuntimeConfig();
@@ -82,7 +87,7 @@ export const useAdminCollections = () => {
     status: "" as string | number | "",
   });
 
-  const statusOptions = reactive<Record<string, number | string>[]>([
+  const statusOptions = reactive<SelectOption[]>([
     { id: "draft", label: "Draft" },
     { id: "published", label: "Published" },
   ]);

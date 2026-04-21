@@ -16,14 +16,9 @@ withDefaults(
 
 <template>
   <div class="admin-table-shell">
-    <el-table
-      v-bind="$attrs"
-      class="admin-table"
-      :data="tableData"
-      :stripe="stripe"
-      :border="border"
-    >
+    <el-table v-bind="$attrs" class="admin-table" :data="tableData" :stripe="stripe" :border="border">
       <slot />
+
     </el-table>
   </div>
 </template>
