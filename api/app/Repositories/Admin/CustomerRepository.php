@@ -19,6 +19,7 @@ class CustomerRepository
             ->select('id', 'full_name', 'gender', 'dob', 'user_name', 'email', 'phone', 'address', 'avatar_url', 'telegram_username', 'enable_telegram_alerts', 'status');
         $search = trim((string) ($filters['search_txt'] ?? ''));
         $sortBy = trim((string) ($filters['sort_by'] ?? 'latest'));
+        $status = $filters['status'] ?? null;
         $perPage = (int) ($filters['per_page'] ?? 10);
 
         if ($search !== '') {
@@ -26,6 +27,9 @@ class CustomerRepository
                 $q->where('full_name', 'like', '%' . $search . '%')
                     ->orWhere('user_name', 'like', '%' . $search . '%');
             });
+        }
+        if ($status !== null && $status !== '') {
+            $query->where('status', $status);
         }
         match ($sortBy) {
             'oldest' => $query->orderBy('customers.id'),
@@ -53,7 +57,7 @@ class CustomerRepository
     // delete 
     public function delete(Customer $customer)
     {
-        $customer->update(['status' => false]);
+        $customer->update(['status' => 'inactive']);
     }
 
 }

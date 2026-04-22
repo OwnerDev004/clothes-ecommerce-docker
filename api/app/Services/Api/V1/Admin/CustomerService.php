@@ -93,7 +93,7 @@ class CustomerService
         if ($customer['avatar_public_id']) {
             Cloudinary::uploadApi()->destroy($customer['avatar_public_id']);
         }
-        $customer->update(['status' => false]);
+        $customer->update(['status' => 'inactive']);
     }
 
 }

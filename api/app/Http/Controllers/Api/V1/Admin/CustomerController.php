@@ -49,6 +49,13 @@ class CustomerController extends Controller
                 )
             ),
             new OA\Parameter(
+                name: 'status',
+                in: 'query',
+                required: false,
+                description: 'Filter by customer account status.',
+                schema: new OA\Schema(type: 'string', enum: ['active', 'inactive'])
+            ),
+            new OA\Parameter(
                 name: 'per_page',
                 in: 'query',
                 required: false,
@@ -171,7 +178,7 @@ class CustomerController extends Controller
                             new OA\Property(property: 'profile', type: 'string', format: 'binary', nullable: true, description: 'Max 5 MB'),
                             new OA\Property(property: 'telegram_username', type: 'string', nullable: true, maxLength: 255, example: 'phnompenh'),
                             new OA\Property(property: 'enable_telegram_alerts', type: 'boolean', example: true),
-                            new OA\Property(property: 'status', type: 'boolean', nullable: true, example: true),
+                            new OA\Property(property: 'status', type: 'string', nullable: true, enum: ['active', 'inactive'], example: 'active'),
                             new OA\Property(property: 'remove_image', type: 'boolean', nullable: true, example: false),
                         ]
                     )

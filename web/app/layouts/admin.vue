@@ -67,7 +67,7 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Reports',
         items: [
-            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Soon', disabled: true },
+            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Live' },
             { index: '/admin/finance', label: 'Finance', icon: Coin, badge: 'Soon', disabled: true },
             { index: '/admin/quality', label: 'Quality', icon: Star, badge: 'Soon', disabled: true },
         ],

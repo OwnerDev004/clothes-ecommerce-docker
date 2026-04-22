@@ -17,6 +17,7 @@ class ListCustomerRequest extends FormRequest
             [
                 "search_txt" => ['nullable', 'string', 'max:255'],
                 "sort_by" => ['nullable', 'string', 'in:latest,oldest,name_asc,name_desc'],
+                "status" => ['nullable', 'string', 'in:active,inactive'],
                 "per_page" => ['nullable', 'integer', 'min:10', 'max:200']
             ];
     }

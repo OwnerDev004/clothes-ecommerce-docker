@@ -106,22 +106,30 @@
                         </el-table-column>
                         <el-table-column label="Status">
                             <template #default="scope">
-                                <el-tag :type="scope.row.status == customerStatus.Active ? 'success' : 'danger'">
-                                    {{ getDisplayCustomerStatus(scope.row.status) }}
-                                </el-tag>
+                                <div class="flex flex-col gap-2">
+                                    <el-tag :type="scope.row.status === customerStatus.Active ? 'success' : 'danger'">
+                                        {{ getDisplayCustomerStatus(scope.row.status) }}
+                                    </el-tag>
+                                    <el-switch :model-value="scope.row.status === customerStatus.Active" inline-prompt
+                                        active-text="On" inactive-text="Off" :loading="savingStatusId === scope.row.id"
+                                        @change="toggleCustomerStatus(scope.row, $event ? customerStatus.Active : customerStatus.Inactive)" />
+                                </div>
                             </template>
                         </el-table-column>
 
                         <el-table-column fixed="right" label="Action" min-width="120">
                             <template #default="scope">
-                                <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
+                                <!-- <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
                                     @click="deleteCustomer(scope.row)">
                                     <Icon name="ic:twotone-delete-forever" class="text-base" />
+                                </BaseButton> -->
+                                <BaseButton link type="info" size="default" @click="viewCustomer(scope.row)">
+                                    <Icon name="ic:outline-remove-red-eye" class="text-base" />
                                 </BaseButton>
                                 <BaseButton link type="primary" size="default" @click="editCustomer(scope.row)">
                                     <Icon name="ic:outline-edit" class="text-base" />
                                 </BaseButton>
-                                <BaseButton link type="warning" size="default"
+                                <BaseButton link type="warning" size="default" :loading="sendingMailId == scope.row.id"
                                     @click="resetCustomerPassword(scope.row)">
                                     <Icon name="material-symbols:mail-shield-outline" class="text-base" />
                                 </BaseButton>
@@ -161,13 +169,16 @@ definePageMeta({
 const {
     filters,
     deletingId,
+    savingStatusId,
     dataTable,
     pagination,
     sortOptions,
     statusOptions,
+    sendingMailId,
     editCustomer,
+    viewCustomer,
     resetCustomerPassword,
-    deleteCustomer,
+    toggleCustomerStatus,
 } = useAdminCustomer()
 
 

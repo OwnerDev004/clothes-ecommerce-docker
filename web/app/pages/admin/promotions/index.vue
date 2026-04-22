@@ -146,7 +146,6 @@ const {
   editVoucher,
   deleteVoucher,
   submitForm,
-  fetchVouchers,
 } = useAdminVoucher()
 
 const formatDiscount = (voucher: AdminVoucherRecord) => {

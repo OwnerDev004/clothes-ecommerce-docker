@@ -45,7 +45,7 @@ export default defineNuxtConfig({
     cssPath: "./assets/css/tailwind.css",
   },
   elementPlus: {
-    importStyle: "scss",
+    importStyle: "css",
     themeChalk: {
       $colors: {
         primary: {

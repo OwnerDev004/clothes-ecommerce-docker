@@ -19,6 +19,7 @@ use App\Http\Controllers\Auth\SocialRedirectController;
 // Admin
 use App\Http\Controllers\Api\V1\Auth\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Api\V1\Admin\AnalyticsController as AdminAnalyticsController;
 use App\Http\Controllers\Api\V1\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\ProductVariantController as AdminProductVariantController;
@@ -155,6 +156,11 @@ Route::prefix('admin')->group(function () {
         // dashboard
         Route::prefix('dashboard')->group(function () {
             Route::get('/', [AdminDashboardController::class, 'index']);
+        });
+
+        // analytics
+        Route::prefix('analytics')->group(function () {
+            Route::get('/', [AdminAnalyticsController::class, 'index']);
         });
 
         // Products

@@ -1,13 +1,15 @@
-export enum customerStatus {
-  Active = "active",
-  Inactive = "inactive",
-}
+export const customerStatus = {
+  Active: "active",
+  Inactive: "inactive",
+} as const;
 
-export const displayCustomerStatus: Record<customerStatus, string> = {
-  [customerStatus.Active]: "Active",
-  [customerStatus.Inactive]: "Disable Account",
+export type CustomerStatus = (typeof customerStatus)[keyof typeof customerStatus];
+
+export const displayCustomerStatus: Record<string, string> = {
+  [String(customerStatus.Active)]: "Active",
+  [String(customerStatus.Inactive)]: "Disable Account",
 };
 
-export function getDisplayCustomerStatus(status: customerStatus): string {
-  return displayCustomerStatus[status] || status;
+export function getDisplayCustomerStatus(status: string): string {
+  return displayCustomerStatus[String(status)] || String(status);
 }

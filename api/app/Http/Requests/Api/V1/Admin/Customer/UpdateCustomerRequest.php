@@ -14,7 +14,7 @@ class UpdateCustomerRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $booleanFields = ['enable_telegram_alerts', 'status', 'remove_image'];
+        $booleanFields = ['enable_telegram_alerts', 'remove_image'];
         $normalized = [];
 
         foreach ($booleanFields as $field) {
@@ -53,7 +53,7 @@ class UpdateCustomerRequest extends FormRequest
             'profile' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'telegram_username' => ['sometimes', 'nullable', 'string', 'max:255', Rule::unique('customers', 'telegram_username')->ignore($customerId)],
             'enable_telegram_alerts' => ['sometimes', 'boolean'],
-            'status' => ['sometimes', 'boolean'],
+            'status' => ['sometimes', 'string', Rule::in(['active', 'inactive'])],
             'remove_image' => ['sometimes', 'boolean'],
         ];
     }
