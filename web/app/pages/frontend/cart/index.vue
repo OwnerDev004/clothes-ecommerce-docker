@@ -133,12 +133,7 @@
                 </div>
                 <div class="border-t border-dashed border-gray-300"></div>
                 <div class="relative grid place-items-center">
-                  <img :src="qrImageUrl" alt="Payment QR" class="h-[230px] w-[230px] object-contain">
-                  <div
-                    class="absolute flex h-9 w-9 items-center justify-center rounded-full bg-[#D8141F] border-2 border-white text-[10px] font-bold text-white p-1">
-                    <img
-                      src="https://res.cloudinary.com/dqjh71k90/image/upload/v1773660871/clothes_ecommerce/bakong_logo_kaqnsd.png" />
-                  </div>
+                  <img :src="qrImageUrl" alt="Payment QR" class="h-[260px] w-[260px] object-contain">
                 </div>
               </div>
             </div>
@@ -309,7 +304,7 @@ const qrImageUrl = computed(() => {
   if (!qrString.value) {
     return ''
   }
-  return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrString.value)}`
+  return `https://api.qrserver.com/v1/create-qr-code/?size=360x360&ecc=H&margin=2&data=${encodeURIComponent(qrString.value)}`
 })
 
 const timeLeftLabel = computed(() => {
@@ -627,7 +622,7 @@ const createPaymentIntent = async (orderId: number) => {
   qrString.value = String(response?.data?.qr_string || '')
   pollHash.value = String(response?.data?.poll_hash || '')
   checkoutUrl.value = String(response?.data?.checkout_url || '')
-  merchantName.value = String(response?.data.mechant_name || '')
+  merchantName.value = String(response?.data?.merchant_name || response?.data?.mechant_name || '')
   const parsedAmount = parseKhqrAmountFromQrString(qrString.value)
   payableAmount.value = parsedAmount ?? Number(response?.data?.amount || 0)
 

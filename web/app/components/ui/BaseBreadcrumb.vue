@@ -15,7 +15,8 @@
 
 <style scoped>
     .el-breadcrumb{
-      font-size: 14px;
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
 </style>

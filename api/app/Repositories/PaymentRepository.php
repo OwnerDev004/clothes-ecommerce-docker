@@ -17,6 +17,7 @@ use KHQR\BakongKHQR;
 use KHQR\Config\Constants;
 use KHQR\Exceptions\KHQRException;
 use KHQR\Helpers\KHQRData;
+use KHQR\Models\SourceInfo;
 use KHQR\Models\MerchantInfo;
 
 class PaymentRepository
@@ -58,10 +59,12 @@ class PaymentRepository
         }
         $qrString = null;
         $khqrMd5 = null;
+        $deepLink = null;
         $currencyIso = strtoupper($currency);
 
         if ($provider === 'khrqr') {
             [$qrString, $khqrMd5] = $this->generateKhrqrQrData($order, $currencyIso);
+            $deepLink = $this->generateKhrqrDeepLink($qrString);
         }
 
         $providerPaymentId = strtoupper($provider) . '-' . Str::upper(Str::random(20));
@@ -101,6 +104,7 @@ class PaymentRepository
         return [
             'order_id' => $order->id,
             'provider' => $provider,
+            'merchant_name' => $merchantConfig['merchant_name'],
             'mechant_name' => $merchantConfig['merchant_name'],
             'provider_payment_id' => $providerPaymentId,
             'status' => 'pending',
@@ -108,6 +112,7 @@ class PaymentRepository
             'currency' => $transaction->currency,
             'client_token' => $clientToken,
             'checkout_url' => $checkoutUrl,
+            'deep_link' => $deepLink,
             'expires_at' => optional($expiresAt)->toISOString(),
             'poll_hash' => $pollHash,
             'qr_string' => $qrString,
@@ -388,7 +393,44 @@ class PaymentRepository
             ]);
         }
 
+        if (!BakongKHQR::verify($qr)->isValid) {
+            throw ValidationException::withMessages([
+                'khrqr' => ['Generated KHQR payload is invalid'],
+            ]);
+        }
+
         return [$qr, $md5];
+    }
+
+    private function generateKhrqrDeepLink(string $qrString): ?string
+    {
+        if ($qrString === '') {
+            return null;
+        }
+
+        $deeplinkUrl = trim((string) (config('payment.providers.khrqr.deeplink_url') ?? ''));
+        $appIconUrl = trim((string) (config('payment.providers.khrqr.deeplink_app_icon_url') ?? ''));
+        $appName = trim((string) (config('payment.providers.khrqr.deeplink_app_name') ?? ''));
+        $appCallback = trim((string) (config('payment.providers.khrqr.deeplink_app_deep_link_callback') ?? ''));
+
+        if ($deeplinkUrl === '' || $appIconUrl === '' || $appName === '' || $appCallback === '') {
+            return null;
+        }
+
+        try {
+            $response = BakongKHQR::generateDeepLinkWithUrl(
+                $deeplinkUrl,
+                $qrString,
+                new SourceInfo($appIconUrl, $appName, $appCallback)
+            );
+        } catch (KHQRException) {
+            return null;
+        }
+
+        $data = is_array($response->data ?? null) ? $response->data : [];
+        $shortLink = (string) ($data['shortLink'] ?? '');
+
+        return $shortLink !== '' ? $shortLink : null;
     }
 
     /**

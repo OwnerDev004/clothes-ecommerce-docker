@@ -2,11 +2,71 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    font-family: "Poppins", sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #0f172a;
+    background: #f8fafc;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  p,
+  li,
+  input,
+  button,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+
+  :root {
+    --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.08);
+    --card-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.06), 0 16px 40px rgba(15, 23, 42, 0.12);
+    --card-shadow-strong: 0 2px 6px rgba(15, 23, 42, 0.08), 0 2px 10px rgba(54, 59, 71, 0.14);
+  }
+
+  .el-card {
+    box-shadow: var(--card-shadow);
+    transition:
+      box-shadow 0.25s ease,
+      transform 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .el-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-1px);
+  }
+}
+
 @layer components {
   .admin-theme .el-card {
     background-color: var(--el-fill-color-blank);
-    border-color: var(--el-border-color-lighter);
+    border-color: var(--el-border-color-surface);
     border-radius: 16px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .admin-theme .el-card:hover {
+    box-shadow: var(--card-shadow-hover);
   }
 
   .admin-theme .el-input__wrapper,

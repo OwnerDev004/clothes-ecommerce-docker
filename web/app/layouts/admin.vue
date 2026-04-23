@@ -8,7 +8,6 @@ import {
     ArrowRight,
     Bell,
     Box,
-    Coin,
     DataLine,
     Goods,
     Grid,
@@ -18,6 +17,7 @@ import {
     Star,
     Tickets,
     User,
+    Setting
 } from '@element-plus/icons-vue'
 import { useAdminAuthStore } from '~/stores/adminAuthStore'
 const router = useRouter()
@@ -53,23 +53,29 @@ const navigationGroups: NavGroup[] = [
         items: [
             { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live' },
             { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live' },
-            { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Soon', disabled: true },
+            { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Live' },
         ],
     },
     {
         title: 'Commerce',
         items: [
             { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', disabled: true },
-            { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Soon', disabled: true },
+            { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Live' },
             { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live' },
         ],
     },
     {
         title: 'Reports',
         items: [
-            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Live' },
-            { index: '/admin/finance', label: 'Finance', icon: Coin, badge: 'Soon', disabled: true },
-            { index: '/admin/quality', label: 'Quality', icon: Star, badge: 'Soon', disabled: true },
+            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Live' }
+        ],
+    },
+    {
+        title: 'Settings',
+        items: [
+            { index: '/admin/role', label: 'Admin Role', icon: User, badge: 'Soon' },
+            { index: '/admin/role-permission', label: 'Role Permission', icon: User, badge: 'Soon' },
+            { index: '/admin/setting', label: 'Admin Setting', icon: Setting, badge: 'Soon' }
         ],
     },
 ]
@@ -91,7 +97,7 @@ const navigationGroups: NavGroup[] = [
                     </div>
                 </div>
 
-                <div class="mx-1 mb-4 rounded-[20px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                <!-- <div class="mx-1 mb-4 rounded-[20px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                     <p class="m-0 text-[0.72rem] uppercase tracking-[0.12em] text-white/50">Store status</p>
                     <div class="mt-2 flex items-center gap-2 font-semibold">
                         <span
@@ -101,7 +107,7 @@ const navigationGroups: NavGroup[] = [
                     <p class="m-0 mt-2 text-sm leading-6 text-white/65">
                         Inventory, orders, and promotions are ready for the day.
                     </p>
-                </div>
+                </div> -->
 
                 <div class="flex-1 space-y-4 pr-1">
                     <div v-for="group in navigationGroups" :key="group.title" class="space-y-2">

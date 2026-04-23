@@ -45,7 +45,7 @@ export default defineNuxtConfig({
     cssPath: "./assets/css/tailwind.css",
   },
   elementPlus: {
-    importStyle: "css",
+    importStyle: "scss",
     themeChalk: {
       $colors: {
         primary: {
@@ -103,6 +103,9 @@ export default defineNuxtConfig({
         small: "8px",
         round: "9999px",
         circle: "9999px",
+      },
+      "$box-shadow": {
+        base: "lighter",
       },
     },
   },

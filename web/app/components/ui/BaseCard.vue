@@ -14,7 +14,7 @@ withDefaults(
 </script>
 
 <template>
-  <el-card v-bind="$attrs" class="admin-card">
+  <el-card v-bind="$attrs" class="admin-card border-border" shadow="never">
     <template v-if="$slots.header" #header>
       <div :class="[headerClass, 'admin-card__header']">
         <slot name="header" />

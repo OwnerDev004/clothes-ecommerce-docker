@@ -1,5 +1,5 @@
 <template>
-  <div class="font-Poppins">
+  <div class="min-h-screen bg-page text-text">
     <NuxtLayout>
       <NuxtLoadingIndicator color="red" :throttle="0" />
       <NuxtPage />

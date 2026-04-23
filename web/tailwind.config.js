@@ -9,6 +9,7 @@ export default {
     './plugins/**/*.{js,ts}',
     './nuxt.config.{js,ts}',
   ],
+  
   theme: {
     extend: {
       colors: {
@@ -37,8 +38,10 @@ export default {
       },
     },
     fontFamily: {
-      Poppins: 'Poppins, sans-serif',
-      Lato: 'Lato, sans-serif',
+      sans: ['Poppins', 'sans-serif'],
+      display: ['Lato', 'sans-serif'],
+      Poppins: ['Poppins', 'sans-serif'],
+      Lato: ['Lato', 'sans-serif'],
     },
     container: {
       center: true,
