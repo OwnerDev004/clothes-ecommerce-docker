@@ -121,13 +121,13 @@
                             <template #default="scope">
                                 <!-- <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
                                     @click="deleteCustomer(scope.row)">
-                                    <Icon name="ic:twotone-delete-forever" class="text-base" />
+                                    <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </BaseButton> -->
                                 <BaseButton link type="info" size="default" @click="viewCustomer(scope.row)">
                                     <Icon name="ic:outline-remove-red-eye" class="text-base" />
                                 </BaseButton>
                                 <BaseButton link type="primary" size="default" @click="editCustomer(scope.row)">
-                                    <Icon name="ic:outline-edit" class="text-base" />
+                                    <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </BaseButton>
                                 <BaseButton link type="warning" size="default" :loading="sendingMailId == scope.row.id"
                                     @click="resetCustomerPassword(scope.row)">

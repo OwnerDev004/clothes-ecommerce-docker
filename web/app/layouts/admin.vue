@@ -162,11 +162,15 @@ const navigationGroups: NavGroup[] = [
                     </div>
 
                     <section class="flex items-center gap-3">
-                        <el-button circle class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-surface-2 ">
-                            <el-icon>
-                                <Bell />
-                            </el-icon>
-                        </el-button>
+                        <el-badge :value="12" class="item">
+                            <el-button circle
+                                class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-muted/10 ">
+                                <el-icon>
+                                    <Bell />
+                                </el-icon>
+                            </el-button>
+                        </el-badge>
+
 
                         <div class="flex items-center gap-3  px-3 py-2 ">
                             <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
@@ -178,7 +182,7 @@ const navigationGroups: NavGroup[] = [
                         </div>
 
                         <button v-if="isAuthenticated" type="button"
-                            class="rounded-2xl border border-surface-2 bg-surface-2 px-4 py-3 text-sm font-semibold text-slate-700  transition hover:border-slate-300 hover:text-slate-950"
+                            class="rounded-2xl border border-surface-2 !bg-muted/10 px-4 py-3 text-sm font-semibold text-slate-700  transition hover:border-slate-300 hover:text-slate-950"
                             @click="handleLogout">
                             Logout
                         </button>

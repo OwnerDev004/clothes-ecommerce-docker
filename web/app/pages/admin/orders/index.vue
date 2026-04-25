@@ -37,13 +37,38 @@
                         </div>
 
                         <div class="grid gap-3 xl:grid-cols-4">
-                            <BaseSelect v-model="filters.is_active" :options="statusOptions" placeholder="All Status"
+                            <BaseSelect v-model="filters.is_active" :options="orderStatus" placeholder="All Status"
                                 class="w-full" />
                         </div>
                     </div>
                 </template>
 
                 <div class="space-y-5">
+                    <BaseTable :table-data="tableData">
+                        <el-table-column prop="order_id" label="Order ID" />
+                        <el-table-column prop="created_at" label="Created At" />
+                        <el-table-column prop="customer" label="Customer" />
+                        <el-table-column prop="payment_status" label="Payment Status" />
+                        <el-table-column prop="total" label="Total" />
+                        <el-table-column prop="items" label="Items" />
+                        <el-table-column prop="delivery_number" label="Delivery Number" />
+                        <el-table-column prop="order_status" label="Order Status" />
+                        <el-table-column label="Action" fixed="right">
+                            <template #default="scope">
+                                <el-button link type="success" size="default" @click="viewOrderDetail(scope.row.id)">
+                                    <Icon name="solar:eye-broken" class="text-base" />
+                                </el-button>
+                                <el-button link type="danger" size="default" :loading="deletingId === scope.row.id"
+                                    @click="(scope.row)">
+                                    <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
+                                </el-button>
+                                <el-button link type="primary" size="default" @click="editProduct(scope.row)">
+                                    <Icon name="solar:pen-new-round-broken" class="text-base" />
+                                </el-button>
+                            </template>
+                        </el-table-column>
+
+                    </BaseTable>
 
 
 
@@ -70,7 +95,18 @@ definePageMeta({
     layout: 'admin',
     middleware: ['admin-auth']
 })
-
+// types
+interface TableData {
+    id: number | string,
+    order_id: string,
+    customer: string,
+    total: number | string,
+    payment_status: 'paid' | 'unpaid' | 'refund',
+    order_status: 'draft' | 'packaging' | 'completed' | 'cancel',
+    items: number,
+    delivery_number: string,
+    created_at: string
+}
 const filters = reactive({
     search_txt: "",
     is_active: ''
@@ -81,8 +117,18 @@ const default_filters = reactive({
     is_active: ''
 })
 
-const tableData = ref([
-    { id: 1, user_name: "dyzak" }
+const tableData = ref<TableData[]>([
+    { id: 1, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 2, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 3, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 4, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 5, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 6, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 7, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 8, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 9, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 10, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' },
+    { id: 11, order_id: '#583488/80', customer: "dyzak", total: 1002, payment_status: 'unpaid', order_status: 'draft', items: 4, delivery_number: '#50308391', created_at: '07-20-2026' }
 ])
 const orders_states = ref([
     { id: 1, title: 'Payment Refund', amount: 430, icon: 'solar:chat-round-money-broken' },

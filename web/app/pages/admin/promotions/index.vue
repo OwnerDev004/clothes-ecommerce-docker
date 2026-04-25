@@ -92,10 +92,10 @@
               <template #default="scope">
                 <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
                   @click="deleteVoucher(scope.row)">
-                  <Icon name="ic:twotone-delete-forever" class="text-base" />
+                  <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                 </BaseButton>
                 <BaseButton link type="primary" size="default" @click="editVoucher(scope.row)">
-                  <Icon name="ic:outline-edit" class="text-base" />
+                  <Icon name="solar:pen-new-round-broken" class="text-base" />
                 </BaseButton>
               </template>
             </el-table-column>

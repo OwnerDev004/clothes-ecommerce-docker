@@ -73,10 +73,10 @@
                                 </el-button>
                                 <el-button link type="danger" size="default" :loading="deletingId === scope.row.id"
                                     @click="deleteProduct(scope.row)">
-                                    <Icon name="ic:twotone-delete-forever" class="text-base" />
+                                    <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </el-button>
                                 <el-button link type="primary" size="default" @click="editProduct(scope.row)">
-                                    <Icon name="ic:outline-edit" class="text-base" />
+                                    <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </el-button>
                             </template>
                         </el-table-column>
