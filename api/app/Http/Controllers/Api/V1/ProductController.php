@@ -1,6 +1,6 @@
 <?php
-
 namespace App\Http\Controllers\Api\V1;
+
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Product\ProductFilterRequest;
@@ -445,7 +445,7 @@ class ProductController extends Controller
             new OA\Response(response: 404, description: 'Product not found'),
         ]
     )]
-    public function reviews(ProductReviewIndexRequest $request, int $id)
+    public function reviewByProduct(ProductReviewIndexRequest $request, int $id)
     {
         $productExists = Product::query()->whereKey($id)->exists();
         if (!$productExists) {
@@ -501,6 +501,33 @@ class ProductController extends Controller
             'total_reviews' => (int) $reviewRows->count(),
             'average_rating' => $average ? round((float) $average, 1) : 0.0,
         ], 'Product reviews', 200);
+    }
+
+    #[OA\Get(
+        path: '/api/v1/products/top_review',
+        tags: ['Products'],
+        summary: 'Get Top 5 reviews',
+        responses: [
+            new OA\Response(response: 200, description: 'Product reviews'),
+            new OA\Response(response: 401, description: 'Unauthorized'),
+            new OA\Response(response: 404, description: 'Product not found'),
+        ]
+    )]
+    public function topFiveReviews(Request $request)
+    {
+        $reviewQuery = ProductReview::query()->with('customer:id,full_name')
+            ->where('rating', '>=', 3)
+            ->orderBy('rating', 'desc')
+            ->limit(5)
+            ->get()
+            ->unique('customer_id'); // Remove duplicates by customer_id
+
+        return $this->success(
+            $reviewQuery
+            ,
+            'All reviews',
+            200
+        );
     }
 
     #[OA\Post(

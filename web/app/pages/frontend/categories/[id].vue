@@ -143,17 +143,18 @@
             <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="mb-4" />
 
             <div v-loading="isLoadingProducts" class="min-h-[220px]">
+
               <div v-if="!isLoadingProducts && displayProducts.length === 0"
                 class="rounded-xl border border-dashed border-gray-300 p-8">
                 <el-empty description="No products found." />
               </div>
-
               <div v-else class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
                 <template v-for="item in displayProducts" :key="item.id">
+
                   <div class="cursor-pointer" @click="viewProduct(item.id)">
                     <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
                       :discount-amount="item.discount_amount" :discount-type="item.discount_type"
-                      :stars-num="item.stars_num" :rating-amount="item.rating_amount" />
+                      :rating-amount="item.average_rating" />
                   </div>
                 </template>
               </div>
@@ -287,7 +288,7 @@ type SizeOption = { id: number | string; name: string }
 type DressTypeOption = { id: number | string; name: string; slug?: string }
 type BrandOption = { id: number | string; name: string; slug?: string }
 type ProductImage = { image_url?: string }
-type ProductApi = { id: number | string; name?: string; price?: number | string; thumbnail?: ProductImage | null; images?: ProductImage[] }
+type ProductApi = { id: number | string; name?: string; price?: number | string; thumbnail?: ProductImage | null; images?: ProductImage[], average_rating: number }
 type ProductCard = {
   id: number | string
   title: string
@@ -295,8 +296,7 @@ type ProductCard = {
   img: string
   discount_amount: number
   discount_type: number | undefined
-  stars_num: number
-  rating_amount: number
+  average_rating: number
 }
 
 const categories = ref<CategoryOption[]>([])
@@ -396,8 +396,7 @@ const mapProductToCard = (item: ProductApi): ProductCard => {
     img: resolveImageUrl(thumbnail),
     discount_amount: 0,
     discount_type: undefined,
-    stars_num: 5,
-    rating_amount: 0,
+    average_rating: item?.average_rating
   }
 }
 

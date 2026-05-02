@@ -33,6 +33,7 @@ type ProductDetail = {
   images?: Array<{ image_url?: string | null }>;
   category_id?: number;
   variants?: ProductVariant[];
+  average_rating: number;
 };
 
 type ProductDetailSection = {
@@ -579,6 +580,10 @@ export const useProductDetail = () => {
     router.push(`/frontend/product_detail/${id}`);
   };
 
+  const averageRating = computed(() => {
+    return Math.round(product.value?.average_rating ?? 0);
+  });
+
   watch(
     productId,
     () => {
@@ -611,6 +616,7 @@ export const useProductDetail = () => {
 
   return {
     product,
+    averageRating,
     relatedProducts,
     qtyAmount,
     selectedImage,

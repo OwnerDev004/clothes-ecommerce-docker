@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use App\Repositories\BaseRepository;
+use DB;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -52,7 +53,17 @@ class ProductRepository extends BaseRepository
                 'brand:id,name,slug,image_url',
                 'subCategory:id,category_id,name,slug',
                 'collections:id,name,slug',
-            ]);
+            ])->withCount([
+                        'reviews as total_reviews' => function ($q) {
+                            $q->select(\DB::raw('count(*)'));
+                        },
+                        'reviews as total_rating_sum' => function ($q) {
+                            $q->select(\DB::raw('coalesce(sum(rating), 0)'));
+                        },
+                        'reviews as average_rating' => function ($q) {
+                            $q->select(\DB::raw('coalesce(avg(rating), 0)'));
+                        }
+                    ]);
 
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
@@ -242,7 +253,17 @@ class ProductRepository extends BaseRepository
                             'size:id,name,sort_order',
                         ]);
                 },
-            ])
+            ])->withCount([
+                    'reviews as total_reviews' => function ($q) {
+                        $q->select(\DB::raw('count(*)'));
+                    },
+                    'reviews as total_rating_sum' => function ($q) {
+                        $q->select(\DB::raw('coalesce(sum(rating), 0)'));
+                    },
+                    'reviews as average_rating' => function ($q) {
+                        $q->select(\DB::raw('coalesce(avg(rating), 0)'));
+                    }
+                ])
             ->find($id);
     }
 }

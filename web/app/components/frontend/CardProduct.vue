@@ -44,7 +44,7 @@ const props = defineProps({
             </div>
         </section>
         <h2 class="text-lg font-semibold text-text my-2">{{ title }}</h2>
-        <SharesRating :stars-num="starsNum" :rating-amount="ratingAmount" />
+        <SharesRating :rating-amount="ratingAmount" />
         <SharesDiscount :discount-amount="discountAmount" :price="price" :discount-type="discountType"
             :discountPercentage="'text-sm'" />
     </div>

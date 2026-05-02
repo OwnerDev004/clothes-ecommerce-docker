@@ -107,7 +107,8 @@ Route::prefix('products')->group(function () {
     Route::get('/', [ProductController::class, 'index']);
     Route::get('/filters', [ProductController::class, 'filters']);
     Route::get('/{id}/detail-sections', [ProductController::class, 'detailSections']);
-    Route::get('/{id}/reviews', [ProductController::class, 'reviews']);
+    Route::get('/{id}/reviews', [ProductController::class, 'reviewByProduct']);
+    Route::get('/top_review', [ProductController::class, 'topFiveReviews']);
     Route::get('/{id}', [ProductController::class, 'show']);
 });
 

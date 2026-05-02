@@ -22,6 +22,9 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'average_rating' => 'float',
+        'total_rating_sum' => 'integer',
+        'total_reviews' => 'integer',
         'price' => 'decimal:2',
     ];
 
@@ -79,5 +82,7 @@ class Product extends Model
     {
         return $this->hasMany(ProductFaq::class);
     }
+
+
 
 }

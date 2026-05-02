@@ -81,8 +81,8 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Settings',
         items: [
-            { index: '/admin/role', label: 'Admin Role', icon: User, badge: 'Soon' },
-            { index: '/admin/role-permission', label: 'Role Permission', icon: User, badge: 'Soon' },
+            { index: '/admin/roles', label: 'Admin Role', icon: User, badge: 'Soon' },
+            { index: '/admin/roles/permission', label: 'Role Permission', icon: User, badge: 'Soon' },
             { index: '/admin/setting', label: 'Admin Setting', icon: Setting, badge: 'Soon' }
         ],
     },
@@ -184,7 +184,7 @@ const navigationGroups: NavGroup[] = [
                             <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                             <div>
                                 <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
-                                }}</strong>
+                                    }}</strong>
                                 <!-- <span class="block text-xs text-slate-500">Super user</span> -->
                             </div>
                         </div>

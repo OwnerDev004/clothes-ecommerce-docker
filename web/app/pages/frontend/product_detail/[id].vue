@@ -3,9 +3,12 @@ import type { TabsPaneContext } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
+import BaseButton from '~/components/ui/BaseButton.vue'
+import BaseSelect from '~/components/ui/BaseSelect.vue'
 
 const {
   product,
+  averageRating,
   relatedProducts,
   qtyAmount,
   selectedImage,
@@ -53,13 +56,14 @@ const tablists = ref([
 ])
 
 const dropdownOptions = ref([
-  { id: 1, label: 'Latest' },
-  { id: 2, label: 'Oldest' },
+  { id: 'latest', label: 'Latest' },
+  { id: 'oldest', label: 'Oldest' },
 ])
 
 const tabClick = (tab: TabsPaneContext) => {
   activeIndex.value = String(tab.paneName)
 }
+
 </script>
 
 <template>
@@ -68,12 +72,7 @@ const tabClick = (tab: TabsPaneContext) => {
       <el-breadcrumb-item :to="{ path: '/' }">Home</el-breadcrumb-item>
       <el-breadcrumb-item>Product Detail</el-breadcrumb-item>
     </BaseBreadcrumb>
-    <div>
-      <h1>Hello</h1>
-      <p>
-        {{ selectedImage }}
-      </p>
-    </div>
+
     <div v-if="pageLoading" class="animate-pulse py-10">
       <div class="grid gap-8 desktop:grid-cols-[440px_1fr]">
         <div class="flex gap-3">
@@ -105,9 +104,10 @@ const tabClick = (tab: TabsPaneContext) => {
 
     <div v-else-if="pageErrorState" class="py-16 text-center">
       <p class="text-red-600">{{ pageErrorState }}</p>
-      <button class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white" @click="refreshProductDetail">
+      <BaseButton class="mt-4 rounded-full border px-5 py-2 hover:bg-black hover:text-white"
+        @click="refreshProductDetail">
         Retry
-      </button>
+      </BaseButton>
     </div>
 
     <div v-else-if="product" class="flex items-center gap-16 flex-col desktop:flex-row mb-10">
@@ -128,7 +128,7 @@ const tabClick = (tab: TabsPaneContext) => {
       <div class="w-full desktop:w-1/2">
         <section class="border-b py-4 border-b-black">
           <h1 class="text-4xl font-extrabold">{{ product.name }}</h1>
-          <SharesRating :rating-amount="0" :stars-num="5" />
+          <SharesRating :rating-amount="averageRating" />
           <SharesDiscount :discount-amount="0" :price="displayPrice" class="!text-3xl font-extrabold"
             :discountPercentage="'text-xl'" />
           <p>{{ product.desc || 'No description.' }}</p>
@@ -206,14 +206,14 @@ const tabClick = (tab: TabsPaneContext) => {
                   All Reviews ({{ reviewStats.total_reviews }}) - Avg {{ reviewStats.average_rating }}/5
                 </h1>
                 <div class="flex gap-2">
-                  <button class="bg-gray w-12 h-12 rounded-full text-2xl p-3" @click="openReviewFilterDialog">
+                  <BaseButton class="bg-gray w-12 h-12 rounded-full text-2xl p-3" @click="openReviewFilterDialog">
                     <Icon name="lets-icons:filter" class="text-black" />
-                  </button>
-                  <SharesDropdown v-model="sortBy" :options="dropdownOptions" class="hidden desktop:block" />
-                  <button class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl"
+                  </BaseButton>
+                  <BaseSelect v-model="sortBy" :options="dropdownOptions" class="hidden desktop:block" />
+                  <BaseButton class="bg-black text-white text-xs lg:text-md w-auto px-1 desktop:w-[300px] rounded-3xl"
                     @click="openWriteReviewDialog">
                     Write a Review
-                  </button>
+                  </BaseButton>
                 </div>
               </div>
 
@@ -249,9 +249,10 @@ const tabClick = (tab: TabsPaneContext) => {
       </h1>
       <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
         <template v-for="item in relatedProducts" :key="item.id">
+          {{ item }}
           <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+            :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
         </template>
       </div>
       <div class="border-b border-zinc-300 mt-10"></div>

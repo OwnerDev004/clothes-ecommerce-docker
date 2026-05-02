@@ -32,6 +32,12 @@ type HomeCatalogPayload = {
   categories: CategoryRecord[];
   collections: CollectionRecord[];
 };
+type CustomerReviewFeedback = {
+  id: number | string;
+  rating: number;
+  customer: any;
+  comment?: string;
+};
 
 export const useHomeProducts = () => {
   const config = useRuntimeConfig();
@@ -41,7 +47,9 @@ export const useHomeProducts = () => {
   const brands = ref<BrandRecord[]>([]);
   const categories = ref<CategoryRecord[]>([]);
   const collections = ref<CollectionRecord[]>([]);
+  const customers_review = ref<CustomerReviewFeedback[]>([]);
   const isLoadingProducts = ref(false);
+  const isLoadingCustomerReview = ref(false);
   const productError = ref("");
   const currentPage = ref(1);
   const hasMoreProducts = ref(true);
@@ -133,8 +141,26 @@ export const useHomeProducts = () => {
     collections.value = payload.collections;
   };
 
+  const fetchCustomerReview = async () => {
+    isLoadingCustomerReview.value = true;
+    try {
+      const response: any = await $fetch(`${apiBase}/products/top_review`, {
+        method: "GET",
+      });
+      customers_review.value = response.data;
+    } catch (error: any) {
+      throw new Error(error);
+    } finally {
+      isLoadingCustomerReview.value = false;
+    }
+  };
+
   const loadInitialHomeData = async () => {
-    await Promise.all([fetchCatalogMeta(), fetchProducts(true)]);
+    await Promise.all([
+      fetchCatalogMeta(),
+      fetchProducts(true),
+      fetchCustomerReview(),
+    ]);
   };
 
   useInfiniteScroll(
@@ -160,6 +186,7 @@ export const useHomeProducts = () => {
     loadMoreTrigger,
     topSellingProducts,
     collectionItems,
+    customers_review,
     fetchProducts,
     loadInitialHomeData,
     getCollectionSpanClass,

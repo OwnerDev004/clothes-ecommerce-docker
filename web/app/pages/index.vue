@@ -13,6 +13,7 @@ const {
   loadMoreTrigger,
   topSellingProducts,
   collectionItems,
+  customers_review,
   fetchProducts,
   loadInitialHomeData,
   getCollectionSpanClass,
@@ -174,8 +175,8 @@ onMounted(async () => {
       <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
         <template v-for="item in products" :key="item.id">
           <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+            :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
         </template>
       </div>
 
@@ -198,7 +199,7 @@ onMounted(async () => {
           </el-icon>
           <span>Loading more products...</span>
         </div>
-        <p v-else-if="!hasMoreProducts && products.length">You reached the end.</p>
+        <p v-else-if="products.length">You reached the end.</p>
       </div>
 
       <div ref="loadMoreTrigger" class="h-4"></div>
@@ -216,8 +217,8 @@ onMounted(async () => {
       <div class="grid gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <template v-for="item in topSellingProducts" :key="`top-${item.id}`">
           <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type" :stars-num="item.stars_num"
-            :rating-amount="item.rating_amount" @click="viewProduct(item.id)" />
+            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+            :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
         </template>
       </div>
       <div class="flex justify-center mt-5">
@@ -278,6 +279,7 @@ onMounted(async () => {
       <h1
         class="px-2 desktop:container text-center font-Poppins text-[2rem] md:text-5xl leading-tight py-4 font-extrabold desktop:">
         OUR HAPPY CUSTOMERS
+
       </h1>
       <ClientOnly>
         <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
@@ -293,15 +295,15 @@ onMounted(async () => {
             spaceBetween: 20,
           },
         }" :centered-slides="true" @slideChange="onSlideChange" autoplay>
-          <SwiperSlide v-for="(slide, index) in 10" :key="index">
-            <div class="p-4 bg-gray flex justify-center flex-col">
-              <SharesRating :stars-num="5" :rating-amount="0" />
-              <h1 class="font-Poppins text-xl font-bold">Sarah M.</h1>
-              <p class="font-Lato">
-                I'm blown away by the quality and style of the clothes I received
-                from Shop.co. From casual wear to elegant dresses, every piece
-                I've bought has exceeded my expectations.”
-              </p>
+          <SwiperSlide v-for="(slide, index) in customers_review" :key="index">
+            <div class="p-4 bg-surface-2 rounded-element flex justify-center flex-col">
+              <SharesRating :rating-amount="slide.rating" />
+              <h1 class="font-Poppins text-xl font-bold">{{ slide.customer.full_name }}</h1>
+              <div class="p-3 space-y-3 bg-surface/40 rounded-element">
+                <p class="font-Lato">
+                  {{ slide.comment }}
+                </p>
+              </div>
             </div>
           </SwiperSlide>
         </Swiper>
