@@ -142,7 +142,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-          }}
+            }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -176,6 +176,7 @@ import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
 import { toPng } from 'html-to-image';
 import { formatAnyDate } from '~/utils/date'
+import { watchDebounced } from '@vueuse/core'
 
 type CartItem = {
   variant_id: number
@@ -713,6 +714,16 @@ const downloadQr = () => {
     })
 
 }
+// checkPromoCode
+
+watchDebounced(
+  promoCode,
+  () => {
+    applyCoupon()
+  },
+  { debounce: 500, maxWait: 1000 },
+)
+
 watch(paymentMethod, (value) => {
   isPaymentByKhrqr.value = value === 'khqr'
 }, { immediate: true })
