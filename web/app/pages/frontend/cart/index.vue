@@ -142,7 +142,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-            }}
+          }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -175,7 +175,7 @@ import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
 import { toPng } from 'html-to-image';
-import { useDateFormat, useNow } from '@vueuse/core'
+import { formatAnyDate } from '~/utils/date'
 
 type CartItem = {
   variant_id: number
@@ -531,10 +531,10 @@ const pollPaymentOnce = async () => {
       headers: getAuthHeaders(),
     })
     const data = response?.data || {}
-    const paymentState = String(data?.payment_state || '').toLowerCase()
-    pollStatus.value = paymentState || String(data?.status || 'pending')
+    const paymentStatus = String(data?.payment_status || '').toLowerCase()
+    pollStatus.value = paymentStatus || String(data?.status || 'pending')
 
-    if (paymentState === 'paid') {
+    if (paymentStatus === 'paid') {
       stopPolling()
       paymentDialogOpen.value = false
       ElMessage.success('Payment successful.')
@@ -542,9 +542,9 @@ const pollPaymentOnce = async () => {
       return router.replace('/')
     }
 
-    if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentState)) {
+    if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentStatus)) {
       stopPolling()
-      ElMessage.error(`Payment ${paymentState}.`)
+      ElMessage.error(`Payment ${paymentStatus}.`)
       await cancelPendingOrder()
     }
   } catch (error: any) {
@@ -699,7 +699,7 @@ const downloadQr = () => {
   const appName = String(config.public.NUXT_PUBLIC_APP_NAME || 'Invoice').trim() || 'Invoice'
   const orderLabel = currentOrderId.value ? `order-${currentOrderId.value}` : 'order'
   const userLocale = navigator.language || 'en-US'
-  const timestamp = useDateFormat(useNow(), 'YYYY-MM-DD HH:mm:ss', { locales: userLocale }).value
+  const timestamp = formatAnyDate(new Date(), 'YYYY-MM-DD-HH-mm-ss', userLocale, 'timestamp')
   const filename = `${appName}-invoice-${orderLabel}-${timestamp}.png`
   toPng<any>(qrImage.value, { cacheBust: true })
     .then((dataUrl) => {

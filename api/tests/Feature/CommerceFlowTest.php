@@ -162,7 +162,7 @@ class CommerceFlowTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'payment_state' => 'paid',
+            'payment_status' => 'paid',
             'status' => 'processing',
         ]);
     }
@@ -261,7 +261,7 @@ class CommerceFlowTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'payment_state' => 'pending',
+            'payment_status' => 'pending',
         ]);
     }
 
@@ -319,7 +319,7 @@ class CommerceFlowTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'id' => $orderId,
-            'payment_state' => 'paid',
+            'payment_status' => 'paid',
             'status' => 'processing',
         ]);
     }

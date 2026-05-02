@@ -17,6 +17,7 @@ use KHQR\BakongKHQR;
 use KHQR\Config\Constants;
 use KHQR\Exceptions\KHQRException;
 use KHQR\Helpers\KHQRData;
+use KHQR\Models\IndividualInfo;
 use KHQR\Models\SourceInfo;
 use KHQR\Models\MerchantInfo;
 
@@ -43,14 +44,14 @@ class PaymentRepository
             ]);
         }
 
-        if ($order->payment_state === 'paid') {
+        if ($order->payment_status === 'paid') {
             throw ValidationException::withMessages([
                 'order_id' => ['Order already paid'],
             ]);
         }
 
         $isRetryableFailedPayment = $order->status === 'cancelled'
-            && in_array((string) $order->payment_state, ['failed', 'expired', 'canceled', 'cancelled'], true);
+            && in_array((string) $order->payment_status, ['failed', 'expired', 'canceled', 'cancelled'], true);
 
         if (in_array($order->status, ['cancelled', 'refunded', 'completed'], true) && !$isRetryableFailedPayment) {
             throw ValidationException::withMessages([
@@ -184,7 +185,7 @@ class PaymentRepository
                 'event_id' => (string) ($normalized['event_id'] ?? $transaction->provider_payment_id),
                 'order_id' => $transaction->order_id,
                 'status' => $transaction->order->status,
-                'payment_state' => $transaction->order->payment_state,
+                'payment_status' => $transaction->order->payment_status,
             ];
         }
 
@@ -221,13 +222,13 @@ class PaymentRepository
                 ]
             );
 
-            $this->markPaid($order, $paymentTx);
+            $this->markPaid($order, $paymentTx, $order->payment_provider ?: 'manual');
 
             $fresh = $order->fresh();
 
             return [
                 'order_id' => $order->id,
-                'payment_state' => $fresh?->payment_state ?? $order->payment_state,
+                'payment_status' => $fresh?->payment_status ?? $order->payment_status,
                 'status' => $fresh?->status ?? $order->status,
             ];
         });
@@ -301,7 +302,7 @@ class PaymentRepository
             }
 
             if (in_array($normalizedType, ['payment.succeeded', 'payment.paid'], true)) {
-                $this->markPaid($order, $paymentTx);
+                $this->markPaid($order, $paymentTx, $provider);
             } elseif ($isFailedEvent) {
                 $this->markFailedOrExpired($order, $paymentTx, $normalizedType, $provider);
             } elseif (in_array($normalizedType, ['payment.refunded'], true)) {
@@ -323,7 +324,7 @@ class PaymentRepository
                 'event_id' => $eventId,
                 'order_id' => $order->id,
                 'status' => $freshOrder?->status ?? $order->status,
-                'payment_state' => $freshOrder?->payment_state ?? $order->payment_state,
+                'payment_status' => $freshOrder?->payment_status ?? $order->payment_status,
             ];
         });
     }
@@ -355,28 +356,18 @@ class PaymentRepository
         $currencyCode = $this->toKhrqrCurrency($currencyIso);
         $amount = (float) $order->total_price;
 
-        $merchantInfo = new MerchantInfo(
-            bakongAccountID: $merchantConfig['account_id'],
-            merchantName: $merchantConfig['merchant_name'],
-            merchantCity: $merchantConfig['merchant_city'],
-            merchantID: $merchantConfig['merchant_id'],
-            acquiringBank: $merchantConfig['acquiring_bank'],
-            accountInformation: $merchantConfig['account_information'] ?? null,
-            currency: $currencyCode,
-            amount: $amount,
-            billNumber: (string) $order->id,
-            storeLabel: $merchantConfig['store_label'] ?? null,
-            terminalLabel: $merchantConfig['terminal_label'] ?? null,
-            mobileNumber: $merchantConfig['mobile_number'] ?? null,
-            purposeOfTransaction: $merchantConfig['purpose'] ?? null,
-            languagePreference: $merchantConfig['language_preference'] ?? null,
-            merchantNameAlternateLanguage: $merchantConfig['merchant_name_alt'] ?? null,
-            merchantCityAlternateLanguage: $merchantConfig['merchant_city_alt'] ?? null,
-            upiMerchantAccount: $merchantConfig['upi_merchant_account'] ?? null,
+        $expire = (time() + 3600) * 1000;  // 1 hour from now (milliseconds)
+
+        $individualInfo = new IndividualInfo(
+            bakongAccountID: 'kry_longdy@aclb',
+            merchantName: 'Longdy Kry',
+            merchantCity: 'Takeo',
+            currency: KHQRData::CURRENCY_KHR,
+            amount: 500,
         );
 
         try {
-            $response = BakongKHQR::generateMerchant($merchantInfo);
+            $response = BakongKHQR::generateIndividual($individualInfo);
         } catch (KHQRException $exception) {
             throw ValidationException::withMessages([
                 'khrqr' => [$exception->getMessage()],
@@ -704,22 +695,21 @@ class PaymentRepository
         ];
     }
 
-    private function markPaid(Order $order, ?PaymentTransaction $paymentTx): void
+    private function markPaid(Order $order, ?PaymentTransaction $paymentTx, string $provider): void
     {
         if ($paymentTx) {
             $paymentTx->status = 'paid';
         }
 
-        if ($order->payment_state === 'paid') {
+        if ($order->payment_status === 'paid') {
             return;
         }
 
-        $order->payment_state = 'paid';
-        $order->payment_status = 'paid';
-        $order->status = in_array($order->status, ['pending', 'paid'], true) ? 'processing' : $order->status;
-        $order->order_status = in_array($order->order_status, ['pending'], true) ? 'processing' : $order->order_status;
-        $order->paid_at = $order->paid_at ?? now();
-        $order->save();
+        $this->orderLifecycleRepository->transition($order, 'processing', [
+            'action_type' => 'payment_confirmed',
+            'reason' => 'Payment confirmed by ' . $provider . ' webhook',
+            'actor_name' => ucfirst($provider) . ' webhook',
+        ]);
 
         if ($order->payment_method === 'khqr') {
             $cart = $order->customer?->cart;
@@ -740,22 +730,27 @@ class PaymentRepository
 
     private function markFailedOrExpired(Order $order, ?PaymentTransaction $paymentTx, string $eventType, string $provider): void
     {
-        if (in_array($order->payment_state, ['refunded', 'cancelled', 'expired'], true)) {
+        if (in_array($order->payment_status, ['refunded', 'cancelled', 'expired'], true)) {
             return;
         }
 
         $failedStatus = str_contains($eventType, 'expired') ? 'expired' : (str_contains($eventType, 'canceled') ? 'canceled' : 'failed');
+        $fromStatus = $order->status ?: 'pending';
         if ($paymentTx) {
             $paymentTx->status = $failedStatus;
         }
 
-        if ($order->payment_state !== 'paid') {
-            $order->payment_state = $failedStatus;
+        if ($order->payment_status !== 'paid') {
+            $order->payment_status = $failedStatus;
             $order->payment_status = 'failed';
             $order->status = 'cancelled';
-            $order->order_status = 'pending';
             $order->cancelled_at = $order->cancelled_at ?? now();
             $order->save();
+            $this->orderLifecycleRepository->recordStatusHistory($order, $fromStatus, 'cancelled', [
+                'action_type' => 'payment_failed',
+                'reason' => "Payment {$failedStatus} by {$provider}",
+                'actor_name' => ucfirst($provider) . ' webhook',
+            ]);
             $this->orderLifecycleRepository->restoreStockIfNeeded($order);
         }
 
@@ -765,7 +760,7 @@ class PaymentRepository
         }
 
         // Remove KHQR orders after failure so customers can re-checkout from cart.
-        if ($provider === 'khrqr' && $order->payment_method === 'khqr' && $order->payment_state !== 'paid') {
+        if ($provider === 'khrqr' && $order->payment_method === 'khqr' && $order->payment_status !== 'paid') {
             $order->delete();
         }
     }
@@ -775,11 +770,17 @@ class PaymentRepository
         if ($paymentTx) {
             $paymentTx->status = 'refunded';
         }
-        $order->payment_state = 'refunded';
+        $fromStatus = $order->status ?: 'pending';
+        $order->payment_status = 'refunded';
         $order->payment_status = 'failed';
         $order->status = 'refunded';
         $order->refunded_at = $order->refunded_at ?? now();
         $order->save();
+        $this->orderLifecycleRepository->recordStatusHistory($order, $fromStatus, 'refunded', [
+            'action_type' => 'payment_refunded',
+            'reason' => 'Payment refunded by provider',
+            'actor_name' => 'Payment provider',
+        ]);
         $this->orderLifecycleRepository->restoreStockIfNeeded($order);
     }
 
@@ -826,7 +827,7 @@ class PaymentRepository
                 return;
             }
 
-            if ($order->payment_state === 'paid') {
+            if ($order->payment_status === 'paid') {
                 return;
             }
 
@@ -855,7 +856,7 @@ class PaymentRepository
                 ]);
             }
 
-            if ($order->payment_state === 'paid') {
+            if ($order->payment_status === 'paid') {
                 throw ValidationException::withMessages([
                     'order_id' => ['Order already paid'],
                 ]);

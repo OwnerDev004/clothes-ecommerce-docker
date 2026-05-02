@@ -109,8 +109,7 @@ class VoucherRepository
                 ->where('customer_id', $customerId)
                 ->where(function ($query) {
                     $query->whereNotNull('paid_at')
-                        ->orWhere('payment_status', 'paid')
-                        ->orWhere('payment_state', 'paid');
+                        ->orWhere('payment_status', 'paid');
                 })
                 ->exists();
 

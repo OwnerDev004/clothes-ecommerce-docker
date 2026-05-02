@@ -1,5 +1,7 @@
 import { storeToRefs } from "pinia";
+import { watch } from "vue";
 import { useAdminAuthStore } from "~/stores/adminAuthStore";
+import { useOrderRealtimeStore } from "~/stores/orderRealtimeStore";
 
 export type AdminDashboardSummary = {
   stats: {
@@ -22,7 +24,7 @@ export type AdminDashboardSummary = {
     id: number;
     customer: string;
     status: string;
-    payment_state: string;
+    payment_status: string;
     amount: number;
     item_count: number;
     updated_at: string | null;
@@ -55,6 +57,7 @@ export const useAdminDashboard = () => {
   const config = useRuntimeConfig();
   const apiBase = (config.public.apiBase || "").replace(/\/$/, "");
   const adminAuthStore = useAdminAuthStore();
+  const realtimeStore = useOrderRealtimeStore();
   const { accessToken } = storeToRefs(adminAuthStore);
 
   const fetchDashboard = async () => {
@@ -78,6 +81,15 @@ export const useAdminDashboard = () => {
         getCachedData: () => undefined,
       },
     );
+
+  watch(
+    () => realtimeStore.adminAlertTick,
+    () => {
+      if (accessToken.value) {
+        void refresh();
+      }
+    },
+  );
 
   return {
     dashboard: data,

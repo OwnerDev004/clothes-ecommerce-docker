@@ -24,12 +24,12 @@ class DashboardService
 
             $revenueToday = (float) Order::query()
                 ->whereDate('order_date', $today)
-                ->where('payment_state', 'paid')
+                ->where('payment_status', 'paid')
                 ->sum('total_price');
 
             $revenueThisWeek = (float) Order::query()
                 ->whereBetween('order_date', [$weekStart, $weekEnd])
-                ->where('payment_state', 'paid')
+                ->where('payment_status', 'paid')
                 ->sum('total_price');
 
             $weeklySales = $this->buildWeeklySalesTrend();
@@ -70,7 +70,7 @@ class DashboardService
 
         $salesByDate = Order::query()
             ->selectRaw('DATE(order_date) as sale_date, COALESCE(SUM(total_price), 0) as total_sales')
-            ->where('payment_state', 'paid')
+            ->where('payment_status', 'paid')
             ->whereBetween('order_date', [$start, $end])
             ->groupByRaw('DATE(order_date)')
             ->orderByRaw('DATE(order_date)')
@@ -106,7 +106,7 @@ class DashboardService
                         ?? $order->customer?->user_name
                         ?? 'Customer',
                     'status' => $order->status,
-                    'payment_state' => $order->payment_state,
+                    'payment_status' => $order->payment_status,
                     'amount' => (float) $order->total_price,
                     'item_count' => (int) $order->items_count,
                     'updated_at' => optional($order->updated_at)->toIso8601String(),

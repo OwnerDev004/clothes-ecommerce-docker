@@ -44,6 +44,7 @@ export default defineNuxtConfig({
     configPath: "~/tailwind.config.ts",
     cssPath: "./assets/css/tailwind.css",
   },
+
   elementPlus: {
     importStyle: "scss",
     themeChalk: {
@@ -64,7 +65,7 @@ export default defineNuxtConfig({
           base: "#DC2626",
         },
         info: {
-          base: "#0F172A",
+          base: "#3b82f6",
         },
       },
       "$text-color": {
@@ -121,6 +122,26 @@ export default defineNuxtConfig({
       appName: process.env.NUXT_PUBLIC_APP_NAME || "Docker-Ecommerce",
       apiBase:
         process.env.NUXT_PUBLIC_API_BASE || "http://127.0.0.1:8000/api/v1",
+      pusherKey:
+        process.env.NUXT_PUBLIC_PUSHER_APP_KEY ||
+        process.env.VITE_PUSHER_APP_KEY ||
+        "",
+      pusherCluster:
+        process.env.NUXT_PUBLIC_PUSHER_APP_CLUSTER ||
+        process.env.VITE_PUSHER_APP_CLUSTER ||
+        "",
+      pusherHost:
+        process.env.NUXT_PUBLIC_PUSHER_HOST ||
+        process.env.VITE_PUSHER_HOST ||
+        "",
+      pusherPort:
+        process.env.NUXT_PUBLIC_PUSHER_PORT ||
+        process.env.VITE_PUSHER_PORT ||
+        "443",
+      pusherScheme:
+        process.env.NUXT_PUBLIC_PUSHER_SCHEME ||
+        process.env.VITE_PUSHER_SCHEME ||
+        "https",
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || "",
       facebookAppId: process.env.NUXT_PUBLIC_FACEBOOK_APP_ID || "",
       facebookGraphVersion:

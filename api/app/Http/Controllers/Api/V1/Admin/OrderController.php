@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Order\OrderEditRequest;
 use App\Http\Requests\Api\V1\Order\OrderStatusUpdateRequest;
+use App\Models\User;
 use App\Repositories\OrderLifecycleRepository;
 use App\Traits\ApiResponse;
 use Illuminate\Validation\ValidationException;
@@ -72,14 +74,33 @@ class OrderController extends Controller
     public function updateStatus(OrderStatusUpdateRequest $request, int $id)
     {
         try {
+            $admin = auth()->guard('admin')->user();
             $order = $this->orderLifecycleRepository->updateStatusByAdmin(
                 $id,
-                (string) $request->validated()['status']
+                (string) $request->validated()['status'],
+                [
+                    'reason' => $request->validated()['order_note'] ?? null,
+                    'actor_type' => $admin ? User::class : null,
+                    'actor_id' => $admin?->id,
+                    'actor_name' => $admin ? trim((string) ($admin->first_name . ' ' . $admin->last_name)) ?: ($admin->user_name ?: $admin->email) : null,
+                    'action_type' => 'manual_status_update',
+                ]
             );
         } catch (ValidationException $e) {
             return $this->error('Unable to update status', 422, $e->errors());
         }
 
         return $this->success($order, 'Order status updated', 200);
+    }
+
+    public function updateOrder(OrderEditRequest $request, int $id)
+    {
+        try {
+            $order = $this->orderLifecycleRepository->updateOrderDetails($id, $request->validated());
+        } catch (ValidationException $e) {
+            return $this->error('Unable to update order information', 422, $e->errors());
+        }
+
+        return $this->success($order, 'Order information updated', 200);
     }
 }

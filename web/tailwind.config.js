@@ -20,6 +20,7 @@ export default {
         text: '#0F172A',
         muted: '#64748B',
         primary: '#111827',
+        info: 'oklch(60.9% 0.126 221.723)',
         accent: '#FF3333',
         success: '#16A34A',
         warning: '#F59E0B',

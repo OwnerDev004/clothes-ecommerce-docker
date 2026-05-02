@@ -45,6 +45,7 @@ type ProductSubmitPayload = {
       id?: number | string | null;
       sku: string;
       color: string;
+      size: string | number | null;
       stock_quantity: string;
       sale_price: string;
       cost_price: string;
@@ -332,6 +333,7 @@ export const useAdminProducts = () => {
       id?: number | string | null;
       sku: string;
       color: string;
+      size: string | number | null;
       stock_quantity: string;
       sale_price: string;
       cost_price: string;
@@ -363,6 +365,7 @@ export const useAdminProducts = () => {
         product_id: productId,
         sku: normalizedSku,
         color: variant.color,
+        size: variant.size ?? null,
         stock_quantity: Number(variant.stock_quantity || 0),
         sell_price: Number(variant.sale_price || 0),
         cost_price: Number(variant.cost_price || 0),

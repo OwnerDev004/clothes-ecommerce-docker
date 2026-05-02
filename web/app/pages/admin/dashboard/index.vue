@@ -11,6 +11,8 @@ import {
   WarningFilled,
 } from '@element-plus/icons-vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
+import { formatAnyDate } from '~/utils/date'
+import { getOrderStatusTagType } from '~/utils/orderStatusTheme'
 
 import { useAdminDashboard, type AdminDashboardSummary } from '~/composables/useAdminDashboard'
 
@@ -51,26 +53,13 @@ const formatMoney = (value: number) =>
   }).format(Number(value || 0))
 
 const formatDateLabel = (value: string) =>
-  new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(value))
+  formatAnyDate(value, 'ddd', 'en-US', '---')
 
-const formatDateTime = (value: string | null) => {
-  if (!value) return 'Just now'
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
+const formatDateTime = (value: string | null) =>
+  formatAnyDate(value, 'MMM D, YYYY h:mm A', 'en-US', 'Just now')
 
 const statusType = (status: string) => {
-  const normalized = status.toLowerCase()
-
-  if (normalized === 'paid' || normalized === 'completed') return 'success'
-  if (normalized === 'shipped') return 'warning'
-  if (normalized === 'processing' || normalized === 'pending') return 'primary'
-  if (normalized === 'canceled' || normalized === 'cancelled' || normalized === 'refunded') return 'info'
-  return 'info'
+  return getOrderStatusTagType(status)
 }
 
 const quickActions = [
@@ -140,7 +129,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">This week revenue</span>
           <strong class="mt-1 block text-lg text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-            }}</strong>
+          }}</strong>
         </div>
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">Customers</span>
@@ -200,7 +189,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
             <div class="text-right">
               <span class="block text-sm text-slate-500">Sales velocity</span>
               <strong class="text-[1.15rem] text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-                }}</strong>
+              }}</strong>
             </div>
           </div>
 

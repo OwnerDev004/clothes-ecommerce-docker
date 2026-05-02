@@ -51,6 +51,9 @@ const props = withDefaults(
     },
 )
 
+
+
+
 const emit = defineEmits<{
     (e: 'submit', payload: CollectionSubmitPayload): void
 }>()
@@ -312,8 +315,8 @@ watch(
                         </el-form-item>
 
                         <el-form-item label="Status" prop="status">
-                            <BaseSelect v-model="form.status" :options="statusOptions"
-                                placeholder="Select status" class="w-full" />
+                            <BaseSelect v-model="form.status" :options="statusOptions" placeholder="Select status"
+                                class="w-full" />
                         </el-form-item>
 
                         <el-form-item label="Sort Order" prop="sort_order">

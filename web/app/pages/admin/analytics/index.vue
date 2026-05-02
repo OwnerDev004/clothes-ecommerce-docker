@@ -13,6 +13,8 @@ import {
 import BaseButton from '~/components/ui/BaseButton.vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import { useAdminAnalytics } from '~/composables/useAdminAnalytics'
+import { getOrderStatusTagType } from '~/utils/orderStatusTheme'
+import { formatAnyDate } from '~/utils/date'
 import type { AdminDashboardSummary } from '~/composables/useAdminDashboard'
 
 definePageMeta({
@@ -51,29 +53,14 @@ const formatMoney = (value: number) =>
     maximumFractionDigits: 2,
   }).format(Number(value || 0))
 
-const formatDateTime = (value: string | null) => {
-  if (!value) return 'Just now'
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
+const formatDateTime = (value: string | null) =>
+  formatAnyDate(value, 'MMM D, YYYY h:mm A', 'en-US', 'Just now')
 
 const formatDateLabel = (value: string) =>
-  new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(value))
+  formatAnyDate(value, 'ddd', 'en-US', '---')
 
 const orderStatusType = (status: string) => {
-  const normalized = status.toLowerCase()
-
-  if (normalized === 'paid' || normalized === 'completed') return 'success'
-  if (normalized === 'shipped') return 'warning'
-  if (normalized === 'processing' || normalized === 'pending') return 'primary'
-  if (normalized === 'canceled' || normalized === 'cancelled' || normalized === 'refunded') return 'info'
-
-  return 'info'
+  return getOrderStatusTagType(status)
 }
 
 const trendMax = computed(() => Math.max(...analyticsState.value.trend.map((item) => item.total), 1))

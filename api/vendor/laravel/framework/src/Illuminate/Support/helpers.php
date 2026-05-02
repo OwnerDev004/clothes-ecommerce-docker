@@ -14,7 +14,7 @@ use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable as SupportStringable;
 
-if (! function_exists('append_config')) {
+if (!function_exists('append_config')) {
     /**
      * Assign high numeric IDs to a config item to force appending.
      *
@@ -36,7 +36,7 @@ if (! function_exists('append_config')) {
     }
 }
 
-if (! function_exists('blank')) {
+if (!function_exists('blank')) {
     /**
      * Determine if the given value is "blank".
      *
@@ -76,7 +76,7 @@ if (! function_exists('blank')) {
     }
 }
 
-if (! function_exists('class_basename')) {
+if (!function_exists('class_basename')) {
     /**
      * Get the class "basename" of the given object / class.
      *
@@ -90,7 +90,7 @@ if (! function_exists('class_basename')) {
     }
 }
 
-if (! function_exists('class_uses_recursive')) {
+if (!function_exists('class_uses_recursive')) {
     /**
      * Returns all traits used by a class, its parent classes and trait of their traits.
      *
@@ -113,7 +113,7 @@ if (! function_exists('class_uses_recursive')) {
     }
 }
 
-if (! function_exists('e')) {
+if (!function_exists('e')) {
     /**
      * Encode HTML special characters in a string.
      *
@@ -138,7 +138,7 @@ if (! function_exists('e')) {
     }
 }
 
-if (! function_exists('env')) {
+if (!function_exists('env')) {
     /**
      * Gets the value of an environment variable.
      *
@@ -152,7 +152,7 @@ if (! function_exists('env')) {
     }
 }
 
-if (! function_exists('filled')) {
+if (!function_exists('filled')) {
     /**
      * Determine if a value is "filled".
      *
@@ -164,11 +164,11 @@ if (! function_exists('filled')) {
      */
     function filled($value): bool
     {
-        return ! blank($value);
+        return !blank($value);
     }
 }
 
-if (! function_exists('fluent')) {
+if (!function_exists('fluent')) {
     /**
      * Create a Fluent object from the given value.
      *
@@ -180,7 +180,7 @@ if (! function_exists('fluent')) {
     }
 }
 
-if (! function_exists('literal')) {
+if (!function_exists('literal')) {
     /**
      * Return a new literal or anonymous object using named arguments.
      *
@@ -196,7 +196,7 @@ if (! function_exists('literal')) {
     }
 }
 
-if (! function_exists('object_get')) {
+if (!function_exists('object_get')) {
     /**
      * Get an item from an object using "dot" notation.
      *
@@ -214,7 +214,7 @@ if (! function_exists('object_get')) {
         }
 
         foreach (explode('.', $key) as $segment) {
-            if (! is_object($object) || ! isset($object->{$segment})) {
+            if (!is_object($object) || !isset($object->{$segment})) {
                 return value($default);
             }
 
@@ -225,7 +225,7 @@ if (! function_exists('object_get')) {
     }
 }
 
-if (! function_exists('laravel_cloud')) {
+if (!function_exists('laravel_cloud')) {
     /**
      * Determine if the application is running on Laravel Cloud.
      */
@@ -236,7 +236,7 @@ if (! function_exists('laravel_cloud')) {
     }
 }
 
-if (! function_exists('once')) {
+if (!function_exists('once')) {
     /**
      * Ensures a callable is only called once, and returns the result on subsequent calls.
      *
@@ -256,7 +256,7 @@ if (! function_exists('once')) {
     }
 }
 
-if (! function_exists('optional')) {
+if (!function_exists('optional')) {
     /**
      * Provide access to optional objects.
      *
@@ -271,13 +271,13 @@ if (! function_exists('optional')) {
     {
         if (is_null($callback)) {
             return new Optional($value);
-        } elseif (! is_null($value)) {
+        } elseif (!is_null($value)) {
             return $callback($value);
         }
     }
 }
 
-if (! function_exists('preg_replace_array')) {
+if (!function_exists('preg_replace_array')) {
     /**
      * Replace a given pattern with each value in the array in sequentially.
      *
@@ -295,7 +295,7 @@ if (! function_exists('preg_replace_array')) {
     }
 }
 
-if (! function_exists('retry')) {
+if (!function_exists('retry')) {
     /**
      * Retry an operation a given number of times.
      *
@@ -328,7 +328,7 @@ if (! function_exists('retry')) {
         try {
             return $callback($attempts);
         } catch (Throwable $e) {
-            if ($times < 1 || ($when && ! $when($e))) {
+            if ($times < 1 || ($when && !$when($e))) {
                 throw $e;
             }
 
@@ -343,7 +343,7 @@ if (! function_exists('retry')) {
     }
 }
 
-if (! function_exists('str')) {
+if (!function_exists('str')) {
     /**
      * Get a new stringable object from the given string.
      *
@@ -353,8 +353,7 @@ if (! function_exists('str')) {
     function str($string = null)
     {
         if (func_num_args() === 0) {
-            return new class
-            {
+            return new class {
                 public function __call($method, $parameters)
                 {
                     return Str::$method(...$parameters);
@@ -371,7 +370,7 @@ if (! function_exists('str')) {
     }
 }
 
-if (! function_exists('tap')) {
+if (!function_exists('tap')) {
     /**
      * Call the given Closure with the given value then return the value.
      *
@@ -393,7 +392,7 @@ if (! function_exists('tap')) {
     }
 }
 
-if (! function_exists('throw_if')) {
+if (!function_exists('throw_if')) {
     /**
      * Throw the given exception if the given condition is true.
      *
@@ -427,7 +426,7 @@ if (! function_exists('throw_if')) {
     }
 }
 
-if (! function_exists('throw_unless')) {
+if (!function_exists('throw_unless')) {
     /**
      * Throw the given exception unless the given condition is true.
      *
@@ -445,13 +444,13 @@ if (! function_exists('throw_unless')) {
      */
     function throw_unless($condition, $exception = 'RuntimeException', ...$parameters)
     {
-        throw_if(! $condition, $exception, ...$parameters);
+        throw_if(!$condition, $exception, ...$parameters);
 
         return $condition;
     }
 }
 
-if (! function_exists('trait_uses_recursive')) {
+if (!function_exists('trait_uses_recursive')) {
     /**
      * Returns all traits used by a trait and its traits.
      *
@@ -470,7 +469,7 @@ if (! function_exists('trait_uses_recursive')) {
     }
 }
 
-if (! function_exists('transform')) {
+if (!function_exists('transform')) {
     /**
      * Transform the given value if it is present.
      *
@@ -497,7 +496,7 @@ if (! function_exists('transform')) {
     }
 }
 
-if (! function_exists('windows_os')) {
+if (!function_exists('windows_os')) {
     /**
      * Determine whether the current environment is Windows based.
      */
@@ -507,7 +506,7 @@ if (! function_exists('windows_os')) {
     }
 }
 
-if (! function_exists('with')) {
+if (!function_exists('with')) {
     /**
      * Return the given value, optionally passed through the given callback.
      *

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useOrderRealtimeStore } from '~/stores/orderRealtimeStore'
 definePageMeta({
     layout: false,
     middleware: ['admin-auth'],
@@ -19,6 +20,7 @@ import {
     User,
     Setting
 } from '@element-plus/icons-vue'
+const orderDetailAlert = useOrderRealtimeStore()
 import { useAdminAuthStore } from '~/stores/adminAuthStore'
 const router = useRouter()
 const adminAuthStore = useAdminAuthStore()
@@ -54,6 +56,12 @@ const navigationGroups: NavGroup[] = [
             { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live' },
             { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live' },
             { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Live' },
+        ],
+    },
+    {
+        title: 'Inventory',
+        items: [
+            { index: '/admin/purchases', label: 'Purchases', icon: Box, badge: 'Live' },
         ],
     },
     {
@@ -162,7 +170,7 @@ const navigationGroups: NavGroup[] = [
                     </div>
 
                     <section class="flex items-center gap-3">
-                        <el-badge :value="12" class="item">
+                        <el-badge :value="orderDetailAlert.adminAlertTick" class="item">
                             <el-button circle
                                 class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-muted/10 ">
                                 <el-icon>
@@ -176,7 +184,7 @@ const navigationGroups: NavGroup[] = [
                             <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                             <div>
                                 <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
-                                    }}</strong>
+                                }}</strong>
                                 <!-- <span class="block text-xs text-slate-500">Super user</span> -->
                             </div>
                         </div>

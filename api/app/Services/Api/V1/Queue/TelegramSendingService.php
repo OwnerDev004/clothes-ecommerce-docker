@@ -50,6 +50,44 @@ class TelegramSendingService
         }
     }
 
+    public function sendOrderStatusUpdate(Order $order, string $message): void
+    {
+        $order->loadMissing('customer:id,full_name,user_name,telegram_chat_id,telegram_user_id,telegram_username,enable_telegram_alerts');
+
+        $customer = $order->customer;
+        if (!$customer) {
+            $this->logDelivery('skip_missing_customer', $order->id);
+            return;
+        }
+
+        if (!$customer->enable_telegram_alerts) {
+            $this->logDelivery('skip_alerts_disabled', $order->id, $customer->id);
+            return;
+        }
+
+        $customerChatId = $customer->routeNotificationForTelegram();
+        if (!$customerChatId) {
+            $this->logDelivery('skip_missing_chat_id', $order->id, $customer->id);
+            return;
+        }
+
+        $payload = implode("\n", [
+            $message,
+            'Order Link' . $this->buildLinkInvoice($order),
+            'Order: #' . $order->id,
+            'Status: ' . strtoupper((string) $order->status),
+            'Total: $' . number_format((float) $order->total_price, 2),
+        ]);
+
+        try {
+            $this->sendDirectMessage($customerChatId, $payload);
+            $this->logDelivery('sent', $order->id, $customer->id, $customerChatId);
+        } catch (\Throwable $e) {
+            $this->logDelivery('send_failed', $order->id, $customer->id, $customerChatId);
+            $this->sendDirectMessage($customerChatId, $payload);
+        }
+    }
+
     private function buildFallbackText(Order $order, bool $isAdminRecipient): string
     {
         $customerName = (string) ($order->customer?->full_name ?: $order->customer?->user_name ?: 'Customer');

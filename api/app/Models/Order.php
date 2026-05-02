@@ -24,13 +24,12 @@ class Order extends Model
         'payment_reference',
         'payment_expires_at',
         'payment_status',
-        'payment_state',
-        'order_status',
         'status',
         'paid_at',
         'cancelled_at',
         'refunded_at',
         'stock_restored_at',
+        'order_note'
     ];
 
     protected $casts = [
@@ -64,5 +63,10 @@ class Order extends Model
     public function paymentTransactions(): HasMany
     {
         return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class)->latest('id');
     }
 }

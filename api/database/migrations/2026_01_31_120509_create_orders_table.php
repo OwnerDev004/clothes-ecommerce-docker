@@ -20,8 +20,7 @@ return new class extends Migration {
             $table->string('shipping_address')->nullable();
             $table->string('shipping_phone')->nullable();
             $table->enum('payment_method', ['khqr', 'cash_on_delivery'])->nullable();
-            $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
-            $table->enum('order_status', ['pending', 'processing', 'shipped', 'delivered'])->default('pending');
+            $table->enum('payment_status', ['pending', 'paid', 'refunded', 'failed'])->default('pending');
             $table->timestamps();
         });
     }

@@ -162,6 +162,7 @@ import BaseCard from '~/components/ui/BaseCard.vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import { useAdminCustomer } from '~/composables/useAdminCustomer'
 import { customerStatus, getDisplayCustomerStatus } from '~/enums/customerStatus'
+import { formatAnyDate } from '~/utils/date'
 
 definePageMeta({
   layout: 'admin',
@@ -182,13 +183,8 @@ const customerId = computed(() => String(route.params.id ?? ''))
 const customer = computed(() => customerDetail.value)
 const oauthAccounts = computed(() => customerDetail.value?.oauth_accounts || [])
 
-const formatDate = (value?: string | null) => {
-  if (!value) {
-    return 'None'
-  }
-
-  return new Date(value).toLocaleString()
-}
+const formatDate = (value?: string | null) =>
+  formatAnyDate(value, 'MMM D, YYYY h:mm A', 'en-US', 'None')
 
 const goBack = () => {
   router.push('/admin/customers')

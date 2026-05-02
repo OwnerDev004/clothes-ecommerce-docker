@@ -81,7 +81,7 @@
 -shipping_phone
 -payment_method
 -payment_status ENUM(pending, paid, fail) default('pending')
--order_status ENUM('pending', 'processing', 'shipped', 'delivered') DEFAULT 'pending',
+-status ENUM("order_confirming" | "payment_confirmed" | "processing" | "shipped" | "delivered" | "cancelled");
 -created_at
 
 +order_items

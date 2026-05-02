@@ -8,12 +8,16 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\VoucherUse;
+use App\Services\Api\V1\OrderRealtimeAlertService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutRepository
 {
-    public function __construct(private readonly VoucherRepository $voucherRepository)
+    public function __construct(
+        private readonly VoucherRepository $voucherRepository,
+        private readonly OrderRealtimeAlertService $orderRealtimeAlertService,
+    )
     {
     }
 
@@ -102,9 +106,7 @@ class CheckoutRepository
                 'shipping_phone' => $payload['shipping_phone'] ?? null,
                 'payment_method' => $payload['payment_method'] ?? 'cash_on_delivery',
                 'payment_status' => 'pending',
-                'payment_state' => 'pending',
-                'order_status' => 'pending',
-                'status' => 'pending',
+                'status' => 'order_confirming',
             ]);
 
             foreach ($snapshots as $snapshot) {
@@ -148,10 +150,13 @@ class CheckoutRepository
             }
 
             $order->load([
+                'customer:id,full_name,user_name,email,phone,address',
                 'items.variant.product:id,name,slug',
                 'items.variant.size:id,name',
                 'voucher:id,code,name',
             ]);
+
+            $this->orderRealtimeAlertService->notifyAdminOrderCreated($order);
 
             return [
                 'order' => $order,

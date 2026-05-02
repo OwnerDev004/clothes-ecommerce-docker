@@ -12,6 +12,28 @@
         }
     ],
     "paths": {
+        "/api/v1/admin/analytics": {
+            "get": {
+                "tags": [
+                    "Admin/Analytics"
+                ],
+                "summary": "Get admin analytics summary",
+                "operationId": "d9e1f2050d10861bad541349942b8255",
+                "responses": {
+                    "200": {
+                        "description": "Analytics summary"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/brands": {
             "get": {
                 "tags": [
@@ -648,6 +670,19 @@
                         }
                     },
                     {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by customer account status.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        }
+                    },
+                    {
                         "name": "per_page",
                         "in": "query",
                         "required": false,
@@ -791,9 +826,13 @@
                                         "example": true
                                     },
                                     "status": {
-                                        "type": "boolean",
-                                        "example": true,
-                                        "nullable": true
+                                        "type": "string",
+                                        "example": "active",
+                                        "nullable": true,
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
                                     },
                                     "remove_image": {
                                         "type": "boolean",
@@ -3259,6 +3298,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin/Analytics",
+            "description": "Admin/Analytics"
+        },
         {
             "name": "Admin/Brands",
             "description": "Admin/Brands"

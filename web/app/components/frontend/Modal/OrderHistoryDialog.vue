@@ -66,11 +66,11 @@
                                     {{ order.status || 'unknown' }}
                                 </el-tag>
                                 <el-tag size="small"
-                                    :type="paymentTagType(order.payment_state || order.payment_status)">
-                                    Payment: {{ order.payment_state || order.payment_status || 'unknown' }}
+                                    :type="paymentTagType(order.payment_status || order.payment_status)">
+                                    Payment: {{ order.payment_status || order.payment_status || 'unknown' }}
                                 </el-tag>
-                                <el-tag size="small" :type="orderTagType(order.order_status)">
-                                    Shipping: {{ order.order_status || 'unknown' }}
+                                <el-tag size="small" :type="orderTagType(order.status)">
+                                    Shipping: {{ order.status || 'unknown' }}
                                 </el-tag>
                                 <span class="text-sm font-semibold text-gray-900">
                                     ${{ formatMoney(order.total_price) }}
@@ -119,6 +119,8 @@
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '~/stores/authStore'
+import { formatAnyDate } from '~/utils/date'
+import { getOrderStatusTagType, getPaymentStatusTagType } from '~/utils/orderStatusTheme'
 
 type OrderItem = {
     id: number | string
@@ -136,11 +138,9 @@ type OrderItem = {
 
 type OrderRecord = {
     id: number | string
-    status?: string
-    payment_state?: string
     payment_status?: string
     payment_provider?: string
-    order_status?: string
+    status?: string
     order_date?: string
     created_at?: string
     payment_method?: string
@@ -206,8 +206,7 @@ const fetchOrders = async () => {
                 page: page.value,
                 per_page: meta.value.per_page,
                 status: statusFilter.value || undefined,
-                payment_state: paymentStateFilter.value || undefined,
-                order_status: orderStatusFilter.value || undefined,
+                payment_status: paymentStateFilter.value || undefined,
             },
         })
 
@@ -233,7 +232,7 @@ const fetchOrders = async () => {
 }
 
 const normalizePaymentState = (order: OrderRecord) => {
-    return String(order.payment_state || order.payment_status || '').toLowerCase()
+    return String(order.payment_status || order.payment_status || '').toLowerCase()
 }
 
 const canRepay = (order: OrderRecord) => {
@@ -302,18 +301,8 @@ const formatMoney = (value: number | string | null | undefined) => {
     return amount.toFixed(2)
 }
 
-const formatDate = (value?: string) => {
-    if (!value) {
-        return 'N/A'
-    }
-
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) {
-        return value
-    }
-
-    return parsed.toLocaleDateString()
-}
+const formatDate = (value?: string) =>
+    formatAnyDate(value, 'MMM D, YYYY', 'en-US', 'N/A')
 
 const itemTitle = (item: OrderItem) => {
     const productName = item?.variant?.product?.name
@@ -325,52 +314,15 @@ const itemTitle = (item: OrderItem) => {
 }
 
 const statusTagType = (status?: string) => {
-    switch ((status || '').toLowerCase()) {
-        case 'completed':
-            return 'success'
-        case 'cancelled':
-        case 'refunded':
-            return 'danger'
-        case 'processing':
-        case 'shipped':
-            return 'warning'
-        case 'paid':
-            return 'primary'
-        default:
-            return 'info'
-    }
+    return getOrderStatusTagType(status)
 }
 
 const paymentTagType = (status?: string) => {
-    switch ((status || '').toLowerCase()) {
-        case 'paid':
-            return 'success'
-        case 'pending':
-            return 'warning'
-        case 'failed':
-        case 'expired':
-        case 'canceled':
-        case 'cancelled':
-        case 'refunded':
-            return 'danger'
-        default:
-            return 'info'
-    }
+    return getPaymentStatusTagType(status)
 }
 
 const orderTagType = (status?: string) => {
-    switch ((status || '').toLowerCase()) {
-        case 'delivered':
-        case 'completed':
-            return 'success'
-        case 'processing':
-        case 'shipped':
-            return 'warning'
-        case 'cancelled':
-            return 'danger'
-        default:
-            return 'info'
-    }
+    return getOrderStatusTagType(status)
 }
 
 const onDialogClosed = () => {

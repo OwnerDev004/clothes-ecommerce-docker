@@ -4,73 +4,81 @@
             <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">Dashboard</el-breadcrumb-item>
             <el-breadcrumb-item>Order Details</el-breadcrumb-item>
         </HeaderBreadCrumb>
-        <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_25%] w-full">
 
+        <el-alert v-if="error" :title="error.message" type="error" :closable="false" show-icon class="mb-6" />
+
+        <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_25%] w-full">
             <!-- Left Side -->
             <div class="min-w-0 space-y-6">
 
                 <!-- Progressing Card -->
                 <div class="shadow-sm bg-surface rounded-card p-6">
-                    <!-- header status -->
-                    <section class="flex justify-between">
+                    <section class="flex justify-between gap-6">
                         <div class="space-y-5">
-                            <div class="flex gap-3">
-                                <h2 class="font-sans font-semibold">#0758267/90</h2>
-                                <el-tag effect="light" type="success">Paid</el-tag>
-                                <el-tag effect="plain" type="warning">In Progress</el-tag>
+                            <div class="flex flex-wrap gap-3 items-center">
+                                <h2 class="font-sans font-semibold">
+                                    {{ order_summary.order_id || '#--' }}
+                                </h2>
+                                <el-tag effect="light" :type="paymentTagType">
+                                    {{ order_summary.payment_status || 'Pending' }}
+                                </el-tag>
+
+                                <el-tag effect="plain" :type="progressTagType">
+                                    {{ progressOrderStore.statusText }}
+                                </el-tag>
                             </div>
 
-                            <p class="font-Lato text-muted text-sm">Order / Order Details / #0758267/90 - April 23 ,
-                                2024 at
-                                6:23 pm</p>
+                            <p class="font-Lato text-slate-800 text-sm">
+                                Order / Order Details / {{ order_summary.order_id || '#--' }} -
+                                {{ order_summary.created_at || 'No date available' }}
+                            </p>
                         </div>
-                        <div>
-                            <BaseButton>Refund</BaseButton>
-                            <BaseButton>Return</BaseButton>
-                            <BaseButton type="primary">Edit Order</BaseButton>
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <BaseButton plain :disabled="!activeRefundButton" @click="refundOrderModal">
+                                Refund
+                            </BaseButton>
+                            <BaseButton type="primary" :disabled="!activeEditProgressButton" @click="editOrder">
+                                Edit Order</BaseButton>
                         </div>
+
                     </section>
-                    <!-- Progress -->
+
                     <section class="mt-8">
-                        <h2 class="my-8">Progress</h2>
-                        <div class="grid grid-cols-5 gap-3">
-                            <div class="flex flex-col items-center gap-2">
-                                <el-progress class="w-full" :percentage="100" :stroke-width="12" status="success"
+                        <div class="flex items-center justify-between gap-4">
+                            <h2 class="my-8">Progress</h2>
+                            <el-tag effect="light" :type="progressTagType" class="!rounded-full !px-3 !py-2">
+                                {{ progressOrderStore.subStatusText }}
+                            </el-tag>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                            <div v-for="step in order_timeline" :key="step.key"
+                                class="flex flex-col items-center gap-2">
+                                <el-progress class="w-full"
+                                    :percentage="step.state === 'done' ? 100 : step.state === 'current' ? 50 : 0"
+                                    :stroke-width="12" :status="step.state === 'current' ? 'warning' : 'success'"
                                     striped striped-flow :duration="10" :show-text="false" />
-                                <div class="text-center text-xs font-medium text-slate-600">Order Confirming</div>
-                            </div>
-                            <div class="flex flex-col items-center gap-2">
-                                <el-progress class="w-full" :percentage="100" :stroke-width="12" status="success"
-                                    striped striped-flow :duration="10" :show-text="false" />
-                                <div class="text-center text-xs font-medium text-slate-600">Payment Pending</div>
-                            </div>
-                            <div class="flex flex-col items-center gap-2">
-                                <el-progress class="w-full" :percentage="50" :stroke-width="12" status="warning" striped
-                                    striped-flow :duration="10" :show-text="false" />
                                 <div class="text-center text-xs font-medium text-slate-600 flex items-center gap-1">
-                                    Processing
-                                    <el-icon class="is-loading !text-warning" :size="12">
-                                        <ElIconLoading />
+
+                                    {{ step.title }}
+                                    <el-icon v-if="step.state === 'current'" class="is-loading !text-warning"
+                                        :size="12">
+                                        <Loading />
+                                    </el-icon>
+                                    <el-icon v-else-if="step.state === 'done'" class="!text-emerald-500" :size="12">
+                                        <CircleCheckFilled />
                                     </el-icon>
                                 </div>
                             </div>
-                            <!-- shipping -->
-                            <div class="flex flex-col items-center gap-2">
-                                <el-progress class="w-full" :percentage="0" :stroke-width="12" status="success" striped
-                                    striped-flow :duration="10" :show-text="false" />
-                                <div class="text-center text-xs font-medium text-slate-600">Shipping</div>
-                            </div>
-                            <!-- Delivered -->
-                            <div class="flex flex-col items-center gap-2">
-                                <el-progress class="w-full" :percentage="0" :stroke-width="12" status="success" striped
-                                    striped-flow :duration="10" :show-text="false" />
-                                <div class="text-center text-xs font-medium text-slate-600">Delivered</div>
-                            </div>
                         </div>
                     </section>
-                    <!-- footer -->
-                    <section class="place-self-end mt-8">
-                        <BaseButton type="primary">Make As Ready To Ship</BaseButton>
+                    <section class="place-self-end mt-8 flex flex-wrap gap-3">
+                        <BaseButton plain :disabled="!activeCancelButton" @click="cancelOrderModal">Cancel Order
+                        </BaseButton>
+                        <BaseButton type="primary" :loading="confirmingOrder"
+                            :disabled="!canAdvanceOrder || confirmingOrder" @click="handleAdvanceOrder">
+                            {{ progressOrderStore.currentButton.text }}
+                        </BaseButton>
                     </section>
                 </div>
 
@@ -78,11 +86,30 @@
                 <div class="shadow-sm bg-surface rounded-card p-6 space-y-3">
                     <h2>Product</h2>
                     <hr>
-                    <BaseTable :table-data="tableData">
-                        <el-table-column prop="order_id" label="Product Name & Size" />
-                        <el-table-column prop="created_at" label="Quantity" />
-                        <el-table-column prop="customer" label="Price" />
-                        <el-table-column prop="items" label="Amount" />
+
+                    <BaseTable :table-data="products_order">
+                        <el-table-column prop="order_id" label="Product Name & Size">
+                            <template #default="scope">
+                                <div class="flex items-center gap-2">
+                                    <el-image class="h-16 w-16 rounded-xl object-cover" :src="scope.row.thumbnail || ''"
+                                        :preview-src-list="scope.row.preview_images" preview-teleported fit="cover" />
+                                    <div class="min-w-0">
+                                        <p class="truncate font-semibold text-slate-950">{{ scope.row.name }}</p>
+                                        <p class="truncate text-xs text-slate-500">Size : {{ scope.row.size || '-' }}
+                                        </p>
+                                        <p class="truncate text-xs text-slate-500 flex gap-2">
+                                            <span> Color :</span>
+                                        <div class="w-4 h-4 border border-black"
+                                            :style="{ backgroundColor: scope.row.color }">
+                                        </div>
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="qty" label="Quantity" />
+                        <el-table-column prop="price" label="Price" />
+                        <el-table-column prop="amount" label="Amount" />
                     </BaseTable>
                 </div>
 
@@ -96,32 +123,16 @@
                             </p>
                         </div>
 
-                        <el-tag effect="light" type="warning" class="!rounded-full !px-3 !py-2">
-                            Pending update
+                        <el-tag effect="light" :type="progressTagType" class="!rounded-full !px-3 !py-2">
+
+                            {{ progressOrderStore.currentStepDisplayName }}
                         </el-tag>
                     </div>
 
-                    <!-- <div class="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
-                        <div class="flex items-center gap-2 text-sm text-slate-600">
-                            <el-icon class="is-loading text-amber-500" :size="14">
-                                <Loading />
-                            </el-icon>
-                            <span class="font-medium text-slate-950">Loading...</span>
-                            <span class="text-slate-500">Order timeline is updating in real time.</span>
-                        </div>
-                    </div> -->
-
                     <el-timeline>
-                        <el-timeline-item v-for="step in timelineSteps" :key="step.title" :timestamp="step.time"
-                            placement="top" :type="step.state === 'done'
-                                ? 'success'
-                                : step.state === 'current'
-                                    ? 'warning'
-                                    : 'info'" :color="step.state === 'done'
-                                        ? '#16a34a'
-                                        : step.state === 'current'
-                                            ? '#f59e0b'
-                                            : '#cbd5e1'">
+                        <el-timeline-item v-for="step in order_timeline" :key="step.title" placement="top"
+                            :type="step.state === 'done' ? 'success' : step.state === 'current' ? 'warning' : 'info'"
+                            :color="step.state === 'done' ? '#16a34a' : step.state === 'current' ? '#f59e0b' : '#cbd5e1'">
                             <template #dot>
                                 <span
                                     class="el-timeline-item__node el-timeline-item__node--large inline-flex items-center justify-center rounded-full"
@@ -166,12 +177,9 @@
                                     <span v-if="step.actor">- {{ step.actor }}</span>
                                 </div>
                             </div>
-
                         </el-timeline-item>
                     </el-timeline>
                 </div>
-
-
             </div>
 
             <!-- Right Side -->
@@ -179,11 +187,16 @@
                 <div class="rounded-card border border-border bg-surface p-6 shadow-sm">
                     <div class="flex items-start justify-between gap-4">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Order Summary
+                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                Order Summary
                             </p>
-                            <h2 class="mt-2 text-lg font-semibold text-slate-950">#0758267/90</h2>
+                            <h2 class="mt-2 text-lg font-semibold text-slate-950">
+                                {{ order_summary.order_id || '#--' }}
+                            </h2>
                         </div>
-                        <el-tag effect="light" type="success">Paid</el-tag>
+                        <el-tag effect="light" :type="paymentTagType">
+                            {{ order_summary.payment_status || 'Pending' }}
+                        </el-tag>
                     </div>
 
                     <div class="mt-5 space-y-4">
@@ -195,7 +208,9 @@
 
                         <div class="flex items-center justify-between border-t border-dashed border-slate-200 pt-4">
                             <p class="m-0 text-sm font-semibold text-slate-950">Total Amount</p>
-                            <p class="m-0 text-lg font-bold text-slate-950">$737.00</p>
+                            <p class="m-0 text-lg font-bold text-slate-950">
+                                {{ formatMoney(order_summary.total_price) }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -205,22 +220,26 @@
 
                     <div class="mt-5 flex items-center gap-4 rounded-2xl bg-slate-50 p-4">
                         <div class="grid h-12 w-12 place-items-center rounded-2xl bg-white shadow-sm">
-                            <span class="text-sm font-bold text-slate-800">MC</span>
+                            <span class="text-sm font-bold text-slate-800">PM</span>
                         </div>
                         <div class="min-w-0">
-                            <h3 class="m-0 text-sm font-semibold text-slate-950">Master Card</h3>
-                            <p class="m-0 mt-1 text-sm text-slate-500">xxxx xxxx xxxx 7812</p>
+                            <h3 class="m-0 text-sm font-semibold text-slate-950">
+                                {{ order_summary.payment_method || 'Payment Method' }}
+                            </h3>
+                            <p class="m-0 mt-1 text-sm text-slate-500">
+                                {{ order_summary.payment_provider || 'No provider selected' }}
+                            </p>
                         </div>
                     </div>
 
                     <div class="mt-4 space-y-3 text-sm">
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-slate-500">Transaction ID</span>
-                            <span class="font-medium text-slate-950">#IDN768139059</span>
+                            <span class="font-medium text-slate-950">{{ order_summary.order_id || '-' }}</span>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-slate-500">Card Holder</span>
-                            <span class="font-medium text-slate-950">Gaston Lapierre</span>
+                            <span class="font-medium text-slate-950">{{ order_summary.customer_name || '-' }}</span>
                         </div>
                     </div>
                 </div>
@@ -228,119 +247,314 @@
                 <div class="rounded-card border border-border bg-surface p-6 shadow-sm">
                     <div class="flex items-start gap-4">
                         <div class="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-500">
-                            <span class="text-lg font-bold">GL</span>
+                            <span class="text-lg font-bold">CU</span>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Customer Details
+                            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                Customer Details
                             </p>
-                            <h3 class="m-0 mt-2 text-lg font-semibold text-slate-950">Gaston Lapierre</h3>
-                            <p class="m-0 mt-1 text-sm text-slate-500">hello@dundermuffilin.com</p>
+                            <h3 class="m-0 mt-2 text-lg font-semibold text-slate-950">
+                                {{ order_summary.customer_name || 'Customer' }}
+                            </h3>
+                            <p class="m-0 mt-1 text-sm text-slate-500">
+                                {{ order_summary.customer_email || 'No email available' }}
+                            </p>
                         </div>
                     </div>
 
                     <div class="mt-5 space-y-4 text-sm">
                         <div>
-                            <p class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Contact Number
-                            </p>
-                            <p class="m-0 mt-1 font-medium text-slate-950">(723) 732-760-5760</p>
-                        </div>
-                        <div>
-                            <p class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Shipping Address
-                            </p>
-                            <p class="m-0 mt-1 leading-6 text-slate-700">
-                                Wilson's Jewelers LTD<br>
-                                1344 Hershell Hollow Road,<br>
-                                Tukwila, WA 98168,<br>
-                                United States
+                            <p class="m-0 text-sm font-semibold uppercase tracking-wide">Contact Number</p>
+                            <p class="m-0 mt-1 font-medium text-slate-800 text-xs">
+                                {{ order_summary.customer_phone || '-' }}
                             </p>
                         </div>
                         <div>
-                            <p class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Billing Address
+                            <p class="m-0 text-sm font-semibold uppercase tracking-wide">Shipping Address</p>
+                            <p class="m-0 mt-1 leading-6 text-slate-800 text-xs">
+                                {{ order_summary.shipping_address || 'No shipping address available' }}
                             </p>
-                            <p class="m-0 mt-1 font-medium text-slate-950">Same as shipping address</p>
+                        </div>
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+                            <p class="m-0 text-sm font-semibold uppercase tracking-wide text-amber-800">
+                                Order Note
+                            </p>
+                            <p class="m-0 mt-2 text-xs leading-6 text-amber-900">
+                                {{ selectedOrder?.order_note || 'No order note available.' }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="m-0 text-sm font-semibold uppercase tracking-wide">Billing Address</p>
+                            <p class="m-0 mt-1 text-xs font-medium text-slate-800">
+                                Same as shipping address
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+        <EditOrderDetailModal v-model="isEditOrderModal" :order-id="orderId" :form="formEditOrder" />
+        <CancelNoteModal v-model="isCancelOrderModal" :order-id="orderId" :form="formEditOrder"
+            @submit="handleCancelOrder" :loading="pending" />
+        <RefundNoteModal v-model="isRefundOrderModal" :order-id="orderId" :form="formEditOrder"
+            @submit="handleRefundOrder" />
     </div>
 </template>
 
 <script setup lang="ts">
-
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue';
 import BaseButton from '~/components/ui/BaseButton.vue';
 import BaseTable from '~/components/ui/BaseTable.vue';
 import { CircleCheckFilled, Clock, Loading } from '@element-plus/icons-vue';
+import { useRoute } from 'vue-router';
+import { useAdminOrders } from '~/composables/useAdminOrders';
+import { useAdminOrderDetail } from '~/composables/useAdminOrderDetail';
+import { useProgressOrderStore } from '~/stores/progressOrderStore';
+import { getOrderStatusTagType, getPaymentStatusTagType } from '~/utils/orderStatusTheme';
+import EditOrderDetailModal from './components/EditOrderDetailModal.vue'
+import CancelNoteModal from './components/CancelNoteModal.vue';
+import RefundNoteModal from './components/RefundNoteModal.vue';
 
+const {
+    error,
+    selectedOrder,
+    order_summary,
+    products_order,
+    order_timeline,
+    refundOrder,
+    cancelOrder,
+    refreshOrderDetail,
+    pending,
+} = useAdminOrderDetail();
+
+const {
+    updateOrderStatus,
+    savingStatus,
+    updatingOrderId,
+    fetchOrders,
+} = useAdminOrders();
+
+const progressOrderStore = useProgressOrderStore();
+const route = useRoute();
 
 definePageMeta({
     layout: 'admin',
-    middleware: ['admin-auth']
+    middleware: ['admin-auth'],
+});
+const isEditOrderModal = ref<boolean>(false)
+const isCancelOrderModal = ref<boolean>(false)
+const isRefundOrderModal = ref<boolean>(false)
+type EditOrderForm = {
+    customer?: {
+        shipping_phone: string
+        shipping_address: string
+        shipping_province: string
+        shipping_fee: number
+    }
+    order_note: string
+}
+// handleOrderType
+type handleUpdateOrder = {
+    id: string | number | undefined
+    order_note: string
+    status: string
+}
+
+const formEditOrder = ref<EditOrderForm>({
+    customer: {
+        shipping_phone: '',
+        shipping_address: '',
+        shipping_province: '',
+        shipping_fee: 0,
+    },
+    order_note: '',
+})
+const orderId = computed(() => {
+    const value = route.params.id;
+    return Array.isArray(value) ? value[0] : value;
+});
+
+const normalizeStatus = (value?: string | null) => {
+    return String(value || 'pending').toLowerCase();
+};
+
+const nextStatusMap: Record<string, string> = {
+    order_confirming: 'payment_confirmed',
+    payment_confirmed: 'processing',
+    processing: 'shipped',
+    shipped: 'delivered',
+};
+
+watch(
+    selectedOrder,
+    (order) => {
+        if (order) {
+            progressOrderStore.initFromOrder(order as any);
+            return;
+        }
+
+        progressOrderStore.resetStore();
+    },
+    { immediate: true },
+);
+
+const currentOrderStatus = computed(() => {
+    return normalizeStatus(selectedOrder.value?.status);
+});
+
+const nextOrderStatus = computed(() => {
+    return nextStatusMap[currentOrderStatus.value] || '';
+});
+
+const confirmingOrder = computed(() => {
+    return savingStatus.value && updatingOrderId.value === orderId.value;
+});
+
+const canAdvanceOrder = computed(() => {
+    return Boolean(orderId.value && nextOrderStatus.value);
+});
+
+// Cancel Button Active
+const activeCancelButton = computed(() => {
+    if (currentOrderStatus.value == 'order_confirming' ||
+        currentOrderStatus.value == 'payment_confirmed' ||
+        currentOrderStatus.value == 'processing') {
+        return true;
+    }
+    return false
 })
 
-const tableData = ref([
+// Refund Button Active
+const activeRefundButton = computed(() => {
+    if (
+        currentOrderStatus.value == 'payment_confirmed' ||
+        currentOrderStatus.value == 'processing' ||
+        currentOrderStatus.value == 'shipped' ||
+        currentOrderStatus.value == 'delivered'
+    ) {
+        return true;
+    }
+    return false
+})
 
-])
+// Edit Button Active
+const activeEditProgressButton = computed(() => {
+    if (
+        currentOrderStatus.value == 'order_confirming' ||
+        currentOrderStatus.value == 'payment_confirmed' ||
+        currentOrderStatus.value == 'processing'
+    ) {
+        return true;
+    }
+    return false
+})
 
-const timelineSteps = [
-    {
-        title: 'Order confirmed',
-        description: 'The order was reviewed and approved for fulfillment.',
-        time: 'Today, 09:12 AM',
-        actor: 'Confirmed by Gaston Lapierre',
-        label: 'Done',
-        state: 'done',
-    },
-    {
-        title: 'Payment verified',
-        description: 'Card payment was captured successfully and the receipt was sent.',
-        time: 'Today, 09:18 AM',
-        actor: 'Using Master Card',
-        label: 'Done',
-        state: 'done',
-    },
-    {
-        title: 'Packing in progress',
-        description: 'The warehouse is preparing items for shipment.',
-        time: 'Just now',
-        actor: 'Assigned to warehouse team',
-        label: 'Live',
-        state: 'current',
-    },
-    {
-        title: 'Ready for shipping',
-        description: 'Shipping label will be generated after packing is complete.',
-        time: 'Upcoming',
-        actor: 'Auto step',
-        label: 'Next',
-        state: 'upcoming',
-    },
-    {
-        title: 'Delivered',
-        description: 'Final handoff to the customer once courier scans the parcel.',
-        time: 'Pending',
-        actor: 'Courier tracking',
-        label: 'Later',
-        state: 'upcoming',
-    },
-] as const
+// edit order function 
 
-const order_summaries = ref([
-    {
-        title: 'Sub Total',
-        amount: '$777.00'
-    },
-    {
-        title: 'Discount',
-        amount: '-$60.00'
-    },
-    {
-        title: 'Delivery Charge',
-        amount: '$00.00'
+const editOrder = () => {
+    formEditOrder.value = {
+        customer: {
+            shipping_phone: selectedOrder.value?.shipping_phone ?? '',
+            shipping_address: selectedOrder.value?.shipping_address ?? '',
+            shipping_province: selectedOrder.value?.shipping_province ?? '',
+            shipping_fee: Number(selectedOrder.value?.shipping_fee),
+        },
+        order_note: selectedOrder.value?.order_note ?? '',
+    }
+    isEditOrderModal.value = true
+}
+const refundOrderModal = () => {
+    formEditOrder.value = {
+        order_note: selectedOrder.value?.order_note ?? '',
+    }
+    isRefundOrderModal.value = true
+
+}
+const cancelOrderModal = () => {
+    formEditOrder.value = {
+        order_note: selectedOrder.value?.order_note ?? '',
+    }
+    isCancelOrderModal.value = true
+
+}
+
+
+const handleRefundOrder = async (payload: handleUpdateOrder) => {
+    if (!payload.id) {
+        return;
     }
 
-])
+    await refundOrder(payload);
+    await Promise.all([
+        refreshOrderDetail(payload.id),
+        fetchOrders(),
+    ]);
+    isRefundOrderModal.value = false;
+}
+
+const handleCancelOrder = async (payload: handleUpdateOrder) => {
+    if (!payload.id) {
+        return;
+    }
+
+    await cancelOrder(payload);
+    await Promise.all([
+        refreshOrderDetail(payload.id),
+        fetchOrders(),
+    ]);
+    isCancelOrderModal.value = false;
+}
+
+
+const handleAdvanceOrder = async () => {
+    if (!orderId.value || !nextOrderStatus.value) {
+        return;
+    }
+
+    await updateOrderStatus(orderId.value, nextOrderStatus.value);
+    await refreshOrderDetail(orderId.value);
+
+    if (selectedOrder.value) {
+        progressOrderStore.initFromOrder(selectedOrder.value as any);
+    }
+};
+
+const progressTagType = computed(() => {
+    return getOrderStatusTagType(order_summary.value.status || selectedOrder.value?.status);
+});
+
+const paymentTagType = computed(() => {
+    return getPaymentStatusTagType(order_summary.value.payment_status);
+});
+
+const formatMoney = (value: unknown) => {
+    const amount = Number(value || 0);
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(amount);
+};
+
+const order_summaries = computed(() => {
+    const subtotal = Number(order_summary.value.subtotal_price || 0);
+    const discount = Number(order_summary.value.discount_amount || 0);
+    const shipping = Number(order_summary.value.shipping_fee || 0);
+
+    return [
+        {
+            title: 'Sub Total',
+            amount: formatMoney(subtotal),
+        },
+        {
+            title: 'Discount',
+            amount: `-${formatMoney(discount)}`,
+        },
+        {
+            title: 'Delivery Charge',
+            amount: formatMoney(shipping),
+        },
+    ];
+});
 </script>
 
 <style scoped></style>

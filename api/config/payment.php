@@ -23,7 +23,7 @@ return [
             'merchant' => [
                 'account_id' => env('KHRQR_MERCHANT_ACCOUNT_ID', 'kry_longdy@aclb'),
                 'merchant_name' => env('KHRQR_MERCHANT_NAME', 'Longdy Kry'),
-                'merchant_city' => env('KHRQR_MERCHANT_CITY', 'Takeo'),
+                'merchant_city' => env('KHRQR_MERCHANT_CITY', 'Phnom Penh'),
                 'merchant_id' => env('KHRQR_MERCHANT_ID', '101376578'),
                 'acquiring_bank' => env('KHRQR_ACQUIRING_BANK', 'Dev Bank'),
                 'mobile_number' => env('KHRQR_MOBILE_NUMBER', '85586382575'),

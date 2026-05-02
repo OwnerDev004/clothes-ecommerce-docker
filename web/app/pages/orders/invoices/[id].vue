@@ -6,8 +6,8 @@
           <h1>Invoice</h1>
           <p v-if="orderNumber">Order #{{ orderNumber }}</p>
         </div>
-        <div class="status" :data-status="order?.payment_state || 'unknown'">
-          {{ (order?.payment_state || 'pending').toUpperCase() }}
+        <div class="status" :data-status="order?.payment_status || 'unknown'">
+          {{ (order?.payment_status || 'pending').toUpperCase() }}
         </div>
       </div>
 

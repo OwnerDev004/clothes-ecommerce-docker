@@ -95,7 +95,7 @@
             </BaseCard>
         </section>
 
-        <ProductModal v-model="isFormModal" :mode="modalMode" :product="selectedProduct" :loading="saving"
+        <ProductModal v-model="isFormModal" :mode="modalMode" :product="selectedProduct" :size-options="sizeOptions" :loading="saving"
             @submit="handleProductSubmit" />
 
         <ProductDetailModal v-model="detailModalOpen" :product="selectedDetailProduct" :loading="detailLoading" />

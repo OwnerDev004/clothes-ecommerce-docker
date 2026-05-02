@@ -28,9 +28,18 @@ use App\Http\Controllers\Api\V1\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\CollectionController as AdminCollectionController;
 use App\Http\Controllers\Api\V1\Admin\CustomerController as AdminCustomerController;
+use App\Http\Controllers\Api\V1\Admin\StockPurchaseController as AdminStockPurchaseController;
+use Illuminate\Support\Facades\Broadcast;
 
 
 //** Customers */ 
+
+Broadcast::routes([
+    'middleware' => [
+        'jwt.cookie',
+        \App\Http\Middleware\AuthenticateBroadcastToken::class,
+    ],
+]);
 
 //Client  Auth
 Route::prefix('auth')->group(function () {
@@ -184,7 +193,16 @@ Route::prefix('admin')->group(function () {
         Route::prefix('orders')->group(function () {
             Route::get('/', [AdminOrderController::class, 'index']);
             Route::get('/{id}', [AdminOrderController::class, 'show']);
+            Route::patch('/{id}', [AdminOrderController::class, 'updateOrder']);
             Route::patch('/{id}/status', [AdminOrderController::class, 'updateStatus']);
+
+        });
+
+        Route::prefix('purchases')->group(function () {
+            Route::get('/', [AdminStockPurchaseController::class, 'index']);
+            Route::post('/', [AdminStockPurchaseController::class, 'store']);
+            Route::put('/{id}', [AdminStockPurchaseController::class, 'update']);
+            Route::delete('/{id}', [AdminStockPurchaseController::class, 'destroy']);
         });
 
         Route::prefix('vouchers')->group(function () {

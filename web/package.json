@@ -27,12 +27,15 @@
     "nuxt-vitalizer": "^2.0.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
+    "qrcode": "^1.5.4",
     "swiper": "^11.1.14",
     "vue": "latest",
     "vue-router": "latest"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.2",
-    "@types/node": "^25.2.0"
+    "@types/node": "^25.2.0",
+    "laravel-echo": "^2.3.4",
+    "pusher-js": "^8.5.0"
   }
 }
