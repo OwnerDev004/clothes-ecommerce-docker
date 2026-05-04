@@ -1,65 +1,68 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-10 px-4">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Create account</h1>
-      <p class="text-sm text-gray-600 mt-1">Sign up with email and username.</p>
+  <div class="bg-surface-2 box-border flex items-center justify-center h-screen">
+    <div class="grid grid-cols-1 lg:grid-cols-3  w-[100vw] h-[100vh]">
+      <section class="bg-primary hidden lg:flex justify-center items-center">
+        <NuxtImg src="/img/auth/graphic1.svg" alt="Login graphic" format="webp" loading="lazy" />
+      </section>
+      <section class=" flex justify-center items-center col-span-2 ">
+        <div class="w-[80vw] lg:w-[25vw] bg-surface drop-shadow-xl p-6 rounded-element  space-y-6">
+          <header>
+            <p class="text-xl font-semibold">Create account</p>
+            <p class="text-xs">Sign up with email and username.</p>
+          </header>
+          <el-form label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off">
+            <el-form-item label="Full Name" prop="full_name">
+              <BaseInput placeholder="Your Full Name" type="text" v-model="form.full_name" />
+            </el-form-item>
+            <el-form-item label="Username" prop="user_name">
+              <BaseInput placeholder="Your Username" type="text" v-model="form.user_name" />
+            </el-form-item>
+            <el-form-item label="Email" prop="email">
+              <BaseInput placeholder="Your Email" type="email" v-model="form.email" />
+            </el-form-item>
+            <el-form-item label="Phone" prop="phone">
+              <BaseInput placeholder="Your Phone Number" type="email" v-model="form.phone" />
+            </el-form-item>
+            <el-form-item label="Password" prop="password">
+              <BaseInput placeholder="Your Password" type="password" v-model="form.password" />
+            </el-form-item>
+            <el-form-item label="Gender" prop="gender">
+              <BaseSelect v-model="form.gender" :options="genderOptions" placeholder="Choose your gender"
+                class="w-full" />
+            </el-form-item>
+          </el-form>
+          <div v-if="errorMessage" class="text-danger text-xs grid place-items-center">{{ errorMessage }}
+          </div>
 
-      <form class="mt-6 space-y-4" @submit.prevent="submitSignup">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
-          <input v-model="form.full_name" type="text" class="input" placeholder="Your full name (optional)" />
+          <div class="flex flex-col justify-center gap-4 items-center">
+            <BaseButton type="primary" class="w-[300px]" @click="submitSignup">
+              Sign Up
+            </BaseButton>
+            <div class="flex gap-1">
+              <span class="text-xs"> Already have an account?</span>
+              <NuxtLink to="/auth/login" class="text-xs underline">
+                Sign in
+              </NuxtLink>
+            </div>
+          </div>
+
+
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-          <input v-model="form.user_name" type="text" class="input" placeholder="your_username" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input v-model="form.email" type="email" class="input" placeholder="you@example.com" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input v-model="form.phone" type="text" class="input" placeholder="+1..." />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-          <select v-model="form.gender" class="input">
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input v-model="form.password" type="password" class="input" placeholder="At least 6 characters" />
-        </div>
-
-        <div v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</div>
-
-        <button type="submit" :disabled="loading"
-          class="w-full py-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60">
-          {{ loading ? 'Creating account...' : 'Create account' }}
-        </button>
-      </form>
-
-      <p class="text-sm text-gray-600 mt-4">
-        Already have an account?
-        <NuxtLink to="/auth/login" class="text-indigo-600 font-medium hover:text-indigo-700">
-          <span>Sign in</span>
-        </NuxtLink>
-      </p>
+      </section>
     </div>
+    <CompleteOAuthDialog v-model="authCompleteDialogOpen" />
   </div>
 </template>
 
 <script setup lang="ts">
+import CompleteOAuthDialog from '~/components/frontend/Modal/CompleteOAuthDialog.vue'
+import BaseButton from '~/components/ui/BaseButton.vue'
+import BaseInput from '~/components/ui/BaseInput.vue'
+import BaseSelect from '~/components/ui/BaseSelect.vue'
 import { useAuthStore } from '~/stores/authStore'
 
 definePageMeta({
+  layout: 'guest',
   middleware: ['guest']
 })
 
@@ -67,6 +70,17 @@ const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const router = useRouter()
 const authStore = useAuthStore()
+const authCompleteDialogOpen = ref<boolean>(false)
+const genderOptions = ref<any[]>([
+  {
+    id: 'male',
+    label: 'Male'
+  },
+  {
+    id: 'female',
+    label: 'Female'
+  }
+])
 
 const form = reactive({
   full_name: '',
@@ -80,14 +94,11 @@ const form = reactive({
 const loading = ref(false)
 const errorMessage = ref('')
 
-const applyAuthFromResponse = (response: any) => {
-  const token = response?.data?.access_token ?? null
-  const profile = response?.data?.user ?? response?.data?.customer ?? null
 
-  authStore.setAccessToken(token)
-  authStore.setAuthenticated(Boolean(token) || Boolean(profile))
-  authStore.setUserProfile(profile)
+const shouldCompleteProfile = (profile: any) => {
+  return Boolean(profile?.requires_profile_completion)
 }
+
 
 const submitSignup = async () => {
   errorMessage.value = ''
@@ -103,8 +114,16 @@ const submitSignup = async () => {
       credentials: 'include',
       body: form
     })
-    applyAuthFromResponse(response)
-    await router.replace('/')
+    // applyAuthFromResponse(response)
+    const profile = response?.data?.user ?? response?.data?.customer ?? null
+    console.log(response?.data?.requires_profile_completion);
+    console.log(profile)
+
+    if (shouldCompleteProfile(profile) || response?.data?.requires_profile_completion) {
+      authCompleteDialogOpen.value = true
+      return
+    }
+    await router.replace('/auth/login')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Signup failed. Please try again.'
     authStore.resetAuth()
@@ -114,17 +133,4 @@ const submitSignup = async () => {
 }
 </script>
 
-<style scoped>
-.input {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  outline: none;
-}
-
-.input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-}
-</style>
+<style scoped></style>

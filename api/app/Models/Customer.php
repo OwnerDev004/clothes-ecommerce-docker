@@ -35,7 +35,7 @@ class Customer extends Authenticatable implements JWTSubject
     ];
 
     protected $casts = [
-        'enable_telegram_alerts' => 'boolean',
+        'enable_telegram_alerts' => 'boolean'
     ];
 
     /**
@@ -107,11 +107,18 @@ class Customer extends Authenticatable implements JWTSubject
         return null;
     }
 
-    public function requiresProfileCompletion(): bool
+    public function requiresProfileOauthCompletion(): bool
     {
         if (!$this->oauthAccounts()->exists()) {
             return false;
         }
+
+        return $this->telegram_username === null || $this->telegram_username === '';
+    }
+
+
+    public function requiresTelegramAuthCompletion(): bool
+    {
 
         return $this->telegram_username === null || $this->telegram_username === '';
     }

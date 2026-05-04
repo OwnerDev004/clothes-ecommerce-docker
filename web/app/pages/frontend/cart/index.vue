@@ -142,7 +142,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-            }}
+          }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>

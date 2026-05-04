@@ -110,7 +110,7 @@ const authStore = useAuthStore()
 // state
 const email_subscribe = ref<string>('')
 const errorMessage = ref('')
-const isLoading = ref<Boolean>(false)
+const isLoading = ref<boolean>(false)
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 

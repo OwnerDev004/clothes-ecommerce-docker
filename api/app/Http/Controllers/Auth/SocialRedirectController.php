@@ -208,7 +208,8 @@ class SocialRedirectController extends Controller
             'address' => $customer->address,
             'telegram_username' => $customer->telegram_username,
             'enable_telegram_alerts' => (bool) $customer->enable_telegram_alerts,
-            'requires_profile_completion' => $customer->requiresProfileCompletion(),
+            'requires_profile_completion' => $customer->requiresProfileOauthCompletion(),
+            'requires_telegram_completion' => $customer->requiresTelegramAuthCompletion(),
         ];
     }
 

@@ -17,6 +17,8 @@ docker-compose.override.yml
 /web/.output
 /web/node_modules
 
+#ngrok
+ngrok.yml
 # IDE
 .vscode/
 .idea/

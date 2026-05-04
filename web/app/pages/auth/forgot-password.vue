@@ -1,39 +1,48 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-10">
-    <div class="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Forgot password</h1>
-      <p class="text-sm text-gray-600 mt-1">
-        Enter your account email and we will send a reset link.
-      </p>
+  <div class="bg-surface-2 box-border flex items-center justify-center h-screen">
+    <div class="grid grid-cols-1 lg:grid-cols-3  w-[100vw] h-[100vh]">
+      <section class="bg-primary hidden lg:flex justify-center items-center">
+        <NuxtImg src="/img/auth/graphic1.svg" alt="Login graphic" format="webp" loading="lazy" />
+      </section>
+      <section class=" flex justify-center items-center col-span-2 ">
+        <div class="w-[80vw] lg:w-[30vw] bg-surface p-6 rounded-element  space-y-6">
+          <header>
+            <p class="text-xl font-semibold">Forgot password</p>
+          </header>
+          <el-form label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off">
 
-      <form class="mt-6 space-y-4" @submit.prevent="submitForgotPassword">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input v-model="email" type="email"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500"
-            placeholder="you@example.com" />
+            <el-form-item label="New Password" prop="new_password">
+              <BaseInput placeholder="you@example.com" type="email" :prefix-icon="MessageBox" v-model="email" />
+            </el-form-item>
+          </el-form>
+
+
+          <div class="flex justify-center gap-8 items-center">
+            <BaseButton class="w-[300px]">
+              <NuxtLink to="/auth/login" class="text-xs ">
+                Back to Sign in
+              </NuxtLink>
+            </BaseButton>
+            <BaseButton type="primary" class="w-[300px]" @click="submitForgotPassword">
+              {{ loading ? 'Sending...' : 'Send reset link' }} Reset Paswword
+            </BaseButton>
+
+          </div>
+
+
         </div>
-
-        <div v-if="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</div>
-        <div v-if="successMessage" class="text-sm text-green-600">{{ successMessage }}</div>
-
-        <button type="submit" :disabled="loading"
-          class="w-full py-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60">
-          {{ loading ? 'Sending...' : 'Send reset link' }}
-        </button>
-      </form>
-
-      <p class="text-sm text-gray-600 mt-4">
-        Back to
-        <NuxtLink to="/auth/login" class="text-indigo-600 font-medium hover:text-indigo-700"><span>Sign in</span>
-        </NuxtLink>
-      </p>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { MessageBox } from '@element-plus/icons-vue'
+import BaseButton from '~/components/ui/BaseButton.vue'
+import BaseInput from '~/components/ui/BaseInput.vue'
+
 definePageMeta({
+  layout: 'guest',
   middleware: ['guest']
 })
 
@@ -42,15 +51,12 @@ const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 
 const email = ref('')
 const loading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
+
 
 const submitForgotPassword = async () => {
-  errorMessage.value = ''
-  successMessage.value = ''
 
   if (!email.value) {
-    errorMessage.value = 'Email is required.'
+    ElMessage({ message: 'Email is required', type: 'error' })
     return
   }
 
@@ -63,9 +69,9 @@ const submitForgotPassword = async () => {
       }
     })
 
-    successMessage.value = response?.message || 'If this email exists, a reset link has been sent.'
+    ElMessage({ message: response?.message || 'If this email exists, a reset link has been sent.', type: 'success' })
   } catch (error: any) {
-    errorMessage.value = error?.data?.message || 'Cannot send reset link now.'
+    ElMessage({ message: error?.data?.message || 'Cannot send reset link now.', type: 'error' })
   } finally {
     loading.value = false
   }

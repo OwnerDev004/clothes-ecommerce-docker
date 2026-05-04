@@ -79,7 +79,7 @@ export const useAdminCategory = () => {
     total: 0,
   });
   const deletingId = ref<number | string | null>(null);
-  const statusOption = ref([
+  const statusOption = ref<any[]>([
     { id: null, label: "Select all status" },
     { id: 1, label: "Active" },
     { id: 0, label: "UnActive" },

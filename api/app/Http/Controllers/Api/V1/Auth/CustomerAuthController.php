@@ -359,7 +359,8 @@ class CustomerAuthController extends Controller
     {
         return [
             'customer' => $customer->makeHidden(['password', 'remember_token']),
-            'requires_profile_completion' => $customer->requiresProfileCompletion(),
+            'requires_profile_completion' => $customer->requiresProfileOauthCompletion(),
+            'requires_telegram_completion' => $customer->requiresTelegramAuthCompletion(),
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => auth('customer')->factory()->getTTL() * 60,

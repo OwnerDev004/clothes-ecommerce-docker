@@ -97,12 +97,12 @@
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.name }}</p>
                                         <p class="truncate text-xs text-slate-500">Size : {{ scope.row.size || '-' }}
                                         </p>
-                                        <p class="truncate text-xs text-slate-500 flex gap-2">
-                                            <span> Color :</span>
-                                        <div class="w-4 h-4 border border-black"
-                                            :style="{ backgroundColor: scope.row.color }">
+                                        <div class="truncate text-xs text-slate-500 flex gap-2">
+                                            <p> Color :</p>
+                                            <div class="w-4 h-4 border border-black"
+                                                :style="{ backgroundColor: scope.row.color }">
+                                            </div>
                                         </div>
-                                        </p>
                                     </div>
                                 </div>
                             </template>

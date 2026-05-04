@@ -71,7 +71,8 @@ class CustomerController extends Controller
         }
         $profile = $this->customerRepository->findById($customer->id);
         if ($profile) {
-            $profile->setAttribute('requires_profile_completion', $profile->requiresProfileCompletion());
+            $profile->setAttribute('requires_profile_completion', $profile->requiresProfileOauthCompletion());
+            $profile->setAttribute('requires_telegram_completion', $profile->requiresTelegramAuthCompletion());
         }
 
         return $this->success($profile, "client profile success", 200);
@@ -149,7 +150,8 @@ class CustomerController extends Controller
 
         $customer->save();
 
-        $customer->setAttribute('requires_profile_completion', $customer->requiresProfileCompletion());
+        $customer->setAttribute('requires_profile_completion', $customer->requiresProfileOauthCompletion());
+        $customer->setAttribute('requires_telegram_completion', $customer->requiresTelegramAuthCompletion());
 
         return $this->success($customer, "Customer Updated", 200);
     }
