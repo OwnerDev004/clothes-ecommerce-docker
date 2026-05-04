@@ -11,7 +11,7 @@
                         <!-- Search Icon -->
                         <Icon name="mdi:email"
                             class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-200 text-lg" />
-                        <input type="email" v-model="email_subscribe"
+                        <input type="email" v-model="email_subscribe" ref="email_sub_ref"
                             class="rounded-[62px] bg-gray px-16 outline-none w-full py-2 text-sm desktop:text-lg"
                             placeholder="Enter your email">
                     </div>
@@ -104,20 +104,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useAuthStore } from '~/stores/authStore';
-
-const authStore = useAuthStore()
 // state
 const email_subscribe = ref<string>('')
-const errorMessage = ref('')
 const isLoading = ref<boolean>(false)
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+const email_sub_ref = ref()
 
 // functions
 const subscribeNewsLetter = async () => {
     isLoading.value = true
-    errorMessage.value = ''
     try {
         await $fetch(`${apiBase}/newsletters/subscribe`, {
             method: 'POST',
@@ -126,8 +122,10 @@ const subscribeNewsLetter = async () => {
                 email: email_subscribe.value
             }
         })
+        ElMessage({ message: 'Subscribed Newsletter!', type: 'success' })
     } catch (error: any) {
-        errorMessage.value = error?.data?.message || 'Unable Subscribe Newsletter'
+        ElMessage({ message: `${error?.data?.message}`, type: 'error' })
+        email_sub_ref.value.focus()
     }
     finally {
         isLoading.value = false

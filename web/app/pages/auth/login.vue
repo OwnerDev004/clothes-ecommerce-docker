@@ -138,6 +138,7 @@ const submitLogin = async () => {
     }
     loading.value = true
     try {
+
         const response: any = await $fetch(`${apiBase}/auth/login`, {
             method: 'POST',
             credentials: 'include',

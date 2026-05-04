@@ -141,28 +141,32 @@ onMounted(async () => {
 
     <!-- Brand Section -->
     <section class="py-10 bg-black">
-      <ClientOnly>
-        <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
-          640: { slidesPerView: 3, spaceBetween: 10 },
-          1024: { slidesPerView: 4, spaceBetween: 12 },
-        }" :autoplay="{
-          delay: 5000,
-          disableOnInteraction: true
-        }">
-          <SwiperSlide
-            v-for="slide in brands.length ? brands : [{ id: 'placeholder', name: 'Brand', image_url: '/img/brand/brand1.png' }]"
-            :key="slide.id">
-            <NuxtLink :to="getBrandRoute(slide.id)" class="block rounded-xl bg-gray-200 h-[96px] md:h-[110px]">
-              <div class="w-full h-full px-3 md:px-4 flex items-center justify-center">
-                <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/default_image.webp')"
-                  :alt="slide.name"
-                  class="w-full h-full max-w-[170px] md:max-w-[220px] max-h-[64px] md:max-h-[72px] object-contain object-center"
-                  format="webp" densities="x1" />
-              </div>
-            </NuxtLink>
-          </SwiperSlide>
-        </Swiper>
-      </ClientOnly>
+      <div v-if="brands.length != 0">
+
+        <ClientOnly>
+          <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
+            640: { slidesPerView: 3, spaceBetween: 10 },
+            1024: { slidesPerView: 4, spaceBetween: 12 },
+          }" :autoplay="{
+            delay: 5000,
+            disableOnInteraction: true
+          }">
+            <SwiperSlide v-for="slide in brands" :key="slide.id">
+              <NuxtLink :to="getBrandRoute(slide.id)" class="block rounded-xl bg-gray-200 h-[96px] md:h-[110px]">
+                <div class="w-full h-full px-3 md:px-4 flex items-center justify-center">
+                  <NuxtImg :src="resolveVisualImage((slide as any).image_url, '/img/brand/default_image.webp')"
+                    :alt="slide.name"
+                    class="w-full h-full max-w-[170px] md:max-w-[220px] max-h-[64px] md:max-h-[72px] object-contain object-center"
+                    format="webp" densities="x1" />
+                </div>
+              </NuxtLink>
+            </SwiperSlide>
+          </Swiper>
+        </ClientOnly>
+      </div>
+      <div v-else class="text-sm flex justify-center text-surface">
+        Not available Brands from customers
+      </div>
     </section>
 
     <!-- ALL PRODUCTS -->
@@ -281,33 +285,39 @@ onMounted(async () => {
         OUR HAPPY CUSTOMERS
 
       </h1>
-      <ClientOnly>
-        <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
-          '0': {
-            slidesPerView: 1,
-          },
-          '375': {
-            slidesPerView: 1.5,
-            spaceBetween: 20,
-          },
-          '992': {
-            slidesPerView: 4.1,
-            spaceBetween: 20,
-          },
-        }" :centered-slides="true" @slideChange="onSlideChange" autoplay>
-          <SwiperSlide v-for="(slide, index) in customers_review" :key="index">
-            <div class="p-4 bg-surface-2 rounded-element flex justify-center flex-col">
-              <SharesRating :rating-amount="slide.rating" />
-              <h1 class="font-Poppins text-xl font-bold">{{ slide.customer.full_name }}</h1>
-              <div class="p-3 space-y-3 bg-surface/40 rounded-element">
-                <p class="font-Lato">
-                  {{ slide.comment }}
-                </p>
+      <div v-if="customers_review.length !== 0">
+
+        <ClientOnly>
+          <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
+            '0': {
+              slidesPerView: 1,
+            },
+            '375': {
+              slidesPerView: 1.5,
+              spaceBetween: 20,
+            },
+            '992': {
+              slidesPerView: 4.1,
+              spaceBetween: 20,
+            },
+          }" :centered-slides="true" @slideChange="onSlideChange" autoplay>
+            <SwiperSlide v-for="(slide, index) in customers_review" :key="index">
+              <div class="p-4 bg-surface-2 rounded-element flex justify-center flex-col">
+                <SharesRating :rating-amount="slide.rating" />
+                <h1 class="font-Poppins text-xl font-bold">{{ slide.customer.full_name }}</h1>
+                <div class="p-3 space-y-3 bg-surface/40 rounded-element">
+                  <p class="font-Lato">
+                    {{ slide.comment }}
+                  </p>
+                </div>
               </div>
-            </div>
-          </SwiperSlide>
-        </Swiper>
-      </ClientOnly>
+            </SwiperSlide>
+          </Swiper>
+        </ClientOnly>
+      </div>
+      <div v-else class="flex justify-center text-sm">
+        Not available feedback from customers
+      </div>
     </section>
   </main>
 </template>
