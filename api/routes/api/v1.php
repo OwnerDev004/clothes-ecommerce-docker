@@ -29,6 +29,10 @@ use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryControl
 use App\Http\Controllers\Api\V1\Admin\CollectionController as AdminCollectionController;
 use App\Http\Controllers\Api\V1\Admin\CustomerController as AdminCustomerController;
 use App\Http\Controllers\Api\V1\Admin\StockPurchaseController as AdminStockPurchaseController;
+use App\Http\Controllers\Api\V1\Admin\ModuleController as AdminModuleController;
+use App\Http\Controllers\Api\V1\Admin\RoleController as AdminRolesController;
+use App\Http\Controllers\Api\V1\Admin\AdminController as AdminUsersController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use Illuminate\Support\Facades\Broadcast;
 
 
@@ -44,7 +48,7 @@ Broadcast::routes([
 //Client  Auth
 Route::prefix('auth')->group(function () {
     Route::post("/login", [CustomerAuthController::class, 'login']);
-    Route::post("/register", [CustomerAuthController::class, 'register']);
+    Route::post("/register", [CustomerAuthController::class, 'reg ister']);
     Route::post('/forgot_password', [CustomerAuthController::class, 'forgotPassword']);
     Route::post('/reset_password', [CustomerAuthController::class, 'resetPassword']);
     Route::post('/oauth/cookie', [CustomerAuthController::class, 'storeAccessTokenCookie']);
@@ -158,7 +162,7 @@ Route::prefix('admin')->group(function () {
     // Admin Auth
     Route::post("/login", [AdminAuthController::class, 'login']);
     Route::post("/register", [AdminAuthController::class, 'register']);
-    Route::middleware(['auth:admin'])->group(function () {
+    Route::middleware(['auth:admin', 'admin.permission'])->group(function () {
         Route::prefix('auth')->group(function () {
             Route::get('/profile', [AdminAuthController::class, 'show']);
         });
@@ -244,6 +248,36 @@ Route::prefix('admin')->group(function () {
             Route::put('/{collection}', [AdminCollectionController::class, 'update']);
             Route::delete('/{collection}', [AdminCollectionController::class, 'destroy']);
         });
+
+        Route::prefix('roles')->group(function () {
+            Route::get('/', [AdminRolesController::class, 'index']);
+            Route::get('/{role:id}', [AdminRolesController::class, 'show']);
+            Route::post('/', [AdminRolesController::class, 'store']);
+            Route::put('/{role:id}', [AdminRolesController::class, 'update']);
+            Route::patch('/{role:id}', [AdminRolesController::class, 'modify']);
+            Route::delete('/{role:id}', [AdminRolesController::class, 'destroy']);
+
+        });
+
+        Route::prefix('modules')->group(function () {
+            Route::get('/', [AdminModuleController::class, 'index']);
+        });
+
+        Route::prefix('admins')->group(function () {
+            Route::get('/', [AdminUsersController::class, 'index']);
+            Route::get('/roles', [AdminUsersController::class, 'roleOptions']);
+            Route::get('/{admin:id}', [AdminUsersController::class, 'show']);
+            Route::post('/', [AdminUsersController::class, 'store']);
+            Route::put('/{admin:id}', [AdminUsersController::class, 'update']);
+            Route::delete('/{admin:id}', [AdminUsersController::class, 'destroy']);
+        });
+
+        Route::prefix('setting')->group(function () {
+            Route::get('/', [AdminSettingController::class, 'index']);
+            Route::put('/', [AdminSettingController::class, 'update']);
+        });
+
+
     });
 
 

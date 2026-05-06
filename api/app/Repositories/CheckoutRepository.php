@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\VoucherUse;
+use App\Repositories\AppSettingRepository;
 use App\Services\Api\V1\OrderRealtimeAlertService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ class CheckoutRepository
     public function __construct(
         private readonly VoucherRepository $voucherRepository,
         private readonly OrderRealtimeAlertService $orderRealtimeAlertService,
+        private readonly AppSettingRepository $appSettingRepository,
     )
     {
     }
@@ -84,7 +86,7 @@ class CheckoutRepository
             $subtotal = round($subtotal, 2);
             [$voucher, $discount] = $this->resolveVoucherDiscount($customerId, $payload, $subtotal);
 
-            $shippingFee = $this->calculateShippingFee((string) $payload['shipping_province']);
+            $shippingFee = $this->calculateShippingFee((string) $payload['shipping_province'], $subtotal);
             $total = round($subtotal - $discount + $shippingFee, 2);
 
             if (array_key_exists('grand_total', $payload) && $payload['grand_total'] !== null && $payload['grand_total'] !== '') {
@@ -170,10 +172,35 @@ class CheckoutRepository
         });
     }
 
-    private function calculateShippingFee(string $shippingProvince): float
+    private function calculateShippingFee(string $shippingProvince, float $subtotal): float
     {
         $province = strtolower(trim($shippingProvince));
-        $rates = [
+        $settings = $this->appSettingRepository->current();
+
+        $freeShippingThreshold = (float) ($settings->free_shipping_threshold ?? 0);
+        if ($freeShippingThreshold > 0 && $subtotal >= $freeShippingThreshold) {
+            return 0.0;
+        }
+
+        $shippingRates = collect($settings->shipping_rates ?? [])
+            ->mapWithKeys(function ($row) {
+                $key = strtolower(trim((string) ($row['province'] ?? '')));
+                $fee = (float) ($row['fee'] ?? 0);
+
+                return $key !== '' ? [$key => $fee] : [];
+            })
+            ->all();
+
+        if (array_key_exists($province, $shippingRates)) {
+            return (float) $shippingRates[$province];
+        }
+
+        $defaultShippingFee = (float) ($settings->shipping_fee ?? 0);
+        if ($defaultShippingFee > 0) {
+            return $defaultShippingFee;
+        }
+
+        $legacyRates = [
             'phnom penh' => 1.50,
             'kandal' => 2.00,
             'siem reap' => 2.50,
@@ -181,7 +208,7 @@ class CheckoutRepository
             'preah sihanouk' => 3.00,
         ];
 
-        return $rates[$province] ?? 3.50;
+        return $legacyRates[$province] ?? 3.50;
     }
 
     private function resolveVoucherDiscount(int $customerId, array $payload, float $subtotal): array

@@ -57,7 +57,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.gender || 'None'
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -68,7 +68,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.email || 'None'
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -78,7 +78,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.phone || 'None'
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -88,7 +88,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.address || 'None'
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -99,7 +99,7 @@
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.telegram_username
                                             || 'None'
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -123,13 +123,13 @@
                                     @click="deleteCustomer(scope.row)">
                                     <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </BaseButton> -->
-                                <BaseButton link type="info" size="default" @click="viewCustomer(scope.row)">
+                                <BaseButton v-if="can('customers', 'view')" link type="info" size="default" @click="viewCustomer(scope.row)">
                                     <Icon name="ic:outline-remove-red-eye" class="text-base" />
                                 </BaseButton>
-                                <BaseButton link type="primary" size="default" @click="editCustomer(scope.row)">
+                                <BaseButton v-if="can('customers', 'edit')" link type="primary" size="default" @click="editCustomer(scope.row)">
                                     <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </BaseButton>
-                                <BaseButton link type="warning" size="default" :loading="sendingMailId == scope.row.id"
+                                <BaseButton v-if="can('customers', 'edit')" link type="warning" size="default" :loading="sendingMailId == scope.row.id"
                                     @click="resetCustomerPassword(scope.row)">
                                     <Icon name="material-symbols:mail-shield-outline" class="text-base" />
                                 </BaseButton>
@@ -162,10 +162,13 @@ import BaseSelect from '~/components/ui/BaseSelect.vue';
 import BaseTable from '~/components/ui/BaseTable.vue';
 import { useAdminCustomer } from '~/composables/useAdminCustomer';
 import { customerStatus, getDisplayCustomerStatus } from '~/enums/customerStatus';
+import { useAdminAuthStore } from '~/stores/adminAuthStore';
 definePageMeta({
     layout: 'admin',
     middleware: ['admin-auth'],
 })
+const adminAuthStore = useAdminAuthStore()
+const can = adminAuthStore.can
 const {
     filters,
     deletingId,

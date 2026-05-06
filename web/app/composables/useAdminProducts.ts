@@ -30,7 +30,7 @@ type ProductFiltersPayload = {
   brands?: Array<{ id: number | string; name?: string | null }>;
 };
 
-type ProductSubmitPayload = {
+export type ProductSubmitPayload = {
   mode: "create" | "edit";
   productId: number | string | null;
   form: {
@@ -178,7 +178,7 @@ export const useAdminProducts = () => {
   );
 
   const categoryOptions = computed(() => [
-    { id: null, label: "All Categories" },
+    { id: "", label: "All Categories" },
     ...(filterOptionsResponse.value?.categories || []).map((item) => ({
       id: item.id,
       label: item.name || "Uncategorized",
@@ -186,7 +186,7 @@ export const useAdminProducts = () => {
   ]);
 
   const brandOptions = computed(() => [
-    { id: null, label: "All Brands" },
+    { id: "", label: "All Brands" },
     ...(filterOptionsResponse.value?.brands || []).map((item) => ({
       id: item.id,
       label: item.name || "Brand",
@@ -194,7 +194,7 @@ export const useAdminProducts = () => {
   ]);
 
   const colorOptions = computed(() => [
-    { id: null, label: "All Colors" },
+    { id: "", label: "All Colors" },
     ...(filterOptionsResponse.value?.colors || []).map((item) => ({
       id: item.id,
       label: item.name || item.id,
@@ -202,7 +202,7 @@ export const useAdminProducts = () => {
   ]);
 
   const sizeOptions = computed(() => [
-    { id: null, label: "All Sizes" },
+    { id: "", label: "All Sizes" },
     ...(filterOptionsResponse.value?.sizes || []).map((item) => ({
       id: item.id,
       label: item.name || "Size",
@@ -482,7 +482,6 @@ export const useAdminProducts = () => {
   const handleProductSubmit = async (payload: ProductSubmitPayload) => {
     try {
       saving.value = true;
-
       if (payload.mode === "edit" && payload.productId) {
         await updateProductRequest(payload);
         ElMessage.success("Product updated.");

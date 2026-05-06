@@ -17,7 +17,8 @@
 
                             <div class="flex flex-wrap gap-3">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-                                <BaseButton type="primary" @click="addProduct">Add Product</BaseButton>
+                                <BaseButton v-if="can('products', 'create')" type="primary" @click="addProduct">Add
+                                    Product</BaseButton>
                             </div>
                         </div>
 
@@ -68,14 +69,16 @@
 
                         <el-table-column fixed="right" label="Action" min-width="160">
                             <template #default="scope">
-                                <el-button link type="success" size="default" @click="openProductDetail(scope.row.id)">
+                                <el-button v-if="can('products', 'view')" link type="success" size="default"
+                                    @click="openProductDetail(scope.row.id)">
                                     <Icon name="ic:twotone-remove-red-eye" class="text-base" />
                                 </el-button>
-                                <el-button link type="danger" size="default" :loading="deletingId === scope.row.id"
-                                    @click="deleteProduct(scope.row)">
+                                <el-button v-if="can('products', 'delete')" link type="danger" size="default"
+                                    :loading="deletingId === scope.row.id" @click="deleteProduct(scope.row)">
                                     <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </el-button>
-                                <el-button link type="primary" size="default" @click="editProduct(scope.row)">
+                                <el-button v-if="can('products', 'edit')" link type="primary" size="default"
+                                    @click="editProduct(scope.row)">
                                     <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </el-button>
                             </template>
@@ -95,8 +98,8 @@
             </BaseCard>
         </section>
 
-        <ProductModal v-model="isFormModal" :mode="modalMode" :product="selectedProduct" :size-options="sizeOptions" :loading="saving"
-            @submit="handleProductSubmit" />
+        <ProductModal v-model="isFormModal" :mode="modalMode" :product="selectedProduct" :size-options="sizeOptions"
+            :loading="saving" @submit="handleProductSubmit" />
 
         <ProductDetailModal v-model="detailModalOpen" :product="selectedDetailProduct" :loading="detailLoading" />
     </div>
@@ -112,11 +115,14 @@ import BaseTable from '~/components/ui/BaseTable.vue'
 import ProductModal from './components/Modal.vue'
 import ProductDetailModal from './components/DetailModal.vue'
 import { useAdminProducts } from '~/composables/useAdminProducts'
+import { useAdminAuthStore } from '~/stores/adminAuthStore'
 
 definePageMeta({
     layout: 'admin',
     middleware: ['admin-auth'],
 })
+const adminAuthStore = useAdminAuthStore()
+const can = adminAuthStore.can
 
 const {
     filters,

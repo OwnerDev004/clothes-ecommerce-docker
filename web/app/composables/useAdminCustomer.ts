@@ -74,7 +74,7 @@ type CustomerSubmitPayload = {
 };
 
 type SelectOption = {
-  id: string | number | boolean | null;
+  id: string | number;
   label: string;
 };
 
@@ -113,7 +113,7 @@ export const useAdminCustomer = () => {
   ]);
 
   const statusOptions = reactive<SelectOption[]>([
-    { id: null, label: "All Status" },
+    { id: "", label: "All Status" },
     { id: customerStatus.Active, label: "Active" },
     { id: customerStatus.Inactive, label: "Disable Account" },
   ]);

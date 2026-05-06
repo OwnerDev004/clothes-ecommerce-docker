@@ -11,8 +11,8 @@
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-                                <BaseInput v-model="filters.search_txt" placeholder="Search product, size, color, note..."
-                                    clearable />
+                                <BaseInput v-model="filters.search_txt"
+                                    placeholder="Search product, size, color, note..." clearable />
                                 <BaseSelect v-model="filters.product_variant_id" :options="variantFilterOptions"
                                     placeholder="All Variants" class="w-full" />
                             </div>
@@ -35,7 +35,8 @@
                                             {{ scope.row.variant?.product?.name || 'Product Variant' }}
                                         </p>
                                         <p class="m-0 mt-1 truncate text-xs text-slate-500">
-                                            {{ [scope.row.variant?.size?.name, scope.row.variant?.color].filter(Boolean).join(' • ') || '-' }}
+                                            {{ [scope.row.variant?.size?.name,
+                                            scope.row.variant?.color].filter(Boolean).join(' • ') || '-' }}
                                         </p>
                                     </div>
                                 </template>
@@ -75,8 +76,7 @@
                                             <Icon name="solar:pen-new-round-broken" class="text-base" />
                                         </BaseButton>
                                         <BaseButton link type="danger" size="default"
-                                            :loading="deletingId === scope.row.id"
-                                            @click="deletePurchase(scope.row)">
+                                            :loading="deletingId === scope.row.id" @click="deletePurchase(scope.row)">
                                             <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                         </BaseButton>
                                     </div>
@@ -94,8 +94,7 @@
 
                         <el-pagination v-if="pagination.total > pagination.per_page" background
                             layout="prev, pager, next" :current-page="pagination.current_page"
-                            :page-size="pagination.per_page" :total="pagination.total"
-                            @current-change="setPage" />
+                            :page-size="pagination.per_page" :total="pagination.total" @current-change="setPage" />
                     </section>
                 </div>
             </BaseCard>
@@ -132,6 +131,7 @@ const {
     pagination,
     variantOptions,
     variantFilterOptions,
+    resetFilters,
     modalOpen,
     modalMode,
     selectedPurchase,

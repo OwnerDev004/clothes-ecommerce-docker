@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\AdminRegisterRequest;
 use App\Http\Requests\Api\V1\Auth\AdminLoginRequest;
 use App\Repositories\Admin\AdminRepository;
+use App\Repositories\Admin\RoleRepository;
 use App\Traits\ApiResponse;
 
 use Request;
@@ -15,10 +16,12 @@ class AdminAuthController extends Controller
 {
     use ApiResponse;
     protected $adminRepository;
+    protected RoleRepository $roleRepository;
 
-    public function __construct(AdminRepository $adminRepo)
+    public function __construct(AdminRepository $adminRepo, RoleRepository $roleRepository)
     {
         $this->adminRepository = $adminRepo;
+        $this->roleRepository = $roleRepository;
 
     }
 
@@ -84,12 +87,14 @@ class AdminAuthController extends Controller
             return $this->error('Credentials invalid', 401);
         }
 
+        $permissionMatrix = $this->roleRepository->permissionMatrixForSlug((string) $admin->role);
+
         return $this->success([
-            // 'customer' => $customer->makeHidden(['password', 'created_at', 'updated_at']),
             'admin_data' => $admin,
             'admin_access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => auth('admin')->factory()->getTTL() * 60,
+            'permission_matrix' => $permissionMatrix,
         ], 'Login successful');
     }
 

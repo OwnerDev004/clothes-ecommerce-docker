@@ -7,17 +7,25 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Repositories\AppSettingRepository;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardService
 {
     private const CACHE_KEY = 'admin:dashboard:summary';
     private const CACHE_TTL_SECONDS = 60;
-    private const LOW_STOCK_THRESHOLD = 5;
+
+    public function __construct(
+        private readonly AppSettingRepository $settingRepository,
+    ) {
+    }
 
     public function summary(): array
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL_SECONDS, function () {
+        $settings = $this->settingRepository->current();
+        $lowStockThreshold = max(0, (int) ($settings->low_stock_threshold ?? 5));
+
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL_SECONDS, function () use ($lowStockThreshold) {
             $today = now()->startOfDay();
             $weekStart = now()->startOfWeek();
             $weekEnd = now()->endOfWeek();
@@ -35,7 +43,7 @@ class DashboardService
             $weeklySales = $this->buildWeeklySalesTrend();
             $recentOrders = $this->buildRecentOrders();
             $topCategories = $this->buildTopCategories();
-            $lowStockItems = $this->buildLowStockItems();
+            $lowStockItems = $this->buildLowStockItems($lowStockThreshold);
             $statusBreakdown = $this->buildStatusBreakdown();
 
             return [
@@ -45,7 +53,7 @@ class DashboardService
                     'pending_orders' => Order::query()->where('status', 'pending')->count(),
                     'active_products' => Product::query()->count(),
                     'low_stock_items' => ProductVariant::query()
-                        ->where('stock_quantity', '<=', self::LOW_STOCK_THRESHOLD)
+                        ->where('stock_quantity', '<=', $lowStockThreshold)
                         ->count(),
                     'customers' => Customer::query()->count(),
                 ],
@@ -145,11 +153,11 @@ class DashboardService
     /**
      * @return array<int, array<string, mixed>>
      */
-    protected function buildLowStockItems(): array
+    protected function buildLowStockItems(int $threshold): array
     {
         return ProductVariant::query()
             ->with(['product:id,name,slug', 'size:id,name'])
-            ->where('stock_quantity', '<=', self::LOW_STOCK_THRESHOLD)
+            ->where('stock_quantity', '<=', $threshold)
             ->orderBy('stock_quantity')
             ->limit(10)
             ->get()

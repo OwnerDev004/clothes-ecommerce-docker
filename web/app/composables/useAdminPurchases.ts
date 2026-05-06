@@ -163,12 +163,16 @@ export const useAdminPurchases = () => {
         headers: resolveAuthHeaders(),
       });
 
-      const rows = Array.isArray(response?.data) ? response.data : response?.data || [];
+      const rows = Array.isArray(response?.data)
+        ? response.data
+        : response?.data || [];
       variantOptions.value = rows.map(normalizeVariant);
       return variantOptions.value;
     } catch (err: any) {
       if (!silent) {
-        ElMessage.error(err?.data?.message || "Failed to load product variants.");
+        ElMessage.error(
+          err?.data?.message || "Failed to load product variants.",
+        );
       }
 
       throw err;
@@ -252,7 +256,10 @@ export const useAdminPurchases = () => {
     saving.value = true;
 
     try {
-      const isEdit = payload.mode === "edit" && payload.purchaseId !== null && payload.purchaseId !== undefined;
+      const isEdit =
+        payload.mode === "edit" &&
+        payload.purchaseId !== null &&
+        payload.purchaseId !== undefined;
       const url = isEdit
         ? `${apiBase}/admin/purchases/${payload.purchaseId}`
         : `${apiBase}/admin/purchases`;
@@ -269,7 +276,11 @@ export const useAdminPurchases = () => {
         },
       });
 
-      ElMessage.success(isEdit ? "Purchase updated successfully." : "Purchase created successfully.");
+      ElMessage.success(
+        isEdit
+          ? "Purchase updated successfully."
+          : "Purchase created successfully.",
+      );
       void refreshAll(true).catch(() => undefined);
       return true;
     } catch (err: any) {
@@ -315,7 +326,7 @@ export const useAdminPurchases = () => {
   };
 
   const variantFilterOptions = computed(() => [
-    { id: null, label: "All Variants" },
+    { id: "", label: "All Variants" },
     ...variantOptions.value,
   ]);
 
@@ -358,7 +369,9 @@ export const useAdminPurchases = () => {
 
   const selectedVariantLabel = computed(() => {
     return (id: number | string | null | undefined) => {
-      const variant = variantOptions.value.find((item) => String(item.id) === String(id));
+      const variant = variantOptions.value.find(
+        (item) => String(item.id) === String(id),
+      );
       return variant?.label || "Select a variant";
     };
   });
@@ -382,6 +395,7 @@ export const useAdminPurchases = () => {
     fetchPurchases,
     refreshAll,
     savePurchase,
+    resetFilters,
     deletePurchase,
     setPage,
     selectedVariantLabel,

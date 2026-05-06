@@ -71,6 +71,7 @@ import BaseInput from '~/components/ui/BaseInput.vue';
 import BaseImageUpload from '~/components/ui/BaseImageUpload.vue'
 import BaseSelect from '~/components/ui/BaseSelect.vue'
 import BaseModal from '~/components/ui/BaseModal.vue';
+import type { AdminCategoryRecord } from '~/composables/useAdminCategory';
 const model = defineModel<boolean>()
 const props = withDefaults(
     defineProps<{

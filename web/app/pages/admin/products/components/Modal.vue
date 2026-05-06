@@ -9,6 +9,7 @@ import BaseButton from '~/components/ui/BaseButton.vue'
 import type { AdminProductRecord, AdminProductImageRecord, AdminProductVariantRecord } from '~/composables/useAdminProduct'
 
 type ProductForm = {
+    mode: 'edit' | 'create'
     name: string
     category_id: string | number | null
     status: 'draft' | 'active' | 'archived'
@@ -20,7 +21,7 @@ type ProductVariantForm = {
     id?: number | string | null
     sku: string
     color: string
-    size_id: string | number | null
+    size: string | number | null
     stock_quantity: string
     sale_price: string
     cost_price: string
@@ -43,13 +44,13 @@ const props = withDefaults(
         modelValue: boolean
         mode?: 'create' | 'edit'
         product?: AdminProductRecord | null
-        sizeOptions?: Array<{ id: number | string | null; label: string }>
+        sizeOptions?: Array<{ id: number | string; label: string }>
         loading?: boolean
     }>(),
     {
         mode: 'create',
         product: null,
-        sizeOptions: () => [{ id: null, label: 'Select size' }],
+        sizeOptions: () => [{ id: "", label: 'Select size' }],
         loading: false,
     },
 )
@@ -108,7 +109,7 @@ const createVariant = (index = 0, productName = ''): ProductVariantForm => {
     return {
         sku: `${prefix}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
         color: '#000000',
-        size_id: null,
+        size: null,
         stock_quantity: '',
         sale_price: '',
         cost_price: '',
@@ -120,6 +121,7 @@ const form = reactive<{
     product_variants: ProductVariantForm[]
 }>({
     product: {
+        mode: 'create',
         name: '',
         category_id: null,
         status: 'active',
@@ -192,7 +194,7 @@ const hydrateFromProduct = (product: AdminProductRecord | null) => {
                 id: item?.id ?? null,
                 sku: String(item?.sku || createVariant(index, product.name).sku),
                 color: String(item?.color || '#000000'),
-                size_id: item?.size_id ?? item?.size?.id ?? null,
+                size: item?.size_id ?? item?.size?.id ?? null,
                 stock_quantity: String(item?.stock_quantity ?? ''),
                 sale_price: String(item?.sell_price ?? product.price ?? ''),
                 cost_price: String(item?.cost_price ?? product.price ?? ''),
@@ -506,7 +508,7 @@ onBeforeUnmount(() => {
                         </el-form-item>
 
                         <el-form-item :label="`Size ${index + 1}`" :prop="`product_variants.${index}.size_id`">
-                            <BaseSelect v-model="variant.size_id" :options="props.sizeOptions || []"
+                            <BaseSelect v-model="variant.size" :options="props.sizeOptions || []"
                                 placeholder="Select size" class="w-full" />
                         </el-form-item>
 

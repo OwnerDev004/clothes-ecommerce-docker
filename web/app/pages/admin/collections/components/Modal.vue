@@ -8,6 +8,7 @@ import BaseModal from '~/components/ui/BaseModal.vue'
 import BaseSelect from '~/components/ui/BaseSelect.vue'
 import { useAdminCategory } from '~/composables/useAdminCategory'
 import { useAdminProducts } from '~/composables/useAdminProducts'
+import type { AdminCollectionsRecord } from '~/composables/useAdminCollections'
 
 type CollectionProductSummary = {
     id: number | string

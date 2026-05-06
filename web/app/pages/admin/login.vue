@@ -37,6 +37,7 @@ const submitLogin = async () => {
 
     const token = response?.data?.admin_access_token
     const admin_data = response?.data?.admin_data
+    const permissionMatrix = response?.data?.permission_matrix || null
     if (!token) {
       throw new Error('Login token was not returned.')
     }
@@ -44,6 +45,7 @@ const submitLogin = async () => {
     adminAuthStore.setAccessToken(token)
     adminAuthStore.setAuthenticated(true)
     adminAuthStore.setAdminProfile(admin_data)
+    adminAuthStore.setPermissionMatrix(permissionMatrix)
     await router.replace('/admin/dashboard')
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Admin login failed.'

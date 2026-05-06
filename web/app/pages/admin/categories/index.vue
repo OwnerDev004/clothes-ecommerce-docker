@@ -16,7 +16,7 @@
 
                             <div class="flex flex-wrap gap-3">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-                                <BaseButton type="primary" @click="addCategory">Add Category</BaseButton>
+                                <BaseButton v-if="can('categories', 'create')" type="primary" @click="addCategory">Add Category</BaseButton>
                             </div>
                         </div>
 
@@ -59,11 +59,11 @@
 
                         <el-table-column fixed="right" label="Action">
                             <template #default="scope">
-                                <BaseButton link type="danger" size="default" :loading="deletingId === scope.row.id"
+                                <BaseButton v-if="can('categories', 'delete')" link type="danger" size="default" :loading="deletingId === scope.row.id"
                                     @click="deleteCategory(scope.row.id)">
                                     <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </BaseButton>
-                                <BaseButton link type="primary" size="default" @click="editCategory(scope.row)">
+                                <BaseButton v-if="can('categories', 'edit')" link type="primary" size="default" @click="editCategory(scope.row)">
                                     <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </BaseButton>
                             </template>
@@ -95,12 +95,15 @@ import BaseInput from '~/components/ui/BaseInput.vue';
 import BaseSelect from '~/components/ui/BaseSelect.vue';
 import BaseTable from '~/components/ui/BaseTable.vue';
 import { useAdminCategory } from '~/composables/useAdminCategory';
+import { useAdminAuthStore } from '~/stores/adminAuthStore';
 import CategoryModal from './components/Modal.vue'
 // pageMeta
 definePageMeta({
     layout: 'admin',
     middleware: ['admin-auth']
 })
+const adminAuthStore = useAdminAuthStore()
+const can = adminAuthStore.can
 const {
     filters,
     pagination,

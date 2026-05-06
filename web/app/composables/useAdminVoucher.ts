@@ -53,7 +53,7 @@ export const useAdminVoucher = () => {
   });
 
   const statusOptions = [
-    { id: null, label: "All Status" },
+    { id: "", label: "All Status" },
     { id: 1, label: "Active" },
     { id: 0, label: "Inactive" },
   ];

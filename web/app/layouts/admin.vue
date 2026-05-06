@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useOrderRealtimeStore } from '~/stores/orderRealtimeStore'
 definePageMeta({
     layout: false,
@@ -24,7 +25,28 @@ const orderDetailAlert = useOrderRealtimeStore()
 import { useAdminAuthStore } from '~/stores/adminAuthStore'
 const router = useRouter()
 const adminAuthStore = useAdminAuthStore()
+const config = useRuntimeConfig()
+const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+const { accessToken } = storeToRefs(adminAuthStore)
 const isAuthenticated = computed(() => adminAuthStore.isAuthenticated || Boolean(adminAuthStore.accessToken))
+const can = adminAuthStore.can
+const isSuperAdmin = adminAuthStore.isSuperAdmin
+const appName = ref('Clothes Shop')
+
+const resolveAuthHeaders = () => (accessToken.value ? { Authorization: `Bearer ${accessToken.value}` } : undefined)
+
+const loadAppSetting = async () => {
+    try {
+        const response: any = await $fetch(`${apiBase}/admin/setting`, {
+            method: 'GET',
+            headers: resolveAuthHeaders(),
+        })
+
+        appName.value = response?.data?.app_name || appName.value
+    } catch {
+        // Keep the default brand label if settings are unavailable.
+    }
+}
 
 const handleLogout = async () => {
     adminAuthStore.resetAuth()
@@ -38,6 +60,8 @@ type NavItem = {
     icon: any
     badge?: string
     disabled?: boolean
+    moduleKey?: string
+    action?: string
 }
 
 type NavGroup = {
@@ -48,45 +72,65 @@ type NavGroup = {
 const navigationGroups: NavGroup[] = [
     {
         title: 'Overview',
-        items: [{ index: '/admin/dashboard', label: 'Dashboard', icon: House, badge: 'Live' }],
+        items: [{ index: '/admin/dashboard', label: 'Dashboard', icon: House, badge: 'Live', moduleKey: 'dashboard' }],
     },
     {
         title: 'Catalog',
         items: [
-            { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live' },
-            { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live' },
-            { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Live' },
+            { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live', moduleKey: 'products' },
+            { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live', moduleKey: 'categories' },
+            { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Live', moduleKey: 'collections' },
         ],
     },
     {
         title: 'Inventory',
         items: [
-            { index: '/admin/purchases', label: 'Purchases', icon: Box, badge: 'Live' },
+            { index: '/admin/purchases', label: 'Purchases', icon: Box, badge: 'Live', moduleKey: 'purchases' },
         ],
     },
     {
         title: 'Commerce',
         items: [
-            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', disabled: true },
-            { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Live' },
-            { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live' },
+            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', disabled: true, moduleKey: 'orders' },
+            { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Live', moduleKey: 'customers' },
+            { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live', moduleKey: 'promotions' },
         ],
     },
     {
         title: 'Reports',
         items: [
-            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Live' }
+            { index: '/admin/analytics', label: 'Analytics', icon: DataLine, badge: 'Live', moduleKey: 'analytics' }
         ],
     },
     {
         title: 'Settings',
         items: [
-            { index: '/admin/roles', label: 'Admin Role', icon: User, badge: 'Soon' },
-            { index: '/admin/roles/permission', label: 'Role Permission', icon: User, badge: 'Soon' },
-            { index: '/admin/setting', label: 'Admin Setting', icon: Setting, badge: 'Soon' }
+            { index: '/admin/roles', label: 'Admin Role', icon: User, badge: 'Soon', moduleKey: 'roles' },
+            { index: '/admin/roles/permission', label: 'Role Permission', icon: User, badge: 'Soon', moduleKey: 'roles' },
+            { index: '/admin/admins', label: 'Admins', icon: User, badge: 'Live', moduleKey: 'admins' },
+            { index: '/admin/setting', label: 'Admin Setting', icon: Setting, badge: 'Live', moduleKey: 'setting' }
         ],
     },
 ]
+
+const visibleNavigationGroups = computed(() => {
+    if (isSuperAdmin.value) {
+        return navigationGroups
+    }
+
+    return navigationGroups
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => !item.moduleKey || can(item.moduleKey, item.action || 'view')),
+        }))
+        .filter((group) => group.items.length > 0)
+})
+
+onMounted(() => {
+    if (accessToken.value) {
+        void loadAppSetting()
+    }
+})
 </script>
 
 <template>
@@ -100,7 +144,7 @@ const navigationGroups: NavGroup[] = [
                         CS
                     </div>
                     <div>
-                        <p class="m-0 text-[1rem] font-bold">Clothes Shop</p>
+                        <p class="m-0 text-[1rem] font-bold">{{ appName }}</p>
                         <p class="m-0 mt-1 text-sm text-white/55">Admin console</p>
                     </div>
                 </div>
@@ -118,7 +162,7 @@ const navigationGroups: NavGroup[] = [
                 </div> -->
 
                 <div class="flex-1 space-y-4 pr-1">
-                    <div v-for="group in navigationGroups" :key="group.title" class="space-y-2">
+                    <div v-for="group in visibleNavigationGroups" :key="group.title" class="space-y-2">
                         <p class="m-0 px-3 text-[0.72rem] uppercase tracking-[0.12em] text-white/50">
                             {{ group.title }}
                         </p>

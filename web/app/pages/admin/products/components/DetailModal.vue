@@ -26,13 +26,7 @@ const openState = computed({
 </script>
 
 <template>
-  <BaseModal
-    v-model="openState"
-    title="Product Detail"
-    width="1200px"
-    :show-footer="false"
-    body-class="p-0"
-  >
+  <BaseModal v-model="openState" title="Product Detail" width="1200px" :show-footer="false" body-class="p-0">
     <div v-if="loading" class="grid place-items-center px-6 py-20 text-slate-500">
       Loading product detail...
     </div>
