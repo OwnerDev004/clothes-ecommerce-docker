@@ -29,7 +29,26 @@ export default defineNuxtConfig({
     "nuxt-swiper",
     "@element-plus/nuxt",
     "pinia-plugin-persistedstate/nuxt",
+    "nuxt-pdfmake",
   ],
+  // pdfmake: {
+  //   fonts: {
+  //     khmerBatambong: {
+  //       normal:
+  //         "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf",
+  //     },
+  //   },
+  // },
+
+  pdfmake: {
+    fonts: {
+      Khmer: {
+        normal:
+          "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf",
+        bold: "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf", // Same or specific bold file
+      },
+    },
+  },
   swiper: {
     // Swiper options
     //----------------------

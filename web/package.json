@@ -20,11 +20,13 @@
     "element-plus": "^2.11.7",
     "html-to-image": "^1.11.13",
     "izitoast": "^1.4.0",
+    "jspdf": "^4.2.1",
     "lucide-vue-next": "^0.453.0",
     "nuxt": "^3.13.2",
     "nuxt-swiper": "^1.2.2",
     "nuxt-toast": "^1.4.0",
     "nuxt-vitalizer": "^2.0.0",
+    "pdfmake": "^0.2.7",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "qrcode": "^1.5.4",
@@ -33,9 +35,11 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@ceereals/vue-pdf": "^0.3.1",
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@types/node": "^25.2.0",
     "laravel-echo": "^2.3.4",
+    "nuxt-pdfmake": "^0.1.1",
     "pusher-js": "^8.5.0"
   }
 }

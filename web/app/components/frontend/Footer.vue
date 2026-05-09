@@ -125,6 +125,7 @@ const subscribeNewsLetter = async () => {
         ElMessage({ message: 'Subscribed Newsletter!', type: 'success' })
     } catch (error: any) {
         ElMessage({ message: `${error?.data?.message}`, type: 'error' })
+        await nextTick()
         email_sub_ref.value.focus()
     }
     finally {

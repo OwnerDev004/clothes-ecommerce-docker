@@ -9,7 +9,7 @@
             <BaseCard>
                 <template #header>
                     <div class="space-y-4">
-                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                             <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
                                 <BaseInput v-model="filters.search_txt"
                                     placeholder="Search product, size, color, note..." clearable />
@@ -17,8 +17,9 @@
                                     placeholder="All Variants" class="w-full" />
                             </div>
 
-                            <div class="flex flex-wrap gap-3">
+                            <div class="flex gap-3">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+                                <BaseButton @click="exportPDF">Export</BaseButton>
                                 <BaseButton type="primary" @click="openPurchaseModal">Add Purchase</BaseButton>
                             </div>
                         </div>
@@ -68,7 +69,11 @@
                                     {{ creatorName(scope.row) }}
                                 </template>
                             </el-table-column>
-                            <el-table-column prop="created_at" label="Purchased At" min-width="180" />
+                            <el-table-column prop="created_at" label="Purchased At" min-width="180">
+                                <template #default="scope">
+                                    {{ formatAnyDate(scope.row.created_at) }}
+                                </template>
+                            </el-table-column>
                             <el-table-column label="Action" fixed="right" width="120">
                                 <template #default="scope">
                                     <div class="flex items-center gap-1">
@@ -102,20 +107,23 @@
 
         <PurchaseModal v-model="modalOpen" :mode="modalMode" :purchase="selectedPurchase" :loading="saving"
             :variant-options="variantOptions" @submit="handleSubmit" />
+        <div v-if="isExportPdf">
+            <PurchasesPdf :purchases_list="purchases" @close-pdf="closePdf" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import BaseCard from '~/components/ui/BaseCard.vue'
 import BaseInput from '~/components/ui/BaseInput.vue'
 import BaseSelect from '~/components/ui/BaseSelect.vue'
 import BaseTable from '~/components/ui/BaseTable.vue'
-import PurchaseModal from './components/Modal.vue'
 import { useAdminPurchases } from '~/composables/useAdminPurchases'
-
+import PurchaseModal from './components/Modal.vue'
+import PurchasesPdf from './components/PurchasesPdf.vue'
 definePageMeta({
     layout: 'admin',
     middleware: ['admin-auth'],
@@ -143,7 +151,7 @@ const {
     deletePurchase,
     setPage,
 } = useAdminPurchases()
-
+const isExportPdf = ref<boolean>(false)
 const tableData = computed(() => purchases.value || [])
 
 const creatorName = (purchase: any) => {
@@ -154,12 +162,7 @@ const creatorName = (purchase: any) => {
         : creator.user_name || creator.email || '-'
 }
 
-const formatMoney = (value: unknown) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(Number(value || 0))
-}
+
 
 const handleSubmit = async (payload: {
     mode: 'create' | 'edit'
@@ -177,6 +180,16 @@ const handleSubmit = async (payload: {
     } catch {
         // savePurchase already shows the error message
     }
+}
+
+// exportPDF
+
+
+const exportPDF = async () => {
+    isExportPdf.value = true
+}
+const closePdf = () => {
+    isExportPdf.value = false
 }
 
 onMounted(() => {

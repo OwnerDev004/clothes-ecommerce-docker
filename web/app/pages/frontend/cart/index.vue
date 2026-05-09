@@ -36,15 +36,19 @@
           <p>Total</p>
           <h2 class="text-xl font-semibold">${{ grandTotal.toFixed(2) }}</h2>
         </div>
-
+        <p>TEst: {{ shippingProvince }}</p>
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Province</label>
           <select v-model="shippingProvince" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
-            <option v-for="province in shippingProvinceOptions" :key="province" :value="province">
-              {{ province }}
+            <option value="">Select a province</option>
+            <option v-for="province in appSetting.shipping_rates" :key="province.id || province.province"
+              :value="province.slug">
+              {{ province.province }}
             </option>
           </select>
         </div>
+        <!-- {{ computeShippingFee(shippingProvince) }} -->
+        <!-- {{ shippingRateByProvince['phnom-penh'] }} -->
 
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Address (Optional)</label>
@@ -142,7 +146,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-            }}
+          }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -177,7 +181,7 @@ import { useCartStore } from '~/stores/cartStore'
 import { toPng } from 'html-to-image';
 import { formatAnyDate } from '~/utils/date'
 import { watchDebounced } from '@vueuse/core'
-
+import { useAppSetting } from '~/composables/useAppSetting'
 type CartItem = {
   variant_id: number
   product_id: number
@@ -190,12 +194,19 @@ type CartItem = {
   line_total: number
   product_image?: string
 }
+type ShippingProvinceList = {
+  slug: string
+  province: string
+  fee: number
+}
 
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const authStore = useAuthStore()
 const cartStore = useCartStore()
+const { appSetting, shippingFee, shippingProvince, fetchAppSetting } = useAppSetting()
 const { accessToken, isAuthenticated } = storeToRefs(authStore)
+
 const router = useRouter()
 
 const loadingCart = ref(false)
@@ -203,7 +214,6 @@ const checkingOut = ref(false)
 const applyingCoupon = ref(false)
 const cartItems = ref<CartItem[]>([])
 const subtotal = ref(0)
-const shippingFee = ref(0)
 const discountAmount = ref(0)
 const promoCode = ref('')
 const appliedVoucherCode = ref('')
@@ -212,7 +222,6 @@ const autoCouponMessage = ref('')
 const autoCouponMessageType = ref<'success' | 'warning'>('warning')
 const isCouponComplete = ref(false)
 
-const shippingProvince = ref('Phnom Penh')
 const shippingAddress = ref('')
 const shippingPhone = ref('')
 const paymentMethod = ref<'cash_on_delivery' | 'khqr'>('khqr')
@@ -235,34 +244,15 @@ const qrImage = ref<HTMLElement | null>(null)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
-const shippingProvinceOptions = [
-  'Phnom Penh',
-  'Kandal',
-  'Siem Reap',
-  'Battambang',
-  'Preah Sihanouk',
-  'Other',
-]
 
-const shippingRateByProvince: Record<string, number> = {
-  'phnom penh': 1.5,
-  kandal: 2.0,
-  'siem reap': 2.5,
-  battambang: 2.5,
-  'preah sihanouk': 3.0,
-  other: 3.5,
-}
+
+
 
 const grandTotal = computed(() => {
   return Math.max(0, subtotal.value - discountAmount.value + shippingFee.value)
 })
 
-const normalizeProvince = (value: string) => String(value || '').trim().toLowerCase()
 
-const computeShippingFee = (province: string) => {
-  const normalized = normalizeProvince(province)
-  return shippingRateByProvince[normalized] ?? 3.5
-}
 
 const parseKhqrAmountFromQrString = (rawQr: string) => {
   const qr = String(rawQr || '').trim()
@@ -728,13 +718,7 @@ watch(paymentMethod, (value) => {
   isPaymentByKhrqr.value = value === 'khqr'
 }, { immediate: true })
 
-watch(
-  shippingProvince,
-  (value) => {
-    shippingFee.value = computeShippingFee(value)
-  },
-  { immediate: true }
-)
+
 
 watch(
   () => cartItems.value.length,
@@ -745,6 +729,7 @@ watch(
 
 onMounted(() => {
   fetchCart().then(() => autoApplySignupCoupon())
+  fetchAppSetting()
 })
 
 onBeforeUnmount(() => {

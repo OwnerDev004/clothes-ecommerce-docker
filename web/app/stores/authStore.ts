@@ -1,3 +1,4 @@
+import { useLocalStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { computed } from "vue";
 
@@ -22,6 +23,13 @@ export const useAuthStore = defineStore("auth", () => {
     sameSite: "lax",
     secure: import.meta.env.PROD,
     path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
+  const provinceListFee = useLocalStorage("province_list", {
+    default: () => null,
+    sameSite: "lax",
+    secure: import.meta.env.PROD,
     maxAge: 60 * 60 * 24 * 30,
   });
 

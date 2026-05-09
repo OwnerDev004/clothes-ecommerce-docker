@@ -187,8 +187,8 @@ const closeModal = () => {
 }
 
 watch(
-    () => [model.value, props.mode, props.purchase?.id],
-    ([open]) => {
+    () => model.value,
+    (open) => {
         if (open) {
             syncFromPurchase()
             return
@@ -197,6 +197,16 @@ watch(
         resetForm()
     },
     { immediate: true },
+)
+
+// Ensure form syncs if the parent updates the `purchase` prop after opening the modal
+watch(
+    () => props.purchase,
+    (p) => {
+        if (props.mode === 'edit' && model.value && p) {
+            syncFromPurchase()
+        }
+    },
 )
 
 watch(
