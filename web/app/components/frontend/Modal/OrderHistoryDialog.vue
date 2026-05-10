@@ -2,18 +2,8 @@
     <el-dialog v-model="dialogOpen" width="860px" :close-on-click-modal="false" title="Order History"
         class="order-history-dialog" @closed="onDialogClosed">
         <div class="space-y-4">
+
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <el-select v-model="statusFilter" class="w-full sm:w-52" placeholder="Lifecycle status" clearable
-                    @change="onFilterChanged">
-                    <el-option label="All Lifecycle Statuses" value="" />
-                    <el-option label="Pending" value="pending" />
-                    <el-option label="Paid" value="paid" />
-                    <el-option label="Processing" value="processing" />
-                    <el-option label="Shipped" value="shipped" />
-                    <el-option label="Completed" value="completed" />
-                    <el-option label="Cancelled" value="cancelled" />
-                    <el-option label="Refunded" value="refunded" />
-                </el-select>
 
                 <el-select v-model="paymentStateFilter" class="w-full sm:w-52" placeholder="Payment status" clearable
                     @change="onFilterChanged">
@@ -28,12 +18,7 @@
 
                 <el-select v-model="orderStatusFilter" class="w-full sm:w-52" placeholder="Shipping/Order status"
                     clearable @change="onFilterChanged">
-                    <el-option label="All Shipping/Order Statuses" value="" />
-                    <el-option label="Pending" value="pending" />
-                    <el-option label="Processing" value="processing" />
-                    <el-option label="Shipped" value="shipped" />
-                    <el-option label="Delivered" value="delivered" />
-                    <el-option label="Cancelled" value="cancelled" />
+                    <el-option v-for="item in OrderStatusList" :label="item.label" :value="item.id" />
                 </el-select>
 
                 <el-button :loading="loadingOrders" plain @click="fetchOrders">
@@ -118,6 +103,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import { orderStatus, OrderStatusList } from '~/enums/orderStatus'
 import { useAuthStore } from '~/stores/authStore'
 import { formatAnyDate } from '~/utils/date'
 import { getOrderStatusTagType, getPaymentStatusTagType } from '~/utils/orderStatusTheme'
@@ -205,7 +191,7 @@ const fetchOrders = async () => {
             query: {
                 page: page.value,
                 per_page: meta.value.per_page,
-                status: statusFilter.value || undefined,
+                status: orderStatusFilter.value || undefined,
                 payment_status: paymentStateFilter.value || undefined,
             },
         })

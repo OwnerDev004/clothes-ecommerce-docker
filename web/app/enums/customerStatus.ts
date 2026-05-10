@@ -3,7 +3,8 @@ export const customerStatus = {
   Inactive: "inactive",
 } as const;
 
-export type CustomerStatus = (typeof customerStatus)[keyof typeof customerStatus];
+export type CustomerStatus =
+  (typeof customerStatus)[keyof typeof customerStatus];
 
 export const displayCustomerStatus: Record<string, string> = {
   [String(customerStatus.Active)]: "Active",
