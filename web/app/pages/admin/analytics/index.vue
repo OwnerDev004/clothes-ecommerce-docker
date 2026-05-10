@@ -16,6 +16,8 @@ import { useAdminAnalytics } from '~/composables/useAdminAnalytics'
 import { getOrderStatusTagType } from '~/utils/orderStatusTheme'
 import { formatAnyDate } from '~/utils/date'
 import type { AdminDashboardSummary } from '~/composables/useAdminDashboard'
+import LowStockItemPDF from './components/LowStockItemPDF.vue'
+import RecentCheckOutPDF from './components/RecentCheckOutPDF.vue'
 
 definePageMeta({
   layout: 'admin',
@@ -61,6 +63,30 @@ const formatDateLabel = (value: string) =>
 
 const orderStatusType = (status: string) => {
   return getOrderStatusTagType(status)
+}
+const isExportLowStockItemPdf = ref<boolean>(false)
+const isExportRecentCheckoutPdf = ref<boolean>(false)
+// exportPDF
+
+const exportPDF = (payload: string) => {
+  switch (payload) {
+    case 'low-stock-item':
+      isExportLowStockItemPdf.value = true;
+      break;
+    case 'recent-checkout':
+      isExportRecentCheckoutPdf.value = true;
+      break;
+    default:
+      break;
+
+
+  }
+}
+const closeExportStockItemPdf = () => {
+  isExportLowStockItemPdf.value = false;
+}
+const closeExportRecentCheckoutPdf = () => {
+  isExportRecentCheckoutPdf.value = false;
 }
 
 const trendMax = computed(() => Math.max(...analyticsState.value.trend.map((item) => item.total), 1))
@@ -286,11 +312,16 @@ const pipelineItems = computed(() => [
       <section class="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <article
           class="overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
-          <div class="px-5 pb-4 pt-5">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
-              Orders
-            </p>
-            <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Recent checkout activity</h2>
+          <div class="px-5 pb-4 pt-5 flex justify-between items-center">
+            <div>
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+                Orders
+              </p>
+              <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Recent checkout activity</h2>
+            </div>
+            <BaseButton type="primary" @click="exportPDF('recent-checkout')">
+              Export PDF
+            </BaseButton>
           </div>
 
           <el-table :data="analyticsState.recent_orders" class="w-full" :header-cell-style="{
@@ -318,11 +349,16 @@ const pipelineItems = computed(() => [
 
         <article
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
-          <div class="mb-5">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
-              Watchlist
-            </p>
-            <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Low stock items</h2>
+          <div class="mb-5 flex justify-between items-center">
+            <div>
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+                Watchlist
+              </p>
+              <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Low stock items</h2>
+            </div>
+            <BaseButton type="primary" @click="exportPDF('low-stock-item')">
+              Export PDF
+            </BaseButton>
           </div>
 
           <div class="space-y-3">
@@ -446,5 +482,11 @@ const pipelineItems = computed(() => [
         </div>
       </section>
     </template>
+    <div v-if="isExportLowStockItemPdf">
+      <LowStockItemPDF :items="analyticsState.low_stock_items" @close-pdf="closeExportStockItemPdf" />
+    </div>
+    <div v-if="isExportRecentCheckoutPdf">
+      <RecentCheckOutPDF :items="analyticsState.recent_orders" @close-pdf="closeExportRecentCheckoutPdf" />
+    </div>
   </div>
 </template>
