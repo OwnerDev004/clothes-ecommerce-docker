@@ -24,7 +24,8 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const adminAuthStore = useAdminAuthStore();
 
-  if (!adminAuthStore.isAuthenticated) {
+  const hasToken = Boolean(adminAuthStore.accessToken);
+  if (!hasToken) {
     return navigateTo("/admin/login");
   }
 

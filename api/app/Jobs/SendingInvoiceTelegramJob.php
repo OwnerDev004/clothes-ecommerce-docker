@@ -19,6 +19,7 @@ class SendingInvoiceTelegramJob implements ShouldQueue
 
     public function __construct(private readonly int $orderId)
     {
+
     }
 
     public function handle(TelegramSendingService $telegramSendingService): void

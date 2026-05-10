@@ -1,5 +1,6 @@
 <?php
 // Client
+use App\Http\Controllers\Api\V1\AppSettingController;
 use App\Http\Controllers\Api\V1\NewsLetterSubScribeController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CartController;
@@ -151,6 +152,8 @@ Route::prefix('telegram')->group(function () {
 // newsletters
 Route::post('newsletters/subscribe', [NewsLetterSubScribeController::class, 'subscribeMail']);
 
+//app setting 
+Route::get('app_setting', [AppSettingController::class, 'index']);
 
 
 

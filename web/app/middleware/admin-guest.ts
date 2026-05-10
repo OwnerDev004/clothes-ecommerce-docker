@@ -4,6 +4,6 @@ export default defineNuxtRouteMiddleware(() => {
   const adminAuthStore = useAdminAuthStore();
 
   if (adminAuthStore.isAuthenticated || adminAuthStore.accessToken) {
-    return navigateTo("/admin/dashboard");
+    return navigateTo("/admin/categories");
   }
 });

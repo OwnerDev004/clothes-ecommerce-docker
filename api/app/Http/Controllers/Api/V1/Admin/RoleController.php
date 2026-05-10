@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\Admin\Role\ListRoleRequest;
+use App\Http\Requests\Api\V1\Admin\Admin\ListRoleRequest;
 use App\Http\Requests\Api\V1\Admin\Role\StoreRoleRequest;
 use App\Http\Requests\Api\V1\Admin\Role\UpdateRoleRequest;
 use App\Http\Resources\Api\V1\Admin\RoleResource;
@@ -22,7 +22,7 @@ class RoleController extends Controller
     public function index(ListRoleRequest $request)
     {
         $roles = $this->role_service->paginate($request->validated());
-        $roles->setCollection($roles->getCollection()->map(fn ($role) => RoleResource::make($role)->resolve()));
+        $roles->setCollection($roles->getCollection()->map(fn($role) => RoleResource::make($role)->resolve()));
 
         return $this->paginate($roles, 'Roles list');
     }

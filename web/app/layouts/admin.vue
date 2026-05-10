@@ -228,7 +228,7 @@ onMounted(() => {
                             <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                             <div>
                                 <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
-                                }}</strong>
+                                    }}</strong>
                                 <!-- <span class="block text-xs text-slate-500">Super user</span> -->
                             </div>
                         </div>

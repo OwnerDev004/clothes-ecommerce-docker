@@ -21,6 +21,7 @@
     "html-to-image": "^1.11.13",
     "izitoast": "^1.4.0",
     "jspdf": "^4.2.1",
+    "jwt-decode": "^4.0.0",
     "lucide-vue-next": "^0.453.0",
     "nuxt": "^3.13.2",
     "nuxt-swiper": "^1.2.2",

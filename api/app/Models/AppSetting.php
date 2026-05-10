@@ -17,7 +17,7 @@ class AppSetting extends Model
         'free_shipping_threshold',
         'low_stock_threshold',
         'tax_rate',
-        'shipping_rates',
+        'shipping_rates'
     ];
 
     protected $casts = [

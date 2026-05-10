@@ -33,7 +33,7 @@ export const useAdminAuthStore = defineStore("admin-auth", () => {
     sameSite: "lax",
     secure: import.meta.env.PROD,
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 120000,
   });
 
   const adminProfile = useCookie<AdminProfile | null>("admin_profile", {
@@ -41,7 +41,7 @@ export const useAdminAuthStore = defineStore("admin-auth", () => {
     sameSite: "lax",
     secure: import.meta.env.PROD,
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 120000,
   });
 
   const permissionMatrix = useCookie<PermissionMatrix | null>(
@@ -51,7 +51,7 @@ export const useAdminAuthStore = defineStore("admin-auth", () => {
       sameSite: "lax",
       secure: import.meta.env.PROD,
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      maxAge: 120000,
     },
   );
 

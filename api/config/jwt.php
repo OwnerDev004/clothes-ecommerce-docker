@@ -264,8 +264,8 @@ return [
     'providers' => [
 
         'customer' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\Customer::class, // Change to Customer model
+            'driver' => 'eloquent',
+            'model' => App\Models\Customer::class, // Change to Customer model
         ],
 
         /*

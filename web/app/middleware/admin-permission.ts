@@ -1,31 +1,34 @@
-import { useAdminAuthStore } from '~/stores/adminAuthStore'
+import { useAdminAuthStore } from "~/stores/adminAuthStore";
 
 const resolveModuleKey = (path: string) => {
-  const parts = path.split('/').filter(Boolean)
-  if (parts[0] !== 'admin') {
-    return null
+  const parts = path.split("/").filter(Boolean);
+  if (parts[0] !== "admin") {
+    return null;
   }
 
-  return parts[1] ? parts[1].replace(/-/g, '_') : null
-}
+  return parts[1] ? parts[1].replace(/-/g, "_") : null;
+};
 
 export default defineNuxtRouteMiddleware((to) => {
-  const adminAuthStore = useAdminAuthStore()
+  const adminAuthStore = useAdminAuthStore();
 
-  if (!adminAuthStore.isAuthenticated) {
-    return navigateTo('/admin/login')
+  const hasToken = Boolean(adminAuthStore.accessToken);
+  if (!hasToken) {
+    return navigateTo("/admin/login");
   }
 
   if (adminAuthStore.isSuperAdmin) {
-    return
+    return;
   }
 
-  const moduleKey = resolveModuleKey(to.path)
+  const moduleKey = resolveModuleKey(to.path);
   if (!moduleKey) {
-    return
+    return;
   }
 
-  if (!adminAuthStore.can(moduleKey, 'view')) {
-    return abortNavigation(createError({ statusCode: 403, statusMessage: 'Forbidden' }))
+  if (!adminAuthStore.can(moduleKey, "view")) {
+    return abortNavigation(
+      createError({ statusCode: 403, statusMessage: "Forbidden" }),
+    );
   }
-})
+});

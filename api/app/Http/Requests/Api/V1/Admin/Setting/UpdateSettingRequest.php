@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Admin\Setting;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateSettingRequest extends FormRequest
 {
@@ -28,5 +29,29 @@ class UpdateSettingRequest extends FormRequest
             'shipping_rates.*.province' => ['required_with:shipping_rates', 'string', 'max:255'],
             'shipping_rates.*.fee' => ['required_with:shipping_rates', 'numeric', 'min:0'],
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $shippingRates = $this->shipping_rates;
+
+            if (empty($shippingRates)) {
+                return;
+            }
+
+            // Check for duplicate provinces within the request
+            $provinces = array_map(
+                fn($province) => strtolower(str_replace(' ', '', $province)),
+                array_column($shippingRates, 'province')
+            );
+
+            if (count($provinces) !== count(array_unique($provinces))) {
+                $validator->errors()->add(
+                    'shipping_rates',
+                    'Province names must be unique within shipping rates.'
+                );
+            }
+        });
     }
 }

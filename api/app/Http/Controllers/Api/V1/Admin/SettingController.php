@@ -8,6 +8,7 @@ use App\Http\Resources\Api\V1\Admin\SettingResource;
 use App\Repositories\AppSettingRepository;
 use App\Traits\ApiResponse;
 use OpenApi\Attributes as OA;
+use Str;
 
 class SettingController extends Controller
 {
@@ -39,13 +40,14 @@ class SettingController extends Controller
         $payload = $request->validated();
         $payload['shipping_rates'] = array_values(array_filter(
             array_map(
-                fn (array $row) => [
+                fn(array $row) => [
+                    'slug' => Str::slug($row['province'], '-'),
                     'province' => trim((string) ($row['province'] ?? '')),
                     'fee' => (float) ($row['fee'] ?? 0),
                 ],
                 $payload['shipping_rates'] ?? []
             ),
-            fn (array $row) => $row['province'] !== ''
+            fn(array $row) => $row['province'] !== ''
         ));
 
         $setting = $this->settingRepository->update($payload);
