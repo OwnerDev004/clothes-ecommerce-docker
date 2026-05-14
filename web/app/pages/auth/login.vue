@@ -89,6 +89,14 @@ definePageMeta({
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const frontendBase = (config.public.frontendUrl || 'http://localhost:3000').replace(/\/$/, '')
+const backendOrigin = (() => {
+    try {
+        const url = new URL(apiBase)
+        return `${url.protocol}//${url.host}`
+    } catch {
+        return 'http://localhost:8000'
+    }
+})()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -269,7 +277,7 @@ const onTelegramLogin = async () => {
 }
 
 const startOAuthLogin = async (provider: 'google' | 'facebook' | 'github' | 'telegram') => {
-    const redirectUrl = new URL(`${apiBase}/auth/${provider}/redirect`)
+    const redirectUrl = new URL(`${backendOrigin}/auth/${provider}/redirect`)
     redirectUrl.searchParams.set('redirect', `${frontendBase}/auth/login`)
     window.location.href = redirectUrl.toString()
 }
