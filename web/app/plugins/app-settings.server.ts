@@ -2,7 +2,7 @@ import { useAppSettingStore } from "~/stores/appSettingStore";
 
 export default defineNuxtPlugin(async () => {
   const store = useAppSettingStore();
-  if (!store.loaded) {
+  if (!store.loaded || !store.settings.shipping_rates?.length) {
     try {
       await store.fetchSettings();
     } catch (err) {

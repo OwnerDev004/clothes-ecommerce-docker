@@ -48,10 +48,12 @@ services:
       - DB_PORT=5432
       - DB_PASSWORD=${DB_PASSWORD:-securepassword123}
       - REDIS_HOST=redis
+    command: php artisan queue:work
+    restart: always
     depends_on:
       - db
       - redis
-    entrypoint: ["php", "artisan", "queue:work", "--sleep=1", "--tries=3", "--timeout=90"]
+   
   web:
     build:
       context: web/

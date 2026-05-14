@@ -67,11 +67,15 @@
 
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label class="mb-2 block text-sm font-medium text-slate-700">Currency Code</label>
-                  <el-select v-model="form.currency_code" :disabled="!canEdit" class="w-full" placeholder="USD">
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Default Currency Code</label>
+                  <el-select v-model="form.default_currency_code" :disabled="!canEdit" class="w-full" placeholder="USD">
                     <el-option label="USD" value="USD" />
                     <el-option label="KHR" value="KHR" />
                   </el-select>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate-700">Exchange Rate</label>
+                  <el-input v-model="form.exchange_rate" placeholder="Please Enter Exchange Rate" />
                 </div>
                 <div>
                   <label class="mb-2 block text-sm font-medium text-slate-700">Tax Rate (%)</label>
@@ -167,7 +171,8 @@ type SettingPayload = {
   support_email: string
   support_phone: string
   business_address: string
-  currency_code: string
+  default_currency_code: string
+  exchange_rate: number
   shipping_fee: number
   free_shipping_threshold: number
   low_stock_threshold: number
@@ -191,7 +196,8 @@ const form = reactive<SettingPayload>({
   support_email: '',
   support_phone: '',
   business_address: '',
-  currency_code: 'USD',
+  default_currency_code: 'USD',
+  exchange_rate: 4000,
   shipping_fee: 0,
   free_shipping_threshold: 0,
   low_stock_threshold: 20,
@@ -215,7 +221,8 @@ const hydrateForm = (payload: Partial<SettingPayload> | null) => {
   form.support_email = String(payload?.support_email || '')
   form.support_phone = String(payload?.support_phone || '')
   form.business_address = String(payload?.business_address || '')
-  form.currency_code = String(payload?.currency_code || 'USD')
+  form.default_currency_code = String(payload?.default_currency_code || 'USD')
+  form.exchange_rate = Number(payload?.exchange_rate || 4000)
   form.shipping_fee = Number(payload?.shipping_fee || 0)
   form.free_shipping_threshold = Number(payload?.free_shipping_threshold || 0)
   form.low_stock_threshold = Number(payload?.low_stock_threshold || 20)
@@ -265,7 +272,8 @@ const saveSetting = async () => {
       support_email: form.support_email || null,
       support_phone: form.support_phone || null,
       business_address: form.business_address || null,
-      currency_code: form.currency_code,
+      default_currency_code: form.default_currency_code,
+      exchange_rate: Number(form.exchange_rate || 4000),
       shipping_fee: Number(form.shipping_fee || 0),
       free_shipping_threshold: Number(form.free_shipping_threshold || 0),
       low_stock_threshold: Number(form.low_stock_threshold || 0),

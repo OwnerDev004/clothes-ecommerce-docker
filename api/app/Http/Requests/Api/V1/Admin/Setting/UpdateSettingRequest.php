@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Api\V1\Admin\Setting;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateSettingRequest extends FormRequest
 {
@@ -20,7 +19,8 @@ class UpdateSettingRequest extends FormRequest
             'support_email' => ['nullable', 'email', 'max:255'],
             'support_phone' => ['nullable', 'string', 'max:50'],
             'business_address' => ['nullable', 'string'],
-            'currency_code' => ['required', 'string', 'max:10'],
+            'default_currency_code' => ['required', 'string', 'max:10'],
+            'exchange_rate' => ['required', 'numeric', 'min:0'],
             'shipping_fee' => ['required', 'numeric', 'min:0'],
             'free_shipping_threshold' => ['required', 'numeric', 'min:0'],
             'low_stock_threshold' => ['required', 'integer', 'min:0'],

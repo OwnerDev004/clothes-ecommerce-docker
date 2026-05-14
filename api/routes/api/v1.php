@@ -49,7 +49,7 @@ Broadcast::routes([
 //Client  Auth
 Route::prefix('auth')->group(function () {
     Route::post("/login", [CustomerAuthController::class, 'login']);
-    Route::post("/register", [CustomerAuthController::class, 'reg ister']);
+    Route::post("/register", [CustomerAuthController::class, 'register']);
     Route::post('/forgot_password', [CustomerAuthController::class, 'forgotPassword']);
     Route::post('/reset_password', [CustomerAuthController::class, 'resetPassword']);
     Route::post('/oauth/cookie', [CustomerAuthController::class, 'storeAccessTokenCookie']);

@@ -17,7 +17,8 @@ const props = withDefaults(
 )
 const emit = defineEmits(['close-pdf'])
 
-onMounted(async () => {
+onMounted(
+    async () => {
     try {
         // Client-side pdf generation using pdfmake (compatible with nuxt-pdfmake)
         const pdfMakeModule = await import('pdfmake/build/pdfmake')

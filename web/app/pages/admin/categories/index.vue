@@ -69,7 +69,7 @@
                             </template>
                         </el-table-column>
                     </BaseTable>
-
+x
                     <section class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="m-0 text-sm text-slate-500">
                             Showing {{ dataTable.data.length }} of {{ pagination.total }} products

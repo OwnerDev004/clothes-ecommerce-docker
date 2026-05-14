@@ -12,7 +12,8 @@ class AppSetting extends Model
         'support_email',
         'support_phone',
         'business_address',
-        'currency_code',
+        'default_currency_code',
+        'exchange_rate',
         'shipping_fee',
         'free_shipping_threshold',
         'low_stock_threshold',
@@ -26,5 +27,6 @@ class AppSetting extends Model
         'tax_rate' => 'decimal:2',
         'low_stock_threshold' => 'integer',
         'shipping_rates' => 'array',
+        'exchange_rate' => 'decimal:2',
     ];
 }

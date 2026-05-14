@@ -36,7 +36,6 @@
           <p>Total</p>
           <h2 class="text-xl font-semibold">${{ grandTotal.toFixed(2) }}</h2>
         </div>
-        <p>TEst: {{ shippingProvince }}</p>
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Province</label>
           <select v-model="shippingProvince" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
@@ -47,8 +46,6 @@
             </option>
           </select>
         </div>
-        <!-- {{ computeShippingFee(shippingProvince) }} -->
-        <!-- {{ shippingRateByProvince['phnom-penh'] }} -->
 
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Address (Optional)</label>
@@ -255,18 +252,58 @@ const grandTotal = computed(() => {
 
 
 const parseKhqrAmountFromQrString = (rawQr: string) => {
-  const qr = String(rawQr || '').trim()
+  let qr = String(rawQr || '').trim()
   if (!qr) {
     return null
+  }
+
+  try {
+    qr = decodeURIComponent(qr)
+  } catch (e) {
+    // ignore decode errors
+  }
+
+  // If QR is a URL, try to extract common query param names that contain payload
+  if (/^https?:\/\//i.test(qr)) {
+    try {
+      const url = new URL(qr)
+      const params = url.searchParams
+      const candidates = ['data', 'qr', 'payload', 'qrcode', 'd']
+      for (const k of candidates) {
+        const v = params.get(k)
+        if (v) {
+          qr = v
+          break
+        }
+      }
+
+      // fallback to last pathname segment or hash
+      if (/^https?:\/\//i.test(qr)) {
+        const last = url.pathname.split('/').filter(Boolean).pop() || ''
+        if (last) qr = last
+        else if (url.hash) qr = url.hash.replace(/^#/, '')
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // remove whitespace
+  qr = qr.replace(/\s+/g, '')
+
+  // locate EMV start if present
+  const emvStart = qr.indexOf('000201')
+  if (emvStart >= 0) {
+    qr = qr.slice(emvStart)
   }
 
   let cursor = 0
   while (cursor + 4 <= qr.length) {
     const tag = qr.slice(cursor, cursor + 2)
     const lengthRaw = qr.slice(cursor + 2, cursor + 4)
-    const valueLength = Number(lengthRaw)
+    const valueLength = parseInt(lengthRaw, 10)
 
-    if (!Number.isInteger(valueLength) || valueLength < 0) {
+    if (Number.isNaN(valueLength) || valueLength < 0) {
       break
     }
 
@@ -278,10 +315,20 @@ const parseKhqrAmountFromQrString = (rawQr: string) => {
 
     const value = qr.slice(valueStart, valueEnd)
     if (tag === '54') {
-      const amount = Number(value)
+      const cleaned = value.replace(',', '.').trim()
+      const amount = Number(cleaned)
       if (Number.isFinite(amount) && amount >= 0) {
         return Math.round(amount * 100) / 100
       }
+
+      // fallback: if value is integer cents (no decimal point), divide by 100
+      if (/^\d+$/.test(value)) {
+        const alt = Number(value) / 100
+        if (Number.isFinite(alt) && alt >= 0) {
+          return Math.round(alt * 100) / 100
+        }
+      }
+
       return null
     }
 
@@ -392,6 +439,7 @@ const updateQuantity = async ({ variantId, quantity }: { variantId: number; quan
     mapCartPayload(response?.data || {})
   } catch (error: any) {
     ElMessage.error(error?.data?.message || 'Failed to update quantity.')
+
     await fetchCart()
   }
 }
@@ -522,15 +570,18 @@ const pollPaymentOnce = async () => {
       headers: getAuthHeaders(),
     })
     const data = response?.data || {}
-    const paymentStatus = String(data?.payment_status || '').toLowerCase()
-    pollStatus.value = paymentStatus || String(data?.status || 'pending')
+    console.log(data);
 
-    if (paymentStatus === 'paid') {
+    const orderStatus = String(data?.status || '').toLowerCase()
+    const paymentStatus = String(data?.payment_status || '').toLowerCase()
+    pollStatus.value = paymentStatus || orderStatus || 'pending'
+
+    if (paymentStatus === 'paid' && orderStatus === 'processing') {
       stopPolling()
       paymentDialogOpen.value = false
       ElMessage.success('Payment successful.')
       await fetchCart()
-      return router.replace('/')
+      return router.push('/');
     }
 
     if (['failed', 'expired', 'canceled', 'cancelled', 'refunded'].includes(paymentStatus)) {
@@ -611,11 +662,46 @@ const createPaymentIntent = async (orderId: number) => {
     throw new Error(extractApiErrorDetails(error))
   }
   qrString.value = String(response?.data?.qr_string || '')
+  try {
+    qrString.value = decodeURIComponent(qrString.value)
+  } catch (e) {
+    // ignore
+  }
+  // Fallback: server may return base64 encoded qr payload
+  if (!qrString.value && response?.data?.qr_string_base64) {
+    try {
+      // Handle URL-safe base64
+      let b64 = String(response?.data?.qr_string_base64 || '')
+      b64 = b64.replace(/-/g, '+').replace(/_/g, '/')
+      while (b64.length % 4 !== 0) b64 += '='
+      qrString.value = atob(b64)
+    } catch (e) {
+      // ignore
+    }
+  }
   pollHash.value = String(response?.data?.poll_hash || '')
   checkoutUrl.value = String(response?.data?.checkout_url || '')
   merchantName.value = String(response?.data?.merchant_name || response?.data?.mechant_name || '')
-  const parsedAmount = parseKhqrAmountFromQrString(qrString.value)
-  payableAmount.value = parsedAmount ?? Number(response?.data?.amount || 0)
+  let parsedAmount = null
+  if (qrString.value) {
+    parsedAmount = parseKhqrAmountFromQrString(qrString.value)
+  }
+  // fallback to amount_cents or amount field
+  if (parsedAmount === null) {
+    if (Number.isFinite(Number(response?.data?.amount_cents))) {
+      parsedAmount = Number(response?.data?.amount_cents) / 100
+    } else if (response?.data?.amount) {
+      parsedAmount = Number(response?.data?.amount)
+    }
+  }
+  payableAmount.value = parsedAmount ?? 0
+
+  if (!qrString.value) {
+    // helpful debug when QR payload missing
+    // eslint-disable-next-line no-console
+    console.warn('QR payload missing from payment intent', response?.data)
+    ElMessage.warning('Invalid QR code: payload missing.')
+  }
 
   pollStatus.value = 'pending'
   timeLeftSeconds.value = 60
@@ -655,7 +741,6 @@ const checkout = async () => {
     })
 
     const summary = checkoutResponse?.data?.summary || {}
-    shippingFee.value = Number(summary?.shipping_fee || 0)
     discountAmount.value = Number(summary?.discount || discountAmount.value)
 
     const orderId = Number(checkoutResponse?.data?.order?.id || 0)
@@ -729,7 +814,9 @@ watch(
 
 onMounted(() => {
   fetchCart().then(() => autoApplySignupCoupon())
-  fetchAppSetting()
+  if (!appSetting.value.shipping_rates.length) {
+    void fetchAppSetting(true)
+  }
 })
 
 onBeforeUnmount(() => {

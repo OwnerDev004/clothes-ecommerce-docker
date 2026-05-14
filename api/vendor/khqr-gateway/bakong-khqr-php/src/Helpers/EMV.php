@@ -12,9 +12,9 @@ final class EMV
 
     public const POINT_OF_INITIATION_METHOD = '01';
 
-    public const STATIC_QR = '11';
+    public const STATIC_QR = '010211';
 
-    public const DYNAMIC_QR = '12';
+    public const DYNAMIC_QR = '010212';
 
     public const MERCHANT_ACCOUNT_INFORMATION_INDIVIDUAL = '29';
 
@@ -69,6 +69,7 @@ final class EMV
     public const MERCHANT_INFORMATION_LANGUAGE_TEMPLATE = '64';
 
     public const LANGUAGE_PREFERENCE = '00';
+    public const LANGUAGE_PREFERENCE_EXP = '01';
 
     public const MERCHANT_NAME_ALTERNATE_LANGUAGE = '01';
 

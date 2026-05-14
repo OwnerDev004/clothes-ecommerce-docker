@@ -134,6 +134,7 @@ class PaymentController extends Controller
 
         try {
             $result = $this->paymentRepository->pollKhrqrPaymentStatus($customer->id, $hash);
+            \Log::info($result);
         } catch (ValidationException $e) {
             return $this->error('Unable to check payment status', 422, $e->errors());
         }

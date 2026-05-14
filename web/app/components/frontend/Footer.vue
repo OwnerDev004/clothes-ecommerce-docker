@@ -1,6 +1,5 @@
 <template>
-    <div>
-        <!-- stay comuties -->
+    <footer>
         <section class="pt-20 px-5 desktop:container bottom-0">
             <div class="flex justify-between flex-col desktop:flex-row bg-black p-10 rounded-2xl">
                 <h1
@@ -99,7 +98,7 @@
                 </div>
             </div>
         </section>
-    </div>
+    </footer>
 </template>
 
 <script setup lang="ts">

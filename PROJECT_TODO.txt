@@ -187,3 +187,6 @@ SUGGESTED EXECUTION ORDER (SHORT)
 5. Client cart/checkout flow
 6. Admin variant/order UI
 7. Tests + docs + deploy hardening
+
+
+           

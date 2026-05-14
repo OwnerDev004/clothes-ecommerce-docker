@@ -1,4 +1,7 @@
-import { useAdminAuthStore } from "~/stores/adminAuthStore";
+import { storeToRefs } from "pinia";
+import { computed, ref } from "vue";
+import { useAppSettingStore } from "~/stores/appSettingStore";
+
 export type appSetting = {
   app_name: string;
   shipping_defaul_fee: number;
@@ -6,67 +9,53 @@ export type appSetting = {
   base_currency_code: string;
 };
 export const useAppSetting = () => {
-  const config = useRuntimeConfig();
-  const apiBase = (config.public.apiBase || "").replace(/\/$/, "");
-  const { accessToken } = storeToRefs(useAdminAuthStore());
-  const appSetting = ref<appSetting>({
-    app_name: "",
-    shipping_defaul_fee: 0,
-    shipping_rates: [],
-    base_currency_code: "",
-  });
+  const store = useAppSettingStore();
+  const { settings, loaded } = storeToRefs(store);
+
+  const appSetting = computed<appSetting>(() => ({
+    app_name: settings.value.app_name,
+    shipping_defaul_fee: Number(settings.value.shipping_defaul_fee || 0),
+    shipping_rates: Array.isArray(settings.value.shipping_rates) ? settings.value.shipping_rates : [],
+    base_currency_code: settings.value.base_currency_code,
+  }));
+
   const shippingProvince = ref("phnom-penh");
-  const shippingFee = ref(0);
-  const normalizeShippingRates = (payload: any) => {
-    return [...payload];
-  };
-  const fetchAppSetting = async () => {
-    const response: any = await $fetch(`${apiBase}/app_setting`, {
-      method: "GET",
-    });
-
-    appSetting.value.app_name = response?.data[0].app_name;
-    appSetting.value.shipping_defaul_fee = response?.data[0].shipping_fee;
-    appSetting.value.shipping_rates = normalizeShippingRates(
-      response?.data[0].shipping_rates,
-    );
-    appSetting.value.base_currency_code = response?.data[0].currency_code;
-    // set initial shipping fee once after settings load
-    shippingFee.value = computeShippingFee(shippingProvince.value) || 0;
-  };
-
   const shippingRateByProvince = computed(() => {
     const rateMap: Record<string, number> = {};
-
-    appSetting.value.shipping_rates?.forEach((e: any) => {
-      rateMap[e.slug] = e.fee;
+    appSetting.value.shipping_rates.forEach((item: any) => {
+      if (!item?.slug) {
+        return;
+      }
+      rateMap[String(item.slug)] = Number(item.fee || 0);
     });
-
     return rateMap;
   });
+
   const computeShippingFee = (province: string): number => {
-    const fee: any = shippingRateByProvince.value[province];
-    if (fee != null && fee !== "") return Number(fee);
+    const fee = shippingRateByProvince.value[String(province || "")];
+    if (fee != null && !Number.isNaN(fee)) {
+      return fee;
+    }
     return Number(appSetting.value.shipping_defaul_fee || 0);
   };
 
-  watch(
-    () => accessToken.value,
-    () => {
-      void fetchAppSetting();
-    },
-    { immediate: true },
-  );
+  const shippingFee = computed(() => computeShippingFee(shippingProvince.value));
 
-  let stopShippingWatch: (() => void) | undefined;
-  stopShippingWatch = watch(
-    () => shippingProvince.value,
-    (value: any) => {
-      if (value) {
-        shippingFee.value = computeShippingFee(value) || 0;
-      }
-    },
-  );
+  let pendingFetch: Promise<void> | null = null;
+  const fetchAppSetting = async (force = false) => {
+    if (loaded.value && !force) {
+      return settings.value;
+    }
+
+    if (!pendingFetch) {
+      pendingFetch = store.fetchSettings().finally(() => {
+        pendingFetch = null;
+      });
+    }
+
+    await pendingFetch;
+    return settings.value;
+  };
 
   return {
     shippingRateByProvince,

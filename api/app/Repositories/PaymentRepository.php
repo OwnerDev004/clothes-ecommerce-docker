@@ -7,19 +7,15 @@ use App\Models\Order;
 use App\Models\PaymentEvent;
 use App\Models\PaymentTransaction;
 use App\Services\Api\V1\Queue\TelegramSendingService;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use KHQR\BakongKHQR;
-use KHQR\Config\Constants;
 use KHQR\Exceptions\KHQRException;
 use KHQR\Helpers\KHQRData;
 use KHQR\Models\IndividualInfo;
 use KHQR\Models\SourceInfo;
-use KHQR\Models\MerchantInfo;
 
 class PaymentRepository
 {
@@ -110,6 +106,7 @@ class PaymentRepository
             'provider_payment_id' => $providerPaymentId,
             'status' => 'pending',
             'amount' => (float) $transaction->amount,
+            'amount_cents' => (int) round((float) $transaction->amount * 100),
             'currency' => $transaction->currency,
             'client_token' => $clientToken,
             'checkout_url' => $checkoutUrl,
@@ -117,6 +114,7 @@ class PaymentRepository
             'expires_at' => optional($expiresAt)->toISOString(),
             'poll_hash' => $pollHash,
             'qr_string' => $qrString,
+            'qr_string_base64' => $qrString !== null ? base64_encode($qrString) : null,
             'khqr_md5' => $khqrMd5,
         ];
     }
@@ -171,11 +169,8 @@ class PaymentRepository
             ]);
         }
 
-        $channelTimeout = (int) (config('payment.providers.khrqr.poll_timeout') ?? 10);
-        $payload = $this->postKhrqrPoll($transaction, $pollHash, $channelTimeout);
-
-        // Normalized
-        $normalized = $this->normalizeWebhookPayload('khrqr', $payload);
+        $payload = $this->postKhrqrPoll($transaction, $pollHash);
+        $normalized = $this->normalizeKhrqrCheckResponse((array) ($payload['response'] ?? []), $transaction);
         if (empty($normalized['event_type'])) {
             $transaction->last_event_at = now();
             $transaction->save();
@@ -191,7 +186,7 @@ class PaymentRepository
 
         return $this->processPaymentEvent(
             'khrqr',
-            $payload,
+            (array) ($payload['response'] ?? []),
             (string) ($normalized['event_id'] ?? ''),
             (string) ($normalized['event_type'] ?? ''),
             (array) ($normalized['data'] ?? [])
@@ -249,9 +244,6 @@ class PaymentRepository
                 ->lockForUpdate()
                 ->first();
 
-            if ($event && $event->processed_at) {
-                return ['duplicate' => true, 'event_id' => $eventId];
-            }
 
             if (!$event) {
                 $event = PaymentEvent::create([
@@ -338,33 +330,28 @@ class PaymentRepository
         return md5($orderId . '|' . $providerPaymentId);
     }
 
-    private function buildKhrqrHeaders(): array
-    {
-        $headers = ['Accept' => 'application/json'];
-
-        $apiKey = (string) (config('payment.providers.khrqr.api_key') ?? '');
-        if ($apiKey !== '') {
-            $headers['X-KHQR-API-KEY'] = $apiKey;
-        }
-
-        return $headers;
-    }
-
     private function generateKhrqrQrData(Order $order, string $currencyIso): array
     {
+
         $merchantConfig = $this->resolveKhrqrMerchantConfig();
         $currencyCode = $this->toKhrqrCurrency($currencyIso);
         $amount = (float) $order->total_price;
 
-        $expire = (time() + 3600) * 1000;  // 1 hour from now (milliseconds)
-
         $individualInfo = new IndividualInfo(
-            bakongAccountID: 'kry_longdy@aclb',
-            merchantName: 'Longdy Kry',
-            merchantCity: 'Takeo',
-            currency: KHQRData::CURRENCY_KHR,
-            amount: 500,
+            bakongAccountID: $merchantConfig['account_id'],
+            merchantName: $merchantConfig['merchant_name'],
+            merchantCity: $merchantConfig['merchant_city'],
+            acquiringBank: $merchantConfig['acquiring_bank'],
+            accountInformation: $merchantConfig['account_information'] ?? null,
+            currency: $currencyCode,
+            amount: $amount,
+            billNumber: (string) $order->id,
+            storeLabel: $merchantConfig['store_label'] ?? null,
+            terminalLabel: $merchantConfig['terminal_label'] ?? null,
+            mobileNumber: $merchantConfig['mobile_number'] ?? null,
         );
+
+
 
         try {
             $response = BakongKHQR::generateIndividual($individualInfo);
@@ -453,184 +440,57 @@ class PaymentRepository
         };
     }
 
-    private function resolveKhrqrToken(): string
+    private function postKhrqrPoll(PaymentTransaction $transaction, string $pollHash): array
     {
-        $config = (array) (config('payment.providers.khrqr') ?? []);
-        $useSit = (bool) ($config['use_sit'] ?? false);
+        $response = $this->checkKhrqrTransactionByMd5((string) $transaction->khqr_md5);
 
-        return (string) ($useSit ? ($config['token_sit'] ?? '') : ($config['token'] ?? ''));
-    }
-
-    private function postKhrqrPoll(PaymentTransaction $transaction, string $pollHash, int $timeout): array
-    {
-        $payload = [
-            'hash' => $pollHash,
-            'transaction_id' => $transaction->provider_payment_id,
-            'order_id' => $transaction->order_id,
-            'md5' => $transaction->khqr_md5,
+        return [
+            'poll_hash' => $pollHash,
+            'response' => $response,
         ];
-
-        $customEndpoint = trim((string) (config('payment.providers.khrqr.check_payment_endpoint') ?? ''));
-
-        try {
-            $isOfficialMd5Endpoint = str_contains(strtolower($customEndpoint), 'check_transaction_by_md5');
-            if ($customEndpoint !== '') {
-                $token = $this->resolveKhrqrToken();
-                $headers = $this->buildKhrqrHeaders();
-                if ($token !== '') {
-                    $headers['Authorization'] = 'Bearer ' . $token;
-                }
-
-                $customPayload = $payload;
-                if ($isOfficialMd5Endpoint) {
-                    $customPayload = ['md5' => $transaction->khqr_md5];
-                }
-
-                try {
-                    $response = Http::withHeaders($headers)
-                        ->timeout($timeout)
-                        ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
-                        ->post($customEndpoint, $customPayload);
-                } catch (RequestException $exception) {
-                    $fallback = $this->maybeFallbackToOfficialKhrqr($exception, $transaction, $timeout);
-                    if (is_array($fallback)) {
-                        return $fallback;
-                    }
-                    throw $this->buildKhrqrValidationException($exception->response);
-                }
-            } else {
-                return $this->postOfficialKhrqrCheck($transaction, $timeout);
-            }
-
-            if (!$response->successful()) {
-                $responseBody = trim((string) $response->body());
-                throw ValidationException::withMessages([
-                    'provider' => ['KHQR check endpoint returned an unexpected status'],
-                    'provider_response' => [$responseBody !== '' ? $responseBody : 'No response body'],
-                ]);
-            }
-
-            $result = $response->json();
-            if (!is_array($result)) {
-                throw ValidationException::withMessages([
-                    'provider' => ['Malformed KHQR check response'],
-                ]);
-            }
-
-            if ($customEndpoint !== '' && $isOfficialMd5Endpoint) {
-                return $this->normalizeOfficialKhrqrResponse($result, $transaction);
-            }
-
-            return $result + [
-                'provider_payment_id' => $transaction->provider_payment_id,
-                'order_id' => $transaction->order_id,
-                'md5' => $transaction->khqr_md5,
-            ];
-        } catch (RequestException $exception) {
-            throw $this->buildKhrqrValidationException($exception->response);
-        } catch (ConnectionException) {
-            throw ValidationException::withMessages([
-                'provider' => ['Unable to reach KHQR check endpoint'],
-            ]);
-        }
     }
 
-    private function postOfficialKhrqrCheck(PaymentTransaction $transaction, int $timeout): array
+    private function checkKhrqrTransactionByMd5(string $md5): array
     {
-        $token = $this->resolveKhrqrToken();
+        $token = (string) (config('payment.providers.khrqr.use_sit') ? config('payment.providers.khrqr.token_sit') : config('payment.providers.khrqr.token'));
         if ($token === '') {
             throw ValidationException::withMessages([
                 'provider' => ['KHQR API token is not configured'],
             ]);
         }
 
-        $endpoint = (bool) (config('payment.providers.khrqr.use_sit') ?? false)
-            ? Constants::SIT_CHECK_TRANSACTION_MD5_URL
-            : Constants::CHECK_TRANSACTION_MD5_URL;
+        $bakongKhqr = new BakongKHQR($token);
 
-        try {
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->timeout($timeout)
-                ->retry(2, 200, fn($exception) => $exception instanceof ConnectionException)
-                ->post($endpoint, [
-                    'md5' => $transaction->khqr_md5,
-                ]);
-        } catch (RequestException $exception) {
-            throw $this->buildKhrqrValidationException($exception->response);
-        }
-
-        if (!$response->successful()) {
-            throw ValidationException::withMessages([
-                'provider' => ['KHQR check endpoint returned an unexpected status'],
-                'provider_response' => [trim((string) $response->body()) ?: 'No response body'],
-            ]);
-        }
-
-        $body = $response->json();
-        if (!is_array($body)) {
-            throw ValidationException::withMessages([
-                'provider' => ['Malformed KHQR check response'],
-            ]);
-        }
-
-        return $this->normalizeOfficialKhrqrResponse($body, $transaction);
+        return $bakongKhqr->checkTransactionByMD5($md5, (bool) config('payment.providers.khrqr.use_sit'));
     }
 
-    private function maybeFallbackToOfficialKhrqr(RequestException $exception, PaymentTransaction $transaction, int $timeout): ?array
+    private function normalizeKhrqrCheckResponse(array $response, PaymentTransaction $transaction): array
     {
-        $response = $exception->response;
-        if (!$response) {
-            return null;
-        }
-
-        $status = $response->status();
-        if (!in_array($status, [404, 405], true)) {
-            return null;
-        }
-
-        $token = $this->resolveKhrqrToken();
-        if ($token === '') {
-            return null;
-        }
-
-        return $this->postOfficialKhrqrCheck($transaction, $timeout);
-    }
-
-    private function buildKhrqrValidationException($response): ValidationException
-    {
-        $status = $response ? $response->status() : null;
-        $body = $response ? trim((string) $response->body()) : '';
-
-        return ValidationException::withMessages([
-            'provider' => ['KHQR check endpoint returned an unexpected status'],
-            'provider_status' => [$status !== null ? (string) $status : 'unknown'],
-            'provider_response' => [$body !== '' ? $body : 'No response body'],
-        ]);
-    }
-
-    private function normalizeOfficialKhrqrResponse(array $response, PaymentTransaction $transaction): array
-    {
-        $responseCode = isset($response['responseCode']) ? (int) $response['responseCode'] : null;
-        $status = 'pending';
-
-        if ($responseCode === 0) {
-            $status = 'success';
-        } elseif ($responseCode > 1) {
-            $status = 'failed';
-        }
-
+        $responseCode = (int) ($response['responseCode'] ?? 1);
         $data = is_array($response['data'] ?? null) ? $response['data'] : [];
 
+        if ($responseCode !== 0) {
+            return [
+                'event_id' => (string) ($transaction->khqr_md5 ?: $transaction->provider_payment_id),
+                'event_type' => '',
+                'data' => [
+                    'order_id' => $transaction->order_id,
+                    'provider_payment_id' => $transaction->provider_payment_id,
+                    'amount' => (float) $transaction->amount,
+                    'currency' => $transaction->currency,
+                ],
+            ];
+        }
+
         return [
-            'event_id' => $transaction->provider_payment_id,
-            'transaction_id' => $transaction->provider_payment_id,
-            'provider_payment_id' => $transaction->provider_payment_id,
-            'status' => $status,
-            'order_id' => $transaction->order_id,
-            'amount' => isset($data['amount']) ? (float) $data['amount'] : (float) $transaction->amount,
-            'currency' => $data['currency'] ?? $transaction->currency,
-            'md5' => $transaction->khqr_md5,
+            'event_id' => (string) ($transaction->khqr_md5 ?: $transaction->provider_payment_id),
+            'event_type' => 'payment.succeeded',
+            'data' => [
+                'order_id' => $transaction->order_id,
+                'provider_payment_id' => (string) ($data['externalRef'] ?? $transaction->provider_payment_id),
+                'amount' => isset($data['amount']) ? (float) $data['amount'] : (float) $transaction->amount,
+                'currency' => (string) ($data['currency'] ?? $transaction->currency),
+            ],
         ];
     }
 
@@ -697,8 +557,10 @@ class PaymentRepository
 
     private function markPaid(Order $order, ?PaymentTransaction $paymentTx, string $provider): void
     {
+
         if ($paymentTx) {
             $paymentTx->status = 'paid';
+            $order->payment_status === 'paid';
         }
 
         if ($order->payment_status === 'paid') {
@@ -712,6 +574,8 @@ class PaymentRepository
         ]);
 
         if ($order->payment_method === 'khqr') {
+            $order->payment_status = 'paid';
+            $order->save();
             $cart = $order->customer?->cart;
             if ($cart) {
                 $cart->items()->delete();

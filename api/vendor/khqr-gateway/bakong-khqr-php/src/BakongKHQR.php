@@ -292,9 +292,9 @@ class BakongKHQR
             $tag = $khqrTag['tag'];
             $khqr = current(array_filter(KHQRData::KHQRTag, fn($el): bool => $el['tag'] == $tag));
             assert($khqr !== false);
-
+            $emv = new EMV();
             if ($khqr['instance'] === Timestamp::class) {
-                $instance = new Timestamp($tag);
+                $instance = new Timestamp($tag, $emv);
                 $decodeValue[$khqr['type']] = $instance->value;
 
                 continue;
@@ -483,7 +483,7 @@ class BakongKHQR
         if (!isset($amount) || $amount == 0) {
             $QRType = EMV::STATIC_QR;
         }
-        $pointOfInitiationMethod = new PointOfInitiationMethod(EMV::POINT_OF_INITIATION_METHOD, $QRType);
+        $pointOfInitiationMethod = $QRType;
         $upi = null;
         if ($info->upiMerchantAccount !== null && $info->upiMerchantAccount !== '' && $info->upiMerchantAccount !== '0') {
             $upi = new UnionpayMerchantAccount(EMV::UNIONPAY_MERCHANT_ACCOUNT, $info->upiMerchantAccount);
@@ -542,12 +542,21 @@ class BakongKHQR
             $languageTemplate = new MerchantInformationLanguageTemplate(EMV::MERCHANT_INFORMATION_LANGUAGE_TEMPLATE, $languageInformation);
             $KHQRInstances[] = $languageTemplate;
         }
-        $timeStamp = new Timestamp(EMV::TIMESTAMP_TAG);
-        $KHQRInstances[] = $timeStamp;
+        $emvConfig = new EMV();
+        $timeStamp = new Timestamp(EMV::TIMESTAMP_TAG, $emvConfig);
+
+        // check Qr is Dynamic or Static before add expired time
+        if ($QRType == EMV::STATIC_QR) {
+            $KHQRInstances[] = $timeStamp->value(true, 1);
+
+        } else {
+            $KHQRInstances[] = $timeStamp->value(false, 1);
+        }
         $khqrNoCrc = '';
         foreach ($KHQRInstances as $instance) {
             $khqrNoCrc .= (string) $instance;
         }
+
         $khqr = $khqrNoCrc . EMV::CRC . EMV::CRC_LENGTH;
 
         return $khqr . Utils::crc16($khqr);
