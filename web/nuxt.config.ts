@@ -141,6 +141,8 @@ export default defineNuxtConfig({
       appName: process.env.NUXT_PUBLIC_APP_NAME || "Docker-Ecommerce",
       apiBase:
         process.env.NUXT_PUBLIC_API_BASE || "http://127.0.0.1:8000/api/v1",
+      frontendUrl:
+        process.env.NUXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
       pusherKey:
         process.env.NUXT_PUBLIC_PUSHER_APP_KEY ||
         process.env.VITE_PUSHER_APP_KEY ||

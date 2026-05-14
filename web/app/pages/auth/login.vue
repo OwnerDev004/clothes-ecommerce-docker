@@ -88,21 +88,7 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
-const apiOrigin = (() => {
-    if (apiBase.startsWith('http://') || apiBase.startsWith('https://')) {
-        return apiBase.replace(/\/api\/v1\/?$/, '')
-    }
-    return 'http://localhost:8000'
-})()
-const frontendOrigin = (() => {
-    if (apiOrigin.includes('localhost:8000')) {
-        return 'http://localhost:3000'
-    }
-    if (apiOrigin.includes('127.0.0.1:8000')) {
-        return 'http://127.0.0.1:3000'
-    }
-    return apiOrigin
-})()
+const frontendBase = (config.public.frontendUrl || 'http://localhost:3000').replace(/\/$/, '')
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -283,9 +269,9 @@ const onTelegramLogin = async () => {
 }
 
 const startOAuthLogin = async (provider: 'google' | 'facebook' | 'github' | 'telegram') => {
-    const frontendRedirect = `${frontendOrigin}/auth/login`
-    const redirectUrl = `${apiOrigin}/auth/${provider}/redirect?redirect=${encodeURIComponent(frontendRedirect)}`
-    window.location.href = redirectUrl
+    const redirectUrl = new URL(`${apiBase}/auth/${provider}/redirect`)
+    redirectUrl.searchParams.set('redirect', `${frontendBase}/auth/login`)
+    window.location.href = redirectUrl.toString()
 }
 </script>
 
