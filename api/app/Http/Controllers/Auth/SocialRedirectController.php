@@ -70,6 +70,10 @@ class SocialRedirectController extends Controller
         try {
             $socialUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Throwable $e) {
+            Log::warning('OAuth callback failed', [
+                'provider' => $provider,
+                'message' => $e->getMessage(),
+            ]);
             return redirect($this->buildFrontendRedirect(null, 'oauth_failed'));
         }
         $customer = $this->findOrCreateCustomer($provider, $socialUser);
