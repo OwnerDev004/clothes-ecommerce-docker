@@ -75,21 +75,15 @@ return [
     */
 
     'providers' => [
-        'admins' => [
+        'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
 
-        // Add this customers provider
         'customers' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Customer::class,  // Make sure this model exists
-        ]
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+            'model' => App\Models\Customer::class,
+        ],
     ],
 
     /*
