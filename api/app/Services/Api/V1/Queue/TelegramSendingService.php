@@ -53,7 +53,7 @@ class TelegramSendingService
     public function sendOrderStatusUpdate(Order $order, string $message): void
     {
         $order->loadMissing('customer:id,full_name,user_name,telegram_chat_id,telegram_user_id,telegram_username,enable_telegram_alerts');
-
+        $customerName = (string) ($order->customer?->full_name ?: $order->customer?->user_name ?: 'Customer');
         $customer = $order->customer;
         if (!$customer) {
             $this->logDelivery('skip_missing_customer', $order->id);
@@ -71,12 +71,15 @@ class TelegramSendingService
             return;
         }
 
+        $linkInvoice = $this->buildLinkInvoice($order);
         $payload = implode("\n", [
             $message,
-            'Order Link' . $this->buildLinkInvoice($order),
+            "Customer: {$customerName}",
+            "Order Link: [Track Order]({$linkInvoice})",
             'Order: #' . $order->id,
             'Status: ' . strtoupper((string) $order->status),
             'Total: $' . number_format((float) $order->total_price, 2),
+            '-------------------------------------------',
         ]);
 
         try {
@@ -101,9 +104,10 @@ class TelegramSendingService
             "Customer: {$customerName}",
             'Total: $' . number_format((float) $order->total_price, 2),
             'Payment status: PAID',
-            $invoiceLink ? 'Invoice: ' . url($invoiceLink) : 'Invoice: unavailable',
+            $invoiceLink ? 'Invoice: ' . ($invoiceLink) : 'Invoice: unavailable',
         ]);
     }
+
     private function buildLinkInvoice(Order $order): ?string
     {
         $frontendBase = rtrim((string) config('app.frontend_url', config('app.url', 'http://localhost:3000')), '/');
@@ -122,11 +126,19 @@ class TelegramSendingService
         }
 
         $baseUri = rtrim((string) config('services.telegram-bot-api.base_uri', 'https://api.telegram.org'), '/');
+
         try {
             Http::timeout(10)->post("{$baseUri}/bot{$botToken}/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => $text,
                 'parse_mode' => 'Markdown',
+                'reply_markup' => json_encode([
+                    'inline_keyboard' => [
+                        [
+                            ['text' => 'Contact Service', 'url' => 'https://t.me/dyzak0410'],
+                        ]
+                    ]
+                ])
             ]);
         } catch (\Throwable $e) {
             Log::warning('telegram.direct_send_failed', [
@@ -141,12 +153,5 @@ class TelegramSendingService
         if (!config('services.telegram-bot-api.log_delivery')) {
             return;
         }
-
-        Log::info('telegram.delivery', [
-            'status' => $status,
-            'order_id' => $orderId,
-            'customer_id' => $customerId,
-            'chat_id' => $chatId,
-        ]);
     }
 }
