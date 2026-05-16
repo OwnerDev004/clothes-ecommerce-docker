@@ -41,7 +41,7 @@
           <select v-model="shippingProvince" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
             <option value="">Select a province</option>
             <option v-for="province in appSetting.shipping_rates" :key="province.id || province.province"
-              :value="province.slug">
+              :value="province.slug || slugifyProvince(province.province)">
               {{ province.province }}
             </option>
           </select>
@@ -143,7 +143,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-            }}
+          }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -196,6 +196,13 @@ type ShippingProvinceList = {
   province: string
   fee: number
 }
+
+const slugifyProvince = (value: string) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/_+/g, "-")
 
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')

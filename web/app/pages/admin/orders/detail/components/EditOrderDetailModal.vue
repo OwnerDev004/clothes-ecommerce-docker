@@ -164,6 +164,13 @@ const shippingRateByProvince: Record<string, number> = {
     other: 3.5,
 }
 
+const slugifyProvince = (value: string) =>
+    String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/_+/g, '-')
+
 const form = reactive<{ customer: CustomerInfoEdit, order_note: string }>({
     customer: {
         shipping_phone: '',
@@ -183,7 +190,12 @@ const resolveAuthHeaders = () => {
 
 const shippingFee = computed(() => {
     const province = form.customer.shipping_province;
-    return Number(shippingRateByProvince[province] ?? form.customer.shipping_fee ?? 0);
+    return Number(
+        shippingRateByProvince[province] ??
+        shippingRateByProvince[slugifyProvince(province)] ??
+        form.customer.shipping_fee ??
+        0
+    );
 });
 
 

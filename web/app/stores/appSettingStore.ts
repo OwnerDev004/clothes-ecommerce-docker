@@ -8,6 +8,25 @@ export type AppSetting = {
   base_currency_code: string;
 };
 
+const slugifyProvince = (value: string) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/_+/g, "-");
+
+const normalizeShippingRate = (item: any) => {
+  const province = String(item?.province || "").trim();
+  const slug = String(item?.slug || slugifyProvince(province)).trim();
+
+  return {
+    ...item,
+    province,
+    slug,
+    fee: Number(item?.fee || 0),
+  };
+};
+
 export const useAppSettingStore = defineStore(
   "appSetting",
   () => {
@@ -38,10 +57,12 @@ export const useAppSettingStore = defineStore(
       settings.value.shipping_defaul_fee =
         setting.shipping_fee ?? settings.value.shipping_defaul_fee;
       settings.value.shipping_rates = Array.isArray(setting.shipping_rates)
-        ? setting.shipping_rates
+        ? setting.shipping_rates.map(normalizeShippingRate)
         : settings.value.shipping_rates;
       settings.value.base_currency_code =
-        setting.currency_code ?? settings.value.base_currency_code;
+        setting.default_currency_code ??
+        setting.currency_code ??
+        settings.value.base_currency_code;
       loaded.value = true;
     };
 
