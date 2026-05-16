@@ -26,6 +26,14 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Get admin users list',
         security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Get admin list success'
+            ),
+            new OA\Response(response: 401, description: 'Unauthorized Customer')
+
+        ]
     )]
     public function index(ListAdminRequest $request)
     {
@@ -40,6 +48,11 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Get assignable admin roles',
         security: [['bearerAuth' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Get Roles Admin Success'),
+            new OA\Response(response: 401, description: 'Unauthorize'),
+
+        ]
     )]
     public function roleOptions()
     {
@@ -62,6 +75,15 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Get admin detail',
         security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'admin', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Get Admin Detail Success'),
+            new OA\Response(response: 404, description: 'Not found Admin'),
+            new OA\Response(response: 401, description: 'Unauthorize'),
+
+        ]
     )]
     public function show(User $admin)
     {
@@ -75,6 +97,27 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Create admin user',
         security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['first_name', 'last_name', 'gender', 'user_name', 'email', 'password', 'role'],
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'last_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'gender', type: 'string', enum: ['male', 'female']),
+                    new OA\Property(property: 'dob', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'user_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'phone', type: 'string', maxLength: 20, nullable: true),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', maxLength: 255),
+                    new OA\Property(property: 'password', type: 'string', minLength: 6),
+                    new OA\Property(property: 'role', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Store Admin Success'),
+            new OA\Response(response: 401, description: 'Unauthorize'),
+        ]
     )]
     public function store(StoreAdminRequest $request)
     {
@@ -91,6 +134,28 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Update admin user',
         security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'admin', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'last_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'gender', type: 'string', enum: ['male', 'female']),
+                    new OA\Property(property: 'dob', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'user_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'phone', type: 'string', maxLength: 20, nullable: true),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', maxLength: 255),
+                    new OA\Property(property: 'password', type: 'string', minLength: 6, nullable: true),
+                    new OA\Property(property: 'role', type: 'string'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Success Update Admin')
+        ]
     )]
     public function update(UpdateAdminRequest $request, User $admin)
     {
@@ -110,6 +175,14 @@ class AdminController extends Controller
         tags: ['Admin/Admins'],
         summary: 'Delete admin user',
         security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'admin', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Admin deleted'),
+            new OA\Response(response: 404, description: 'Admin not found'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ],
     )]
     public function destroy(User $admin)
     {

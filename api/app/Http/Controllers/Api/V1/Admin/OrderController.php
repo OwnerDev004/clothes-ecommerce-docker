@@ -66,6 +66,16 @@ class OrderController extends Controller
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['status'],
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', enum: ['order_confirming', 'payment_confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']),
+                    new OA\Property(property: 'order_note', type: 'string', maxLength: 500, nullable: true),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Order status updated'),
             new OA\Response(response: 422, description: 'Validation error'),
@@ -93,6 +103,31 @@ class OrderController extends Controller
         return $this->success($order, 'Order status updated', 200);
     }
 
+    #[OA\Patch(
+        path: '/api/v1/admin/orders/{id}',
+        tags: ['Admin/Orders'],
+        summary: 'Update order details',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'shipping_province', type: 'string', maxLength: 100),
+                    new OA\Property(property: 'shipping_address', type: 'string', maxLength: 255, nullable: true),
+                    new OA\Property(property: 'shipping_phone', type: 'string', maxLength: 30, nullable: true),
+                    new OA\Property(property: 'shipping_fee', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'order_note', type: 'string', maxLength: 500, nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Order updated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function updateOrder(OrderEditRequest $request, int $id)
     {
         try {

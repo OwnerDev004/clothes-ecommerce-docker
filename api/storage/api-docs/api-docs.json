@@ -12,6 +12,281 @@
         }
     ],
     "paths": {
+        "/api/v1/admin/admins": {
+            "get": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Get admin users list",
+                "operationId": "9e7c3acc4d7d65a6db47933a95d1ad2c",
+                "responses": {
+                    "200": {
+                        "description": "Get admin list success"
+                    },
+                    "401": {
+                        "description": "Unauthorized Customer"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Create admin user",
+                "operationId": "a718844c6b4f4abc8ac392e96cfd1f38",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "gender",
+                                    "user_name",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female"
+                                        ]
+                                    },
+                                    "dob": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "user_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 20
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 6
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Store Admin Success"
+                    },
+                    "401": {
+                        "description": "Unauthorize"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/admins/roles": {
+            "get": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Get assignable admin roles",
+                "operationId": "dac1f219f4971106e57dda75157b3f18",
+                "responses": {
+                    "200": {
+                        "description": "Get Roles Admin Success"
+                    },
+                    "401": {
+                        "description": "Unauthorize"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/admins/{admin}": {
+            "get": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Get admin detail",
+                "operationId": "4f8571cb3bb818fab15cfceaad18e3c4",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Get Admin Detail Success"
+                    },
+                    "404": {
+                        "description": "Not found Admin"
+                    },
+                    "401": {
+                        "description": "Unauthorize"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Update admin user",
+                "operationId": "e7cc2111f9f5d6375067b1c2ef24fcbf",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female"
+                                        ]
+                                    },
+                                    "dob": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "user_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 20
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "minLength": 6
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success Update Admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin/Admins"
+                ],
+                "summary": "Delete admin user",
+                "operationId": "10bdae600cc7f6fbc85d0fd9c793efd7",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Admin deleted"
+                    },
+                    "404": {
+                        "description": "Admin not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/analytics": {
             "get": {
                 "tags": [
@@ -1006,6 +1281,72 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin/Orders"
+                ],
+                "summary": "Update order details",
+                "operationId": "168f989a3a2d364cf14bf627ae825abe",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "shipping_province": {
+                                        "type": "string",
+                                        "maxLength": 100
+                                    },
+                                    "shipping_address": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "shipping_phone": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 30
+                                    },
+                                    "shipping_fee": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "order_note": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Order updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/admin/orders/{id}/status": {
@@ -1025,6 +1366,38 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "order_confirming",
+                                            "payment_confirmed",
+                                            "processing",
+                                            "shipped",
+                                            "delivered",
+                                            "cancelled",
+                                            "refunded"
+                                        ]
+                                    },
+                                    "order_note": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Order status updated"
@@ -1066,6 +1439,54 @@
                 "summary": "Create product",
                 "description": "Store a newly created resource in storage.",
                 "operationId": "40d234e149d493461a5a45e951c79b61",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "category_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "sub_category_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "collection_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Product created"
@@ -1130,6 +1551,102 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "sub_category_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "collection_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "nullable": true
+                                    },
+                                    "clear_images": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "existing_images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "image_type": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        "thumbnail",
+                                                        "gallery"
+                                                    ]
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    },
+                                    "new_images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "file": {
+                                                    "type": "string",
+                                                    "format": "binary"
+                                                },
+                                                "image_type": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "enum": [
+                                                        "thumbnail",
+                                                        "gallery"
+                                                    ]
+                                                },
+                                                "sort_order": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Product updated"
@@ -1202,6 +1719,55 @@
                 "summary": "Create product variant",
                 "description": "Store a newly created resource in storage.",
                 "operationId": "a429f2b365fd300587425cc8f88adea9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_id",
+                                    "sell_price",
+                                    "cost_price"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer"
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 64
+                                    },
+                                    "size_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "sell_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "cost_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Product variant created"
@@ -1266,6 +1832,50 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer"
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "color": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 64
+                                    },
+                                    "size_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "type": "integer",
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "sell_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "cost_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Product variant updated"
@@ -1303,6 +1913,624 @@
                     },
                     "404": {
                         "description": "Product variant not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/roles": {
+            "get": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Get roles list",
+                "operationId": "f0940083c821cdc833f5b857fe0eb145",
+                "responses": {
+                    "200": {
+                        "description": "Roles list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Create role",
+                "operationId": "f583fd140e55bdb1ac7de8a65770ed71",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 1000
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "is_system": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "module_id": {
+                                                    "type": "integer"
+                                                },
+                                                "permissions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "view",
+                                                            "create",
+                                                            "edit",
+                                                            "delete"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/roles/{role}": {
+            "get": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Get role detail",
+                "operationId": "ca597d9f42012f592895ffddb7b9ee9e",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role detail"
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Update role",
+                "operationId": "651b561732b259c526ace0e5cc9dd556",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 1000
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "module_id": {
+                                                    "type": "integer"
+                                                },
+                                                "permissions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "view",
+                                                            "create",
+                                                            "edit",
+                                                            "delete"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Delete role",
+                "operationId": "3f4a2bf6157ca0bf827d1f70802c3de1",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role deleted"
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin/Roles"
+                ],
+                "summary": "Modify role",
+                "operationId": "c6361271a5eb181216cea95d80afe66b",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "desc": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 1000
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "module_id": {
+                                                    "type": "integer"
+                                                },
+                                                "permissions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "view",
+                                                            "create",
+                                                            "edit",
+                                                            "delete"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/setting": {
+            "get": {
+                "tags": [
+                    "Admin/Setting"
+                ],
+                "summary": "Get admin settings",
+                "operationId": "992fe42abe8a248d5a0ef30feab24cab",
+                "responses": {
+                    "200": {
+                        "description": "Settings loaded"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin/Setting"
+                ],
+                "summary": "Update admin settings",
+                "operationId": "a14a099de11b394627d935d0fb710b43",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "app_name",
+                                    "default_currency_code",
+                                    "exchange_rate",
+                                    "shipping_fee",
+                                    "free_shipping_threshold",
+                                    "low_stock_threshold",
+                                    "tax_rate"
+                                ],
+                                "properties": {
+                                    "app_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "app_tagline": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "support_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "support_phone": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 50
+                                    },
+                                    "business_address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "default_currency_code": {
+                                        "type": "string",
+                                        "maxLength": 10
+                                    },
+                                    "exchange_rate": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "shipping_fee": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "free_shipping_threshold": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "low_stock_threshold": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "tax_rate": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "shipping_rates": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "province",
+                                                "fee"
+                                            ],
+                                            "properties": {
+                                                "province": {
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                },
+                                                "fee": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settings updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/purchases": {
+            "get": {
+                "tags": [
+                    "Admin/Purchases"
+                ],
+                "summary": "Get stock purchases",
+                "operationId": "74272758be8bb29d0fd26d659cbbe6f0",
+                "responses": {
+                    "200": {
+                        "description": "Purchase list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin/Purchases"
+                ],
+                "summary": "Create stock purchase",
+                "operationId": "92c04ccb62565e4d00a1886b7d8e2045",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_variant_id",
+                                    "quantity",
+                                    "cost_price"
+                                ],
+                                "properties": {
+                                    "product_variant_id": {
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "cost_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Purchase created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/purchases/{id}": {
+            "put": {
+                "tags": [
+                    "Admin/Purchases"
+                ],
+                "summary": "Update stock purchase",
+                "operationId": "83ee211dfc722f84f80e0e7d1390d54c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_variant_id",
+                                    "quantity",
+                                    "cost_price"
+                                ],
+                                "properties": {
+                                    "product_variant_id": {
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "cost_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Purchase updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin/Purchases"
+                ],
+                "summary": "Delete stock purchase",
+                "operationId": "4fa983b3bca06b9e80a5540f9b461dec",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Purchase deleted"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -1446,6 +2674,20 @@
                 ]
             }
         },
+        "/api/v1/app_setting": {
+            "get": {
+                "tags": [
+                    "AppSetting"
+                ],
+                "summary": "Get App Setting ",
+                "operationId": "79fc6e737273cc58e835dafcdc32aeff",
+                "responses": {
+                    "200": {
+                        "description": "app_setting list"
+                    }
+                }
+            }
+        },
         "/api/v1/admin/register": {
             "post": {
                 "tags": [
@@ -1453,6 +2695,68 @@
                 ],
                 "summary": "Register admin",
                 "operationId": "32def6c1a10db192ec162039fd292693",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "gender",
+                                    "user_name",
+                                    "phone",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female"
+                                        ]
+                                    },
+                                    "dob": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    },
+                                    "user_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 6
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Admin registered"
@@ -1484,7 +2788,8 @@
                                 ],
                                 "properties": {
                                     "email": {
-                                        "type": "string, email"
+                                        "type": "string",
+                                        "format": "email"
                                     },
                                     "password": {
                                         "type": "string",
@@ -2364,6 +3669,47 @@
                 ]
             }
         },
+        "/api/v1/newsletters/subscribe": {
+            "post": {
+                "tags": [
+                    "Newsletter"
+                ],
+                "summary": "Subscribe newsletter by email",
+                "operationId": "8e03eaabaa8d2c2d5aa233494a23b77d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "mail_sent_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscribed"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
         "/api/v1/orders": {
             "get": {
                 "tags": [
@@ -2917,7 +4263,7 @@
                     "Products"
                 ],
                 "summary": "Get product reviews",
-                "operationId": "2a56b515bfb464ab80b7f8892b48ee4a",
+                "operationId": "2a8944646c9087eb823b3a17d54bf52d",
                 "parameters": [
                     {
                         "name": "id",
@@ -3033,6 +4379,26 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/v1/products/top_review": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get Top 5 reviews",
+                "operationId": "4e44d8931b859b3c0e24f943d7b6d491",
+                "responses": {
+                    "200": {
+                        "description": "Product reviews"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                }
             }
         },
         "/api/v1/sub-categories": {
@@ -3299,6 +4665,10 @@
     },
     "tags": [
         {
+            "name": "Admin/Admins",
+            "description": "Admin/Admins"
+        },
+        {
             "name": "Admin/Analytics",
             "description": "Admin/Analytics"
         },
@@ -3335,8 +4705,24 @@
             "description": "Admin/Product Variants"
         },
         {
+            "name": "Admin/Roles",
+            "description": "Admin/Roles"
+        },
+        {
+            "name": "Admin/Setting",
+            "description": "Admin/Setting"
+        },
+        {
+            "name": "Admin/Purchases",
+            "description": "Admin/Purchases"
+        },
+        {
             "name": "Admin/Vouchers",
             "description": "Admin/Vouchers"
+        },
+        {
+            "name": "AppSetting",
+            "description": "AppSetting"
         },
         {
             "name": "Admin/Auth",
@@ -3365,6 +4751,10 @@
         {
             "name": "Customer/Profile",
             "description": "Customer/Profile"
+        },
+        {
+            "name": "Newsletter",
+            "description": "Newsletter"
         },
         {
             "name": "Orders",

@@ -48,6 +48,21 @@ class ProductVariantController extends Controller
         tags: ['Admin/Product Variants'],
         summary: 'Create product variant',
         security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['product_id', 'sell_price', 'cost_price'],
+                properties: [
+                    new OA\Property(property: 'product_id', type: 'integer'),
+                    new OA\Property(property: 'sku', type: 'string', maxLength: 255, nullable: true),
+                    new OA\Property(property: 'color', type: 'string', maxLength: 64, nullable: true),
+                    new OA\Property(property: 'size_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'stock_quantity', type: 'integer', minimum: 0, nullable: true),
+                    new OA\Property(property: 'sell_price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'cost_price', type: 'number', format: 'float', minimum: 0),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Product variant created'),
             new OA\Response(response: 422, description: 'Validation error'),
@@ -96,6 +111,20 @@ class ProductVariantController extends Controller
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'product_id', type: 'integer'),
+                    new OA\Property(property: 'sku', type: 'string', maxLength: 255, nullable: true),
+                    new OA\Property(property: 'color', type: 'string', maxLength: 64, nullable: true),
+                    new OA\Property(property: 'size_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'stock_quantity', type: 'integer', minimum: 0, nullable: true),
+                    new OA\Property(property: 'sell_price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'cost_price', type: 'number', format: 'float', minimum: 0),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Product variant updated'),
             new OA\Response(response: 422, description: 'Validation error'),

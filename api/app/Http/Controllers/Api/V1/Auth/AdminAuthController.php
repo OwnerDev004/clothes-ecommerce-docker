@@ -8,7 +8,7 @@ use App\Repositories\Admin\AdminRepository;
 use App\Repositories\Admin\RoleRepository;
 use App\Traits\ApiResponse;
 
-use Request;
+use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use OpenApi\Attributes as OA;
 
@@ -39,6 +39,23 @@ class AdminAuthController extends Controller
         path: '/api/v1/admin/register',
         tags: ['Admin/Auth'],
         summary: 'Register admin',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['first_name', 'last_name', 'gender', 'user_name', 'phone', 'email', 'password', 'role'],
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'last_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'gender', type: 'string', enum: ['male', 'female']),
+                    new OA\Property(property: 'dob', type: 'string', format: 'date', nullable: true),
+                    new OA\Property(property: 'user_name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'phone', type: 'string', maxLength: 20),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', maxLength: 255),
+                    new OA\Property(property: 'password', type: 'string', minLength: 6),
+                    new OA\Property(property: 'role', type: 'string'),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 201, description: 'Admin registered'),
             new OA\Response(response: 409, description: 'Email or username exists'),
@@ -66,7 +83,7 @@ class AdminAuthController extends Controller
             content: new OA\JsonContent(
                 required: ['email', 'password'],
                 properties: [
-                    new OA\Property(property: 'email', type: 'string, email'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email'),
                     new OA\Property(property: 'password', type: 'string', minLength: 6)
                 ]
             )

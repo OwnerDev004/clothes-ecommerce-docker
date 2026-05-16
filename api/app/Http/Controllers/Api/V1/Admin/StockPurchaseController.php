@@ -40,6 +40,18 @@ class StockPurchaseController extends Controller
         tags: ['Admin/Purchases'],
         summary: 'Create stock purchase',
         security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['product_variant_id', 'quantity', 'cost_price'],
+                properties: [
+                    new OA\Property(property: 'product_variant_id', type: 'integer'),
+                    new OA\Property(property: 'quantity', type: 'integer', minimum: 1),
+                    new OA\Property(property: 'cost_price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'note', type: 'string', maxLength: 500, nullable: true),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Purchase created'),
             new OA\Response(response: 422, description: 'Validation error'),
@@ -57,6 +69,31 @@ class StockPurchaseController extends Controller
         return $this->success($purchase, 'Purchase created', 200);
     }
 
+    #[OA\Put(
+        path: '/api/v1/admin/purchases/{id}',
+        tags: ['Admin/Purchases'],
+        summary: 'Update stock purchase',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['product_variant_id', 'quantity', 'cost_price'],
+                properties: [
+                    new OA\Property(property: 'product_variant_id', type: 'integer'),
+                    new OA\Property(property: 'quantity', type: 'integer', minimum: 1),
+                    new OA\Property(property: 'cost_price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'note', type: 'string', maxLength: 500, nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Purchase updated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(StockPurchaseStoreRequest $request, int $id)
     {
         try {
@@ -69,6 +106,19 @@ class StockPurchaseController extends Controller
         return $this->success($purchase, 'Purchase updated', 200);
     }
 
+    #[OA\Delete(
+        path: '/api/v1/admin/purchases/{id}',
+        tags: ['Admin/Purchases'],
+        summary: 'Delete stock purchase',
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Purchase deleted'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function destroy(int $id)
     {
         try {

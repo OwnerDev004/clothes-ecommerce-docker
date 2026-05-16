@@ -46,6 +46,21 @@ class ProductController extends Controller
         tags: ['Admin/Products'],
         summary: 'Create product',
         security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['name', 'price', 'category_id'],
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'desc', type: 'string', nullable: true),
+                    new OA\Property(property: 'price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'category_id', type: 'integer'),
+                    new OA\Property(property: 'sub_category_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'brand_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'collection_ids', type: 'array', nullable: true, items: new OA\Items(type: 'integer')),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Product created'),
             new OA\Response(response: 422, description: 'Validation error'),
@@ -94,6 +109,47 @@ class ProductController extends Controller
         parameters: [
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'name', type: 'string', maxLength: 255),
+                    new OA\Property(property: 'desc', type: 'string', nullable: true),
+                    new OA\Property(property: 'price', type: 'number', format: 'float', minimum: 0),
+                    new OA\Property(property: 'category_id', type: 'integer'),
+                    new OA\Property(property: 'sub_category_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'brand_id', type: 'integer', nullable: true),
+                    new OA\Property(property: 'collection_ids', type: 'array', nullable: true, items: new OA\Items(type: 'integer')),
+                    new OA\Property(property: 'clear_images', type: 'boolean', nullable: true),
+                    new OA\Property(
+                        property: 'existing_images',
+                        type: 'array',
+                        nullable: true,
+                        items: new OA\Items(
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'integer'),
+                                new OA\Property(property: 'image_type', type: 'string', nullable: true, enum: ['thumbnail', 'gallery']),
+                                new OA\Property(property: 'sort_order', type: 'integer', nullable: true),
+                            ]
+                        )
+                    ),
+                    new OA\Property(
+                        property: 'new_images',
+                        type: 'array',
+                        nullable: true,
+                        items: new OA\Items(
+                            type: 'object',
+                            properties: [
+                                new OA\Property(property: 'file', type: 'string', format: 'binary'),
+                                new OA\Property(property: 'image_type', type: 'string', nullable: true, enum: ['thumbnail', 'gallery']),
+                                new OA\Property(property: 'sort_order', type: 'integer', nullable: true),
+                            ]
+                        )
+                    ),
+                ]
+            )
+        ),
         responses: [
             new OA\Response(response: 200, description: 'Product updated'),
             new OA\Response(response: 422, description: 'Validation error'),
