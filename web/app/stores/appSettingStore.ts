@@ -34,14 +34,12 @@ export const useAppSettingStore = defineStore(
         return;
       }
 
-      settings.value.app_name =
-        setting.app_name ?? settings.value.app_name;
+      settings.value.app_name = setting.app_name ?? settings.value.app_name;
       settings.value.shipping_defaul_fee =
         setting.shipping_fee ?? settings.value.shipping_defaul_fee;
-      settings.value.shipping_rates =
-        Array.isArray(setting.shipping_rates)
-          ? setting.shipping_rates
-          : settings.value.shipping_rates;
+      settings.value.shipping_rates = Array.isArray(setting.shipping_rates)
+        ? setting.shipping_rates
+        : settings.value.shipping_rates;
       settings.value.base_currency_code =
         setting.currency_code ?? settings.value.base_currency_code;
       loaded.value = true;
