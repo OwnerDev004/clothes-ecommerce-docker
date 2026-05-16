@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Customer;
+use App\Repositories\AppSettingRepository;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\ProductVariant;
@@ -15,6 +16,7 @@ class OrderLifecycleRepository
 {
     public function __construct(
         private readonly OrderRealtimeAlertService $orderRealtimeAlertService,
+        private readonly AppSettingRepository $appSettingRepository,
     ) {
     }
 
@@ -350,14 +352,22 @@ class OrderLifecycleRepository
     private function calculateShippingFee(string $shippingProvince): float
     {
         $province = strtolower(trim($shippingProvince));
-        $rates = [
-            'phnom_penh' => 1.50,
-            'kandal' => 2.00,
-            'siem_reap' => 2.50,
-            'battambang' => 2.50,
-            'preah_sihanouk' => 3.00,
-        ];
+        $settings = $this->appSettingRepository->current();
 
-        return $rates[$province] ?? 3.50;
+        $shippingRates = collect($settings->shipping_rates ?? [])
+            ->mapWithKeys(function ($row) {
+                $key = strtolower(str_replace(' ', '_', trim((string) ($row['province'] ?? ''))));
+                $fee = (float) ($row['fee'] ?? 0);
+
+                return $key !== '' ? [$key => $fee] : [];
+            })
+            ->all();
+
+        if (array_key_exists($province, $shippingRates)) {
+            return (float) $shippingRates[$province];
+        }
+
+        $defaultShippingFee = (float) ($settings->shipping_fee ?? 3.50);
+        return $defaultShippingFee > 0 ? $defaultShippingFee : 3.50;
     }
 }

@@ -15,7 +15,9 @@ export const useAppSetting = () => {
   const appSetting = computed<appSetting>(() => ({
     app_name: settings.value.app_name,
     shipping_defaul_fee: Number(settings.value.shipping_defaul_fee || 0),
-    shipping_rates: Array.isArray(settings.value.shipping_rates) ? settings.value.shipping_rates : [],
+    shipping_rates: Array.isArray(settings.value.shipping_rates)
+      ? settings.value.shipping_rates
+      : [],
     base_currency_code: settings.value.base_currency_code,
   }));
 
@@ -39,7 +41,9 @@ export const useAppSetting = () => {
     return Number(appSetting.value.shipping_defaul_fee || 0);
   };
 
-  const shippingFee = computed(() => computeShippingFee(shippingProvince.value));
+  const shippingFee = computed(() =>
+    computeShippingFee(shippingProvince.value),
+  );
 
   let pendingFetch: Promise<void> | null = null;
   const fetchAppSetting = async (force = false) => {
