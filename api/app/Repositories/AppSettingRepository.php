@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\AppSetting;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class AppSettingRepository
 {
@@ -11,17 +12,23 @@ class AppSettingRepository
 
     public function current(): AppSetting
     {
-        return Cache::rememberForever(self::CACHE_KEY, function () {
+        $fallback = function (): AppSetting {
             return AppSetting::query()->first() ?? AppSetting::query()->create([
                 'app_name' => config('app.name'),
-                'currency_code' => 'USD',
+                'default_currency_code' => 'USD',
                 'shipping_fee' => 0,
                 'free_shipping_threshold' => 0,
                 'low_stock_threshold' => 20,
                 'tax_rate' => 0,
                 'shipping_rates' => [],
             ]);
-        });
+        };
+
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, $fallback);
+        } catch (Throwable) {
+            return $fallback();
+        }
     }
 
     public function update(array $payload): AppSetting
@@ -35,14 +42,22 @@ class AppSettingRepository
         $setting->fill($payload);
         $setting->save();
 
-        Cache::forget(self::CACHE_KEY);
-        Cache::forget('admin:dashboard:summary');
+        try {
+            Cache::forget(self::CACHE_KEY);
+            Cache::forget('admin:dashboard:summary');
+        } catch (Throwable) {
+            // Ignore cache backend failures so settings updates still persist.
+        }
 
         return $setting->refresh();
     }
 
     public function forgetCache(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        try {
+            Cache::forget(self::CACHE_KEY);
+        } catch (Throwable) {
+            // Ignore cache backend failures.
+        }
     }
 }

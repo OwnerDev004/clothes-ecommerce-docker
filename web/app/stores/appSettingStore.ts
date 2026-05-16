@@ -21,12 +21,27 @@ export const useAppSettingStore = defineStore(
     const loaded = ref(false);
 
     const setSettings = (payload: any) => {
+<<<<<<< Updated upstream
       settings.value.app_name =
         payload?.data?.app_name ?? settings.value.app_name;
       settings.value.shipping_defaul_fee =
         payload?.data?.shipping_fee ?? settings.value.shipping_defaul_fee;
       settings.value.shipping_rates =
         payload?.data?.shipping_rates ?? settings.value.shipping_rates;
+=======
+      const setting = normalizeSetting(payload);
+      if (!setting) {
+        loaded.value = true;
+        return;
+      }
+
+      settings.value.app_name = setting.app_name ?? settings.value.app_name;
+      settings.value.shipping_defaul_fee =
+        setting.shipping_fee ?? settings.value.shipping_defaul_fee;
+      settings.value.shipping_rates = Array.isArray(setting.shipping_rates)
+        ? setting.shipping_rates
+        : settings.value.shipping_rates;
+>>>>>>> Stashed changes
       settings.value.base_currency_code =
         payload?.data?.currency_code ?? settings.value.base_currency_code;
       loaded.value = true;
