@@ -17,7 +17,8 @@ class VoucherController extends Controller
     public function __construct(
         private readonly VoucherRepository $voucherRepository,
         private readonly CartRepository $cartRepository
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource.
@@ -170,7 +171,7 @@ class VoucherController extends Controller
                 'discount_value' => (float) $result['voucher']->discount_value,
             ],
             'cart_subtotal' => $subtotal,
-            'discount' => (float) $result['discount'],
+            'discount' => (float) $result['voucher']->discount_value,
             'subtotal_after_discount' => round($subtotal - (float) $result['discount'], 2),
         ], 'Voucher applied', 200);
     }

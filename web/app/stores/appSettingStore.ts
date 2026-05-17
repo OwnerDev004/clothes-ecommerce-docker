@@ -6,6 +6,8 @@ export type AppSetting = {
   shipping_defaul_fee: number;
   shipping_rates: any[];
   base_currency_code: string;
+  default_currency_code: string;
+  exchange_rate: number;
 };
 
 const slugifyProvince = (value: string) =>
@@ -35,6 +37,8 @@ export const useAppSettingStore = defineStore(
       shipping_defaul_fee: 0,
       shipping_rates: [],
       base_currency_code: "",
+      default_currency_code: "",
+      exchange_rate: 0,
     });
 
     const loaded = ref(false);
@@ -63,6 +67,13 @@ export const useAppSettingStore = defineStore(
         setting.default_currency_code ??
         setting.currency_code ??
         settings.value.base_currency_code;
+      settings.value.default_currency_code =
+        setting.default_currency_code ??
+        setting.currency_code ??
+        settings.value.default_currency_code;
+      settings.value.exchange_rate = Number(
+        setting.exchange_rate ?? settings.value.exchange_rate ?? 0,
+      );
       loaded.value = true;
     };
 

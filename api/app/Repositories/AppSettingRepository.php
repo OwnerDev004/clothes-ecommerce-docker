@@ -16,6 +16,7 @@ class AppSettingRepository
             return AppSetting::query()->first() ?? AppSetting::query()->create([
                 'app_name' => config('app.name'),
                 'default_currency_code' => 'USD',
+                'exchange_rate' => 4000,
                 'shipping_fee' => 0,
                 'free_shipping_threshold' => 0,
                 'low_stock_threshold' => 20,

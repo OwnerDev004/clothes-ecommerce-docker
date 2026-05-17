@@ -77,7 +77,7 @@ class PaymentController extends Controller
                 properties: [
                     new OA\Property(property: 'order_id', type: 'integer'),
                     new OA\Property(property: 'provider', type: 'string'),
-                    new OA\Property(property: 'currency', type: 'string', minLength: 3, maxLength: 3, nullable: true),
+                    new OA\Property(property: 'currency', type: 'string', enum: ['USD', 'KHR'], nullable: true),
                 ]
             )
         ),
@@ -95,13 +95,15 @@ class PaymentController extends Controller
         }
 
         $payload = $request->validated();
-
         try {
             $intent = $this->paymentRepository->createIntent(
                 $customer->id,
                 (int) $payload['order_id'],
                 (string) $payload['provider'],
-                strtoupper((string) ($payload['currency'] ?? 'USD'))
+                strtoupper((string) ($payload['currency'] ?? '')),
+                (bool) $payload['is_complete_coupon'],
+                (string) $payload['promo_code'],
+                (float) $payload['fee_province']
             );
         } catch (ValidationException $e) {
             $this->paymentRepository->cleanupFailedKhqrOrder((int) $payload['order_id']);

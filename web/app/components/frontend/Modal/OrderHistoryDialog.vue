@@ -58,7 +58,7 @@
                                     Shipping: {{ order.status || 'unknown' }}
                                 </el-tag>
                                 <span class="text-sm font-semibold text-gray-900">
-                                    ${{ formatMoney(order.total_price) }}
+                                    {{ formatMoney(order.total_price, defaultCurrencyCode) }}
                                 </span>
                                 <el-button v-if="canRepay(order)" size="small" type="warning" plain
                                     :loading="repayingOrderId === order.id" @click="repayOrder(order)">
@@ -77,7 +77,7 @@
                                     <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
                                 </div>
                                 <p class="font-medium text-gray-700">
-                                    ${{ formatMoney(item.total_price) }}
+                                    {{ formatMoney(item.total_price, defaultCurrencyCode) }}
                                 </p>
                             </div>
                         </div>
@@ -105,6 +105,8 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { orderStatus, OrderStatusList } from '~/enums/orderStatus'
 import { useAuthStore } from '~/stores/authStore'
+import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney } from '~/utils/currency'
 import { formatAnyDate } from '~/utils/date'
 import { getOrderStatusTagType, getPaymentStatusTagType } from '~/utils/orderStatusTheme'
 
@@ -149,6 +151,7 @@ const dialogOpen = computed({
 
 const authStore = useAuthStore()
 const { isAuthenticated, accessToken } = storeToRefs(authStore)
+const { defaultCurrencyCode, fetchAppSetting } = useAppSetting()
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 
@@ -251,7 +254,7 @@ const repayOrder = async (order: OrderRecord) => {
             body: {
                 order_id: Number(order.id),
                 provider,
-                currency: 'USD',
+                currency: defaultCurrencyCode.value,
             },
         })
 
@@ -277,14 +280,6 @@ const onFilterChanged = () => {
 const onPageChanged = (nextPage: number) => {
     page.value = nextPage
     fetchOrders()
-}
-
-const formatMoney = (value: number | string | null | undefined) => {
-    const amount = Number(value || 0)
-    if (Number.isNaN(amount)) {
-        return '0.00'
-    }
-    return amount.toFixed(2)
 }
 
 const formatDate = (value?: string) =>
@@ -320,6 +315,10 @@ watch(dialogOpen, (isOpen) => {
         return
     }
     fetchOrders()
+})
+
+onMounted(() => {
+    void fetchAppSetting(true)
 })
 </script>
 

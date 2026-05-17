@@ -21,25 +21,25 @@
         <h1 class="text-2xl font-semibold mb-3">Order Summary</h1>
         <div class="flex justify-between">
           <p class="text-slate-500">Subtotal</p>
-          <p>${{ subtotal.toFixed(2) }}</p>
+          <p>{{ formatMoney(displaySubtotal, selectedPaymentCurrency) }}</p>
         </div>
         <div class="flex justify-between">
           <p class="text-slate-500">Discount</p>
-          <p class="text-red">-${{ discountAmount.toFixed(2) }}</p>
+          <p class="text-red">-{{ formatMoney(displayDiscountAmount, selectedPaymentCurrency) }}</p>
         </div>
         <div class="flex justify-between">
           <p class="text-slate-500">Delivery Fee</p>
-          <p>${{ shippingFee.toFixed(2) }}</p>
+          <p>{{ formatMoney(displayShippingFee, selectedPaymentCurrency) }}</p>
         </div>
         <hr class="text-gray">
         <div class="flex justify-between">
           <p>Total</p>
-          <h2 class="text-xl font-semibold">${{ grandTotal.toFixed(2) }}</h2>
+          <h2 class="text-xl font-semibold">{{ formatMoney(displayGrandTotal, selectedPaymentCurrency) }}</h2>
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-sm text-slate-600">Shipping Province</label>
           <select v-model="shippingProvince" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
-            <option value="">Select a province</option>
+            <option value="">Other</option>
             <option v-for="province in appSetting.shipping_rates" :key="province.id || province.province"
               :value="province.slug || slugifyProvince(province.province)">
               {{ province.province }}
@@ -69,8 +69,9 @@
         <div class="flex flex-col gap-2" v-if="isPaymentByKhrqr">
           <label class="text-sm text-slate-600">Payment Currency</label>
           <select v-model="paymentCurrency" class="rounded-[16px] bg-gray px-4 outline-none py-3 w-full text-sm">
-            <option value="USD">USD</option>
-            <option value="KHR">KHR</option>
+            <option v-for="option in supportedPaymentCurrencies" :key="option.code" :value="option.code">
+              {{ option.label }}
+            </option>
           </select>
         </div>
 
@@ -125,10 +126,10 @@
                   </p>
                   <div class="flex items-end gap-2 text-gray-900">
                     <span class="text-2xl font-extrabold">
-                      {{ payableAmount.toFixed(2) }}
+                      {{ formatMoney(displayPayableAmount, selectedPaymentCurrency) }}
                     </span>
                     <span class="text-sm font-semibold uppercase text-gray-600">
-                      {{ paymentCurrency }}
+                      {{ selectedPaymentCurrency }}
                     </span>
                   </div>
                 </div>
@@ -143,7 +144,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-          }}
+            }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -179,6 +180,7 @@ import { toPng } from 'html-to-image';
 import { formatAnyDate } from '~/utils/date'
 import { watchDebounced } from '@vueuse/core'
 import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currency'
 type CartItem = {
   variant_id: number
   product_id: number
@@ -208,7 +210,15 @@ const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const authStore = useAuthStore()
 const cartStore = useCartStore()
-const { appSetting, shippingFee, shippingProvince, fetchAppSetting } = useAppSetting()
+const {
+  appSetting,
+  shippingFee,
+  shippingProvince,
+  fetchAppSetting,
+  convertAmount,
+  defaultCurrencyCode,
+  supportedPaymentCurrencies,
+} = useAppSetting()
 const { accessToken, isAuthenticated } = storeToRefs(authStore)
 
 const router = useRouter()
@@ -230,7 +240,7 @@ const shippingAddress = ref('')
 const shippingPhone = ref('')
 const paymentMethod = ref<'cash_on_delivery' | 'khqr'>('khqr')
 const paymentCurrency = ref<'USD' | 'KHR'>('USD')
-const isPaymentByKhrqr = ref<Boolean>(false)
+const isPaymentByKhrqr = ref(false)
 
 const paymentDialogOpen = ref(false)
 const qrString = ref('')
@@ -248,15 +258,53 @@ const qrImage = ref<HTMLElement | null>(null)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
+watch(
+  () => defaultCurrencyCode.value,
+  (value) => {
+    paymentCurrency.value = normalizeCurrencyCode(value)
+  },
+  { immediate: true },
+)
 
-
-
+const selectedPaymentCurrency = computed(() =>
+  normalizeCurrencyCode(paymentCurrency.value),
+)
 
 const grandTotal = computed(() => {
   return Math.max(0, subtotal.value - discountAmount.value + shippingFee.value)
 })
 
-
+const displaySubtotal = computed(() =>
+  convertAmount(
+    subtotal.value,
+    defaultCurrencyCode.value,
+    selectedPaymentCurrency.value,
+  ),
+)
+const displayDiscountAmount = computed(() =>
+  convertAmount(
+    discountAmount.value,
+    defaultCurrencyCode.value,
+    selectedPaymentCurrency.value,
+  ),
+)
+const displayShippingFee = computed(() =>
+  convertAmount(
+    shippingFee.value,
+    defaultCurrencyCode.value,
+    selectedPaymentCurrency.value,
+  ),
+)
+const displayGrandTotal = computed(() =>
+  convertAmount(
+    grandTotal.value,
+    defaultCurrencyCode.value,
+    selectedPaymentCurrency.value,
+  ),
+)
+const displayPayableAmount = computed(() =>
+  payableAmount.value > 0 ? payableAmount.value : displayGrandTotal.value,
+)
 
 const parseKhqrAmountFromQrString = (rawQr: string) => {
   let qr = String(rawQr || '').trim()
@@ -663,6 +711,9 @@ const createPaymentIntent = async (orderId: number) => {
         order_id: orderId,
         provider: 'khrqr',
         currency: paymentCurrency.value,
+        is_complete_coupon: isCouponComplete.value,
+        promo_code: promoCode.value.trim(),
+        fee_province: shippingFee.value
       }
     })
   } catch (error: any) {
@@ -743,7 +794,6 @@ const checkout = async () => {
         shipping_phone: shippingPhone.value.trim() || undefined,
         payment_method: paymentMethod.value,
         voucher_code: appliedVoucherCode.value || undefined,
-        grand_total: Number(grandTotal.value.toFixed(2)),
       }
     })
 
@@ -821,9 +871,7 @@ watch(
 
 onMounted(() => {
   fetchCart().then(() => autoApplySignupCoupon())
-  if (!appSetting.value.shipping_rates.length) {
-    void fetchAppSetting(true)
-  }
+  void fetchAppSetting(true)
 })
 
 onBeforeUnmount(() => {

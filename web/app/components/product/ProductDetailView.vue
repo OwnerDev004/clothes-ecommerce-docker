@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney } from '~/utils/currency'
 
 type ProductImage = {
   image_url?: string | null
@@ -44,6 +46,8 @@ const props = withDefaults(
     product: null,
   },
 )
+
+const { defaultCurrencyCode, fetchAppSetting } = useAppSetting()
 
 const resolvedProduct = computed<ProductDetail | null>(() => {
   const value = props.product
@@ -110,6 +114,10 @@ watch(
   },
   { immediate: true, deep: true },
 )
+
+onMounted(() => {
+  void fetchAppSetting(true)
+})
 </script>
 
 <template>
@@ -153,7 +161,7 @@ watch(
       <div class="flex items-end justify-between rounded-3xl bg-slate-50 p-4">
         <div>
           <p class="text-sm text-slate-500">Price</p>
-          <strong class="block text-3xl text-slate-950">{{ Number(displayPrice || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) }}</strong>
+          <strong class="block text-3xl text-slate-950">{{ formatMoney(displayPrice, defaultCurrencyCode) }}</strong>
         </div>
         <div class="text-right">
           <p class="text-sm text-slate-500">Stock</p>

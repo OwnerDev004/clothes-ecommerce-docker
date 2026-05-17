@@ -22,7 +22,10 @@ class CreatePaymentIntentRequest extends FormRequest
         return [
             'order_id' => ['required', 'integer', 'exists:orders,id'],
             'provider' => ['required', 'string', 'in:' . implode(',', $providers)],
-            'currency' => ['nullable', 'string', 'size:3'],
+            'currency' => ['nullable', 'string', 'in:USD,KHR'],
+            'is_complete_coupon' => ['nullable', 'boolean'],
+            'promo_code' => ['nullable', 'string'],
+            'fee_province' => ['nullable']
         ];
     }
 }

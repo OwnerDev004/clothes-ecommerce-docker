@@ -29,7 +29,7 @@
                 <div class="item-name">{{ item.variant?.product?.name || 'Product' }}</div>
                 <div class="item-meta">Qty {{ item.quantity }}</div>
               </div>
-              <div class="item-price">${{ formatMoney(item.price ?? item.unit_price ?? item.sell_price ?? 0) }}</div>
+              <div class="item-price">{{ formatMoney(item.price ?? item.unit_price ?? item.sell_price ?? 0, defaultCurrencyCode) }}</div>
             </div>
           </div>
         </div>
@@ -37,15 +37,15 @@
         <div class="section totals">
           <div class="row">
             <span>Subtotal</span>
-            <span>${{ formatMoney(order.summary?.subtotal ?? order.total_price ?? 0) }}</span>
+            <span>{{ formatMoney(order.summary?.subtotal ?? order.total_price ?? 0, defaultCurrencyCode) }}</span>
           </div>
           <div class="row" v-if="order.summary?.discount">
             <span>Discount</span>
-            <span>- ${{ formatMoney(order.summary?.discount) }}</span>
+            <span>- {{ formatMoney(order.summary?.discount, defaultCurrencyCode) }}</span>
           </div>
           <div class="row total">
             <span>Total</span>
-            <span>${{ formatMoney(order.total_price ?? 0) }}</span>
+            <span>{{ formatMoney(order.total_price ?? 0, defaultCurrencyCode) }}</span>
           </div>
         </div>
       </div>
@@ -61,6 +61,8 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/authStore'
+import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney } from '~/utils/currency'
 
 definePageMeta({
   middleware: []
@@ -71,6 +73,7 @@ const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const authStore = useAuthStore()
 const { accessToken } = storeToRefs(authStore)
+const { defaultCurrencyCode, fetchAppSetting } = useAppSetting()
 
 const loading = ref(true)
 const errorMessage = ref('')
@@ -99,10 +102,6 @@ const fetchOrder = async () => {
   }
 }
 
-const formatMoney = (value: number) => {
-  return Number(value || 0).toFixed(2)
-}
-
 const printInvoice = () => {
   if (import.meta.client) {
     window.print()
@@ -110,6 +109,9 @@ const printInvoice = () => {
 }
 
 onMounted(fetchOrder)
+onMounted(() => {
+  void fetchAppSetting(true)
+})
 </script>
 
 <style scoped>

@@ -68,7 +68,7 @@
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="mb-2 block text-sm font-medium text-slate-700">Default Currency Code</label>
-                  <el-select v-model="form.default_currency_code" :disabled="!canEdit" class="w-full" placeholder="USD">
+                  <el-select v-model="form.default_currency_code" :disabled="true" class="w-full" placeholder="USD">
                     <el-option label="USD" value="USD" />
                     <el-option label="KHR" value="KHR" />
                   </el-select>
@@ -79,7 +79,7 @@
                 </div>
                 <div>
                   <label class="mb-2 block text-sm font-medium text-slate-700">Tax Rate (%)</label>
-                  <el-input-number v-model="form.tax_rate" :disabled="!canEdit" :min="0" :max="100" :step="0.5"
+                  <el-input-number v-model="form.tax_rate" :disabled="true" :min="0" :max="100" :step="0.5"
                     class="!w-full" controls-position="right" />
                 </div>
               </div>

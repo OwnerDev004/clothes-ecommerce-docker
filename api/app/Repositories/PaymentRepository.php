@@ -16,14 +16,18 @@ use KHQR\Exceptions\KHQRException;
 use KHQR\Helpers\KHQRData;
 use KHQR\Models\IndividualInfo;
 use KHQR\Models\SourceInfo;
+use function PHPUnit\Framework\isEmpty;
 
 class PaymentRepository
 {
-    public function __construct(private readonly OrderLifecycleRepository $orderLifecycleRepository)
-    {
+    public function __construct(
+        private readonly OrderLifecycleRepository $orderLifecycleRepository,
+        private readonly AppSettingRepository $appSettingRepository,
+        private readonly VoucherRepository $promo_voucher,
+    ) {
     }
 
-    public function createIntent(int $customerId, int $orderId, string $provider, string $currency = 'USD'): array
+    public function createIntent(int $customerId, int $orderId, string $provider, string $currency = 'USD', bool $is_complete_coupon, string $promo_code, float $fee_province): array
     {
         $merchantConfig = $this->resolveKhrqrMerchantConfig();
         $provider = strtolower(trim($provider));
@@ -54,13 +58,22 @@ class PaymentRepository
                 'order_id' => ['Order is not payable'],
             ]);
         }
+        $currencyIso = strtoupper(trim($currency));
+
+        [$paymentAmount, $baseCurrencyCode] = $this->resolvePaymentAmount(
+            $promo_code,
+            (float) $order->subtotal_price,
+            $currencyIso,
+            (float) $fee_province,
+        );
+        $currencyIso = $currencyIso !== '' ? $currencyIso : $baseCurrencyCode;
         $qrString = null;
         $khqrMd5 = null;
         $deepLink = null;
-        $currencyIso = strtoupper($currency);
 
         if ($provider === 'khrqr') {
-            [$qrString, $khqrMd5] = $this->generateKhrqrQrData($order, $currencyIso);
+
+            [$qrString, $khqrMd5] = $this->generateKhrqrQrData($order, $currencyIso, $paymentAmount);
             $deepLink = $this->generateKhrqrDeepLink($qrString);
         }
 
@@ -71,7 +84,7 @@ class PaymentRepository
         $expiresAt = now()->addMinutes((int) config('payment.intent_ttl_minutes', 30));
 
         $pollHash = $this->buildPollHashForProvider($provider, $order->id, $providerPaymentId);
-        $transaction = DB::transaction(function () use ($order, $provider, $providerPaymentId, $currency, $clientToken, $checkoutUrl, $expiresAt, $pollHash, $qrString, $khqrMd5) {
+        $transaction = DB::transaction(function () use ($order, $provider, $providerPaymentId, $currencyIso, $paymentAmount, $clientToken, $checkoutUrl, $expiresAt, $pollHash, $qrString, $khqrMd5) {
             $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             $tx = PaymentTransaction::updateOrCreate(
@@ -79,8 +92,8 @@ class PaymentRepository
                 [
                     'provider_payment_id' => $providerPaymentId,
                     'status' => 'pending',
-                    'amount' => (float) $lockedOrder->total_price,
-                    'currency' => strtoupper($currency),
+                    'amount' => $paymentAmount,
+                    'currency' => $currencyIso,
                     'client_token' => $clientToken,
                     'checkout_url' => $checkoutUrl,
                     'expires_at' => $expiresAt,
@@ -108,6 +121,8 @@ class PaymentRepository
             'amount' => (float) $transaction->amount,
             'amount_cents' => (int) round((float) $transaction->amount * 100),
             'currency' => $transaction->currency,
+            'base_amount' => (float) $order->total_price,
+            'base_currency' => $baseCurrencyCode,
             'client_token' => $clientToken,
             'checkout_url' => $checkoutUrl,
             'deep_link' => $deepLink,
@@ -263,12 +278,6 @@ class PaymentRepository
                 ]);
             }
 
-            if (isset($data['amount']) && $data['amount'] !== null && (float) $data['amount'] !== (float) $order->total_price) {
-                throw ValidationException::withMessages([
-                    'amount' => ['Webhook amount mismatch'],
-                ]);
-            }
-
             $normalizedType = strtolower($eventType);
             $isFailedEvent = in_array($normalizedType, ['payment.failed', 'payment.expired', 'payment.canceled'], true);
             $providerPaymentId = (string) ($data['provider_payment_id'] ?? '');
@@ -276,6 +285,15 @@ class PaymentRepository
                 ->where('provider', $provider)
                 ->lockForUpdate()
                 ->first();
+
+            if (isset($data['amount']) && $data['amount'] !== null) {
+                $expectedAmount = (float) ($paymentTx?->amount ?? $order->total_price);
+                if (abs((float) $data['amount'] - $expectedAmount) > 0.01) {
+                    throw ValidationException::withMessages([
+                        'amount' => ['Webhook amount mismatch'],
+                    ]);
+                }
+            }
 
             if (!$paymentTx && !$isFailedEvent) {
                 $paymentTx = PaymentTransaction::create([
@@ -330,12 +348,10 @@ class PaymentRepository
         return md5($orderId . '|' . $providerPaymentId);
     }
 
-    private function generateKhrqrQrData(Order $order, string $currencyIso): array
+    private function generateKhrqrQrData(Order $order, string $currencyIso, float $amount): array
     {
-
         $merchantConfig = $this->resolveKhrqrMerchantConfig();
         $currencyCode = $this->toKhrqrCurrency($currencyIso);
-        $amount = (float) $order->total_price;
 
         $individualInfo = new IndividualInfo(
             bakongAccountID: $merchantConfig['account_id'],
@@ -379,6 +395,64 @@ class PaymentRepository
 
         return [$qr, $md5];
     }
+
+    /**
+     * @return array{0: float, 1: string}
+     */
+    private function resolvePaymentAmount(string $promo_code, float $baseAmount, string $targetCurrency, float $province_fee): array
+    {
+        $settings = $this->appSettingRepository->current();
+        $baseCurrency = strtoupper((string) ($settings->default_currency_code ?? 'USD'));
+        $targetCurrency = strtoupper(trim($targetCurrency));
+        $exchangeRate = (float) ($settings->exchange_rate ?? 0);
+        $customer = auth()->guard('customer')->user();
+        if (!$customer) {
+            return $this->error('Unauthorized', 401);
+        }
+
+
+        $voucher = !empty($promo_code) ? $this->promo_voucher->applyVoucher($customer->id, $promo_code, $baseAmount) : null;
+        \Log::info('province_fee');
+        \Log::info($province_fee);
+        \Log::info('voucher');
+        \Log::info($voucher);
+        if ($targetCurrency === '') {
+            return [round(($baseAmount + $province_fee), 2), $baseCurrency];
+        }
+
+
+        if (!in_array($targetCurrency, ['USD', 'KHR'], true)) {
+            throw ValidationException::withMessages([
+                'currency' => ['Unsupported KHQR currency: ' . $targetCurrency],
+            ]);
+        }
+
+        if ($targetCurrency === $baseCurrency) {
+            \Log::info($baseAmount);
+            \Log::info($voucher);
+            // \Log::info((float) ($voucher ? $voucher['voucher']->discount_value : 0));
+            return [round(($baseAmount + $province_fee) - (float) ($voucher ? $voucher['voucher']->discount_value : 0), 2), $baseCurrency];
+        }
+
+        if ($exchangeRate <= 0) {
+            throw ValidationException::withMessages([
+                'currency' => ['Exchange rate is not configured'],
+            ]);
+        }
+
+        if ($baseCurrency === 'USD' && $targetCurrency === 'KHR') {
+            return [round((($baseAmount + $province_fee) - (float) ($voucher ? $voucher['voucher']->discount_value : 0)) * $exchangeRate, 2), $baseCurrency];
+        }
+
+        if ($baseCurrency === 'KHR' && $targetCurrency === 'USD') {
+            return [round((($baseAmount + $province_fee) - (float) ($voucher ? $voucher['voucher']->discount_value : 0)) / $exchangeRate, 2), $baseCurrency];
+        }
+
+        throw ValidationException::withMessages([
+            'currency' => ['Unsupported currency conversion: ' . $baseCurrency . ' to ' . $targetCurrency],
+        ]);
+    }
+
 
     private function generateKhrqrDeepLink(string $qrString): ?string
     {
