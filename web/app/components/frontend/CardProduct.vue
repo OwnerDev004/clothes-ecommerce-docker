@@ -40,7 +40,7 @@ const props = defineProps({
         <section class="rounded-2xl cursor-pointer hover:scale-95 translate-all duration-300">
             <div class="w-full aspect-[4/5] overflow-hidden rounded-xl bg-white/40">
                 <NuxtImg sizes="sm:100vw md:500px" :src="img" format="webp" densities="x1"
-                    class="w-full h-full object-cover" />
+                    class="w-full h-full object-cover" :alt="title" />
             </div>
         </section>
         <h2 class="text-lg font-semibold text-text my-2">{{ title }}</h2>
