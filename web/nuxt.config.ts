@@ -5,6 +5,17 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-04-03",
   app: {
     pageTransition: { name: "page", mode: "out-in" },
+    head: {
+      link: [
+        {
+          rel: "preload",
+          href: "https://clothes-ecommerce-docker.vercel.app/_vercel/image?url=%2Fimg%2Fslide-1.png&w=768&q=100",
+          as: "image",
+          fetchpriority: "high",
+        },
+        {},
+      ],
+    },
   },
   future: {
     compatibilityVersion: 4,
@@ -31,24 +42,6 @@ export default defineNuxtConfig({
     "pinia-plugin-persistedstate/nuxt",
     "nuxt-pdfmake",
   ],
-  // pdfmake: {
-  //   fonts: {
-  //     khmerBatambong: {
-  //       normal:
-  //         "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf",
-  //     },
-  //   },
-  // },
-
-  pdfmake: {
-    fonts: {
-      Khmer: {
-        normal:
-          "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf",
-        bold: "https://cdn.jsdelivr.net/npm/@canvas-fonts/battambang@1.0.0/files/battambang-regular.ttf", // Same or specific bold file
-      },
-    },
-  },
   swiper: {
     // Swiper options
     //----------------------
