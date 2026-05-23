@@ -22,9 +22,7 @@
                 </div>
             </template>
 
-            <div v-if="loading" class="grid place-items-center py-20">
-                <el-skeleton :rows="8" animated class="w-full" />
-            </div>
+            <LoadingPage v-if="loading" embedded :rows="8" />
 
             <div v-else class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                 <section class="rounded-3xl border border-border bg-white p-6 shadow-sm">

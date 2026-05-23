@@ -1,12 +1,42 @@
 <template>
   <div>
-    <div v-if="isFetching" class="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-      <el-icon class="is-loading text-3xl text-black">
-        <Loading />
-      </el-icon>
-      <p class="text-sm text-gray-500">Loading category data...</p>
+    <LoadingPage v-if="isFetching" embedded class="px-5 desktop:container py-10" :rows="8">
+      <template #template>
+        <div class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside class="hidden lg:block rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="space-y-4">
+              <el-skeleton-item variant="h3" class="h-8 w-1/2" />
+              <div class="space-y-3">
+                <el-skeleton-item v-for="item in 6" :key="item" variant="text" class="h-6 w-full" />
+              </div>
+              <div class="space-y-4 pt-2">
+                <el-skeleton-item variant="h3" class="h-7 w-1/3" />
+                <el-skeleton-item variant="rect" class="h-20 w-full rounded-2xl" />
+                <el-skeleton-item variant="h3" class="h-7 w-1/3" />
+                <div class="grid grid-cols-4 gap-3">
+                  <el-skeleton-item v-for="item in 4" :key="`color-${item}`" variant="circle" class="h-8 w-8" />
+                </div>
+              </div>
+            </div>
+          </aside>
 
-    </div>
+          <main class="space-y-6">
+            <div class="flex items-center justify-between gap-4">
+              <div class="space-y-3">
+                <el-skeleton-item variant="h3" class="h-9 w-56" />
+                <el-skeleton-item variant="text" class="h-5 w-32" />
+              </div>
+              <el-skeleton-item variant="button" class="h-12 w-12 rounded-full lg:hidden" />
+              <el-skeleton-item variant="button" class="hidden h-12 w-60 rounded-full lg:block" />
+            </div>
+
+            <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
+              <FrontendCardProduct v-for="item in 8" :key="`product-${item}`" loading />
+            </div>
+          </main>
+        </div>
+      </template>
+    </LoadingPage>
     <div v-else>
       <div class="px-5 desktop:container relative">
         <BaseBreadcrumb :icon="ArrowRight">
@@ -271,7 +301,6 @@
 
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
-import { Loading } from '@element-plus/icons-vue'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 
 const route = useRoute()

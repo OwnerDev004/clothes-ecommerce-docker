@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Loading } from '@element-plus/icons-vue'
 import { onMounted } from 'vue'
 import { useHomeProducts } from '~/composables/useHomeProducts'
 
@@ -177,7 +176,10 @@ onMounted(async () => {
 
       <!-- card -->
       <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
-        <template v-for="item in products" :key="item.id">
+        <template v-if="isLoadingProducts">
+          <FrontendCardProduct v-for="item in 8" :key="item" loading />
+        </template>
+        <template v-else v-for="item in products" :key="item.id">
           <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
             :discount-amount="item.discount_amount" :discount-type="item.discount_type"
             :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
@@ -195,15 +197,8 @@ onMounted(async () => {
           Retry Loading
         </button>
       </div>
-
       <div class="mt-6 text-center text-sm text-gray-500">
-        <div v-if="isLoadingProducts" class="flex items-center justify-center gap-2">
-          <el-icon class="is-loading text-lg">
-            <Loading />
-          </el-icon>
-          <span>Loading more products...</span>
-        </div>
-        <p v-else-if="products.length">You reached the end.</p>
+        <p v-if="products.length">You reached the end.</p>
       </div>
 
       <div ref="loadMoreTrigger" class="h-4"></div>

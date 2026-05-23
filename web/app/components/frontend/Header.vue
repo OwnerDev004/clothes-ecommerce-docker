@@ -86,7 +86,7 @@
             </ClientOnly>
           </NuxtLink>
           <!-- Account -->
-          <div class="relative hidden sm:block account-menu-root">
+          <div class="relative account-menu-root">
             <NuxtLink v-if="!isAuthenticated" to="/auth/login"
               class="group flex h-10 w-10 items-center justify-center rounded-full border border-transparent bg-gray-100 text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-200 hover:bg-white hover:shadow-md">
               <Icon name="mdi:user" class="text-xl transition-colors group-hover:text-black" />
@@ -96,17 +96,19 @@
               class="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               @click.stop="toggleAccountMenu">
               <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full">
-                <img v-if="userAvatarUrl" :src="userAvatarUrl" alt="Account avatar" class="h-full w-full object-cover">
+                <NuxtImg v-if="userAvatarUrl" format="webp" :src="userAvatarUrl" alt="Account avatar"
+                  class="h-[32px] w-[32px] object-cover" />
                 <div v-else
                   class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-black via-gray-800 to-gray-600 text-xs font-semibold text-white">
                   {{ userInitialsHelper(userDisplayName) }}
                 </div>
               </div>
-              <span class="max-w-[120px] truncate text-sm font-medium text-gray-700 group-hover:text-black">
+              <span
+                class="max-w-[120px] truncate text-sm font-medium text-gray-700 group-hover:text-black hidden  md:block">
                 {{ userDisplayName }}
               </span>
               <Icon name="mdi:chevron-down"
-                class="text-lg text-gray-500 transition-transform duration-200 group-hover:text-black"
+                class="hidden  md:block text-lg text-gray-500 transition-transform duration-200 group-hover:text-black"
                 :class="accountMenuOpen ? 'rotate-180' : ''" />
             </button>
 

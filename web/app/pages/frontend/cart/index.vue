@@ -5,10 +5,37 @@
       <el-breadcrumb-item>Cart</el-breadcrumb-item>
     </BaseBreadcrumb>
 
-    <div class="flex flex-col desktop:flex-row gap-3">
+    <LoadingPage v-if="loadingCart" embedded :rows="4">
+      <template #template>
+        <div class="flex flex-col desktop:flex-row gap-3">
+          <div class="w-full desktop:w-[65%] rounded-2xl border border-gray bg-white p-5">
+            <div class="space-y-4">
+              <el-skeleton-item variant="h3" class="h-8 w-40" />
+              <div class="space-y-3">
+                <el-skeleton-item v-for="item in 3" :key="item" variant="rect" class="h-28 w-full rounded-2xl" />
+              </div>
+            </div>
+          </div>
+
+          <div class="w-full desktop:w-[35%] rounded-2xl border border-gray bg-white p-5">
+            <div class="space-y-4">
+              <el-skeleton-item variant="h3" class="h-8 w-48" />
+              <div class="space-y-3">
+                <el-skeleton-item v-for="item in 6" :key="`row-${item}`" variant="text" class="h-5 w-full" />
+              </div>
+              <div class="space-y-3 pt-2">
+                <el-skeleton-item variant="rect" class="h-12 w-full rounded-2xl" />
+                <el-skeleton-item variant="rect" class="h-12 w-full rounded-2xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </LoadingPage>
+
+    <div v-else class="flex flex-col desktop:flex-row gap-3">
       <div class="w-full desktop:w-[65%] border border-gray rounded-2xl">
-        <div v-if="loadingCart" class="p-8 text-center text-gray-500">Loading cart...</div>
-        <div v-else-if="!cartItems.length" class="p-8 text-center text-gray-500">Your cart is empty.</div>
+        <div v-if="!cartItems.length" class="p-8 text-center text-gray-500">Your cart is empty.</div>
 
         <template v-for="item in cartItems" :key="item.variant_id">
           <FrontendCartProduct :variant-id="item.variant_id" :name="item.product_name || 'Product'"

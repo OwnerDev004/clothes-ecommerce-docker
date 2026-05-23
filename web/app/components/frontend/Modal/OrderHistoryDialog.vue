@@ -1,6 +1,6 @@
 <template>
-    <el-dialog v-model="dialogOpen" width="860px" :close-on-click-modal="false" title="Order History"
-        class="order-history-dialog" @closed="onDialogClosed">
+    <el-dialog v-model="dialogOpen" :close-on-click-modal="false" title="Order History"
+        class="order-history-dialog !w-full md:!w-[700px]" @closed="onDialogClosed">
         <div class="space-y-4">
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -11,7 +11,7 @@
         </div>
       </div>
 
-      <div v-if="loading" class="skeleton">Loading invoice...</div>
+      <LoadingPage v-if="loading" embedded :rows="4" />
       <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
       <div v-else-if="order" class="body">
         <div class="section">

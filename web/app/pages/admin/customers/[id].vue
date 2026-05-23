@@ -26,20 +26,14 @@
         </div>
       </template>
 
-      <div v-if="loading" class="grid place-items-center py-20">
-        <el-skeleton :rows="10" animated class="w-full" />
-      </div>
+      <LoadingPage v-if="loading" embedded :rows="10" />
 
       <div v-else-if="customer" class="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <section class="rounded-3xl border border-border bg-white p-6 shadow-sm">
           <div class="space-y-4">
             <div class="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-              <img
-                v-if="customer.avatar_url"
-                :src="customer.avatar_url"
-                alt="Customer avatar"
-                class="h-72 w-full object-cover"
-              />
+              <img v-if="customer.avatar_url" :src="customer.avatar_url" alt="Customer avatar"
+                class="h-72 w-full object-cover" />
               <div v-else class="grid h-72 place-items-center">
                 <div class="text-center">
                   <p class="m-0 text-5xl font-black text-slate-300">?</p>
@@ -130,11 +124,8 @@
             </template>
 
             <div v-if="oauthAccounts.length" class="grid gap-3 md:grid-cols-2">
-              <div
-                v-for="account in oauthAccounts"
-                :key="account.id"
-                class="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-              >
+              <div v-for="account in oauthAccounts" :key="account.id"
+                class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p class="m-0 text-base font-semibold text-slate-950">{{ account.provider }}</p>
                 <div class="mt-2 space-y-1 text-sm text-slate-600">
                   <p class="m-0">Provider user ID: {{ account.provider_user_id || 'None' }}</p>
@@ -144,7 +135,8 @@
               </div>
             </div>
 
-            <div v-else class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+            <div v-else
+              class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
               No OAuth accounts linked to this customer.
             </div>
           </BaseCard>

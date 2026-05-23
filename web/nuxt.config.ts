@@ -9,7 +9,7 @@ export default defineNuxtConfig({
       link: [
         {
           rel: "preload",
-          href: "https://clothes-ecommerce-docker.vercel.app/_vercel/image?url=%2Fimg%2Fslide-1.png&w=768&q=100",
+          href: `${process.env.NUXT_PUBLIC_FRONTEND_URL}/_vercel/image?url=%2Fimg%2Fslide-1.png&w=768&q=100`,
           as: "image",
           fetchpriority: "high",
         },
