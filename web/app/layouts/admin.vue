@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOrderRealtimeStore } from '~/stores/orderRealtimeStore'
 definePageMeta({
@@ -7,7 +7,6 @@ definePageMeta({
     middleware: ['admin-auth'],
 })
 import {
-    ArrowRight,
     Bell,
     Box,
     DataLine,
@@ -16,14 +15,16 @@ import {
     House,
     Search,
     ShoppingCart,
-    Star,
     Tickets,
     User,
-    Setting
+    Setting,
+    Close,
+    Menu,
 } from '@element-plus/icons-vue'
 const orderDetailAlert = useOrderRealtimeStore()
 import { useAdminAuthStore } from '~/stores/adminAuthStore'
 const router = useRouter()
+const route = useRoute()
 const adminAuthStore = useAdminAuthStore()
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
@@ -32,6 +33,7 @@ const isAuthenticated = computed(() => adminAuthStore.isAuthenticated || Boolean
 const can = adminAuthStore.can
 const isSuperAdmin = adminAuthStore.isSuperAdmin
 const appName = ref('Clothes Shop')
+const sidebarOpen = ref(false)
 
 const resolveAuthHeaders = () => (accessToken.value ? { Authorization: `Bearer ${accessToken.value}` } : undefined)
 
@@ -126,6 +128,21 @@ const visibleNavigationGroups = computed(() => {
         .filter((group) => group.items.length > 0)
 })
 
+const openSidebar = () => {
+    sidebarOpen.value = true
+}
+
+const closeSidebar = () => {
+    sidebarOpen.value = false
+}
+
+watch(
+    () => route.fullPath,
+    () => {
+        sidebarOpen.value = false
+    },
+)
+
 onMounted(() => {
     if (accessToken.value) {
         void loadAppSetting()
@@ -134,115 +151,107 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="admin-theme h-[100dvh] overflow-hidden">
-        <div class="flex h-full min-h-0 flex-col xl:flex-row">
-            <aside
-                class="scroll-shell scroll-smooth flex h-72 w-full flex-none flex-col overflow-y-auto border-b border-white/10 bg-[linear-gradient(180deg,rgba(7,14,28,0.98),rgba(10,17,34,0.92)),linear-gradient(160deg,#18243f,#0c1221_64%)] px-4 py-5 text-white shadow-[0_30px_80px_rgba(2,6,23,0.25)] xl:h-full xl:w-[286px] xl:border-b-0 xl:border-r xl:border-white/10 xl:px-[18px] xl:py-6">
-                <div class="flex items-center gap-3 rounded-2xl px-3 pb-4 pt-2">
-                    <div
-                        class="grid h-11 w-11 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#f8fafc,#c7d2fe)] font-extrabold tracking-[0.08em] text-slate-950 shadow-[0_14px_30px_rgba(96,165,250,0.22)]">
-                        CS
-                    </div>
-                    <div>
-                        <p class="m-0 text-[1rem] font-bold">{{ appName }}</p>
-                        <p class="m-0 mt-1 text-sm text-white/55">Admin console</p>
-                    </div>
-                </div>
-
-                <!-- <div class="mx-1 mb-4 rounded-[20px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-                    <p class="m-0 text-[0.72rem] uppercase tracking-[0.12em] text-white/50">Store status</p>
-                    <div class="mt-2 flex items-center gap-2 font-semibold">
-                        <span
-                            class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_6px_rgba(52,211,153,0.12)]"></span>
-                        <span>Operational</span>
-                    </div>
-                    <p class="m-0 mt-2 text-sm leading-6 text-white/65">
-                        Inventory, orders, and promotions are ready for the day.
-                    </p>
-                </div> -->
-
-                <div class="flex-1 space-y-4 pr-1">
-                    <div v-for="group in visibleNavigationGroups" :key="group.title" class="space-y-2">
-                        <p class="m-0 px-3 text-[0.72rem] uppercase tracking-[0.12em] text-white/50">
-                            {{ group.title }}
-                        </p>
-
-                        <nav class="space-y-1">
-                            <NuxtLink v-for="item in group.items" :key="item.index" :to="item.index"
-                                class="flex h-12 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm text-white/75 transition hover:bg-white/10 hover:text-white">
-                                <el-icon class="text-base">
-                                    <component :is="item.icon" />
+    <div class="admin-theme h-[100dvh] overflow-hidden bg-surface-2">
+        <div class="flex h-full min-h-0 xl:flex-row">
+            <Transition enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0 -translate-x-4" enter-to-class="opacity-100 translate-x-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="opacity-100 translate-x-0" leave-to-class="opacity-0 -translate-x-4">
+                <div v-if="sidebarOpen" class="fixed inset-0 z-50 xl:hidden">
+                    <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]" @click="closeSidebar" />
+                    <aside
+                        class="scroll-shell absolute left-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overflow-y-auto border-r border-white/10 bg-[linear-gradient(180deg,rgba(7,14,28,0.98),rgba(10,17,34,0.92)),linear-gradient(160deg,#18243f,#0c1221_64%)] px-4 py-5 text-white shadow-[0_30px_80px_rgba(2,6,23,0.25)]">
+                        <div class="mb-3 flex items-center justify-between gap-3 px-1">
+                            <p class="text-sm font-semibold uppercase tracking-[0.14em] text-white/50">Navigation</p>
+                            <button
+                                class="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white"
+                                @click="closeSidebar">
+                                <el-icon>
+                                    <Close />
                                 </el-icon>
-                                <span class="flex-1">{{ item.label }}</span>
-                                <span v-if="item.badge"
-                                    class="rounded-full bg-white/10 px-2.5 py-1 text-[0.7rem] font-semibold tracking-wide text-white">
-                                    {{ item.badge }}
-                                </span>
-                            </NuxtLink>
-                        </nav>
-                    </div>
-                </div>
-
-                <div class="pt-4">
-                    <div class="mx-1 rounded-[20px] border border-white/10 bg-white/[0.08] p-4">
-                        <p class="m-0 text-[0.72rem] uppercase tracking-[0.12em] text-white/50">This week</p>
-                        <div class="mt-3 grid grid-cols-2 gap-3">
-                            <div>
-                                <strong class="block text-[1.1rem]">128</strong>
-                                <span class="text-sm text-white/55">orders</span>
-                            </div>
-                            <div>
-                                <strong class="block text-[1.1rem]">24</strong>
-                                <span class="text-sm text-white/55">low stock</span>
-                            </div>
+                            </button>
                         </div>
-                    </div>
+
+                        <AdminSidebar :app-name="appName" :groups="visibleNavigationGroups" @close="closeSidebar" />
+                    </aside>
                 </div>
+            </Transition>
+
+            <aside
+                class="scroll-shell hidden h-full w-[286px] flex-none flex-col overflow-y-auto border-r border-white/10 bg-[linear-gradient(180deg,rgba(7,14,28,0.98),rgba(10,17,34,0.92)),linear-gradient(160deg,#18243f,#0c1221_64%)] px-[18px] py-6 text-white shadow-[0_30px_80px_rgba(2,6,23,0.25)] xl:flex">
+                <AdminSidebar :app-name="appName" :groups="visibleNavigationGroups" />
             </aside>
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <header
-                    class="sticky top-0 z-20 flex flex-col gap-5 border-b border-slate-200/70  px-2 py-5 backdrop-blur-md sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-7">
-                    <div class="flex items-center gap-3">
-                        <el-input class="!w-full sm:!w-[360px]" placeholder="Search products, orders, customers">
-                            <template #prefix>
-                                <el-icon>
-                                    <Search />
-                                </el-icon>
-                            </template>
-                        </el-input>
-                    </div>
+                    class="sticky top-0 z-20 border-b border-slate-200/70 bg-surface/90 px-4 py-4 backdrop-blur-md sm:px-6 lg:px-7">
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <button
+                                    class="grid h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:-translate-y-px hover:shadow-md xl:hidden"
+                                    @click="openSidebar">
+                                    <el-icon>
+                                        <Menu />
+                                    </el-icon>
+                                </button>
 
-                    <section class="flex items-center gap-3">
-                        <el-badge :value="orderDetailAlert.adminAlertTick" class="item">
-                            <el-button circle
-                                class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-muted/10 ">
-                                <el-icon>
-                                    <Bell />
-                                </el-icon>
-                            </el-button>
-                        </el-badge>
-
-
-                        <div class="flex items-center gap-3  px-3 py-2 ">
-                            <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
-                            <div>
-                                <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
-                                    }}</strong>
-                                <!-- <span class="block text-xs text-slate-500">Super user</span> -->
+                                <div>
+                                    <p class="m-0 text-xs uppercase tracking-[0.14em] text-slate-400">Admin console</p>
+                                    <h1 class="m-0 truncate text-lg font-semibold text-slate-950 sm:text-xl">
+                                        {{ appName }}
+                                    </h1>
+                                </div>
                             </div>
+
+                            <section class="flex items-center gap-3">
+                                <el-badge :value="orderDetailAlert.adminAlertTick" class="item">
+                                    <el-button circle
+                                        class="!h-11 !w-11 !rounded-[14px] !border !border-surface-2 !bg-muted/10">
+                                        <el-icon>
+                                            <Bell />
+                                        </el-icon>
+                                    </el-button>
+                                </el-badge>
+
+                                <div class="hidden items-center gap-3 px-3 py-2 sm:flex">
+                                    <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
+                                    <div>
+                                        <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name }}</strong>
+                                    </div>
+                                </div>
+
+                                <button v-if="isAuthenticated" type="button"
+                                    class="rounded-2xl border border-surface-2 bg-muted/10 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                                    @click="handleLogout">
+                                    Logout
+                                </button>
+                            </section>
                         </div>
 
-                        <button v-if="isAuthenticated" type="button"
-                            class="rounded-2xl border border-surface-2 !bg-muted/10 px-4 py-3 text-sm font-semibold text-slate-700  transition hover:border-slate-300 hover:text-slate-950"
-                            @click="handleLogout">
-                            Logout
-                        </button>
-                    </section>
+                        <div class="flex items-center gap-3 xl:hidden">
+                            <el-input class="!w-full" placeholder="Search products, orders, customers">
+                                <template #prefix>
+                                    <el-icon>
+                                        <Search />
+                                    </el-icon>
+                                </template>
+                            </el-input>
+                        </div>
+
+                        <div class="hidden items-center gap-3 xl:flex">
+                            <el-input class="!w-full sm:!w-[360px]" placeholder="Search products, orders, customers">
+                                <template #prefix>
+                                    <el-icon>
+                                        <Search />
+                                    </el-icon>
+                                </template>
+                            </el-input>
+                        </div>
+                    </div>
                 </header>
 
-                <main class="scroll-shell min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 bg-surface-2">
-
+                <main class="scroll-shell min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
                     <slot />
                 </main>
             </div>

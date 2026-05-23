@@ -1,15 +1,20 @@
 <template>
-    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Purchase' : 'Add Purchase'" width="1100px"
-        body-class="p-0" footer-class="px-6 pb-6 pt-0">
+    <BaseModal
+        v-model="model"
+        :title="mode === 'edit' ? 'Edit Purchase' : 'Add Purchase'"
+        width="min(1100px, 96vw)"
+        body-class="p-0"
+        footer-class="px-4 pb-4 pt-0 sm:px-6 sm:pb-6"
+    >
         <el-form label-position="top" class="w-full" autocomplete="off">
-            <div class="grid gap-6 px-6 pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-                <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-6">
+            <div class="grid gap-4 px-4 pb-4 sm:px-6 sm:pb-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
+                <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-5 sm:p-6">
                     <div class="space-y-4">
                         <div>
                             <p class="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                                 Stock Purchase
                             </p>
-                            <h3 class="mt-2 text-xl font-bold text-slate-950">
+                            <h3 class="mt-2 text-lg font-bold text-slate-950 sm:text-xl">
                                 {{ mode === 'edit' ? 'Update purchase record' : 'Add stock to inventory' }}
                             </h3>
                             <p class="mt-2 text-sm leading-6 text-slate-600">
@@ -44,7 +49,7 @@
                     </div>
                 </section>
 
-                <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-6">
+                <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-5 sm:p-6">
                     <div class="grid gap-5">
                         <el-form-item label="Product Variant" prop="product_variant_id">
                             <BaseSelect v-model="form.product_variant_id" :options="variantOptions"

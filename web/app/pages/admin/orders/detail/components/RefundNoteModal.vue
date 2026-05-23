@@ -1,17 +1,21 @@
 <template>
     <div>
-        <BaseModal v-model="model" width="500px" body-class="p-0" footer-class="px-6 pb-6 pt-0">
+        <BaseModal
+            v-model="model"
+            width="min(500px, 96vw)"
+            body-class="p-0"
+            footer-class="px-4 pb-4 pt-0 sm:px-6 sm:pb-6"
+        >
             <el-form label-position="top" class="w-full" autocomplete="off">
-                <div class="grid gap-6 px-6 pb-6">
-                    <header
-                        class="rounded-3xl border border-dashed border-muted bg-gradient-to-br from-slate-50 via-white to-slate-100 p-6">
+                <div class="grid gap-4 px-4 pb-4 sm:px-6 sm:pb-6">
+                    <header class="rounded-3xl border border-border bg-surface p-5">
                         <p class="m-0 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                             Are you sure to refund ?
                         </p>
 
                     </header>
                     <div class="grid gap-6">
-                        <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-6">
+                        <section class="rounded-3xl border border-border bg-surface-2 p-5">
 
                             <div class="grid gap-4">
                                 <el-form-item label="Reason" prop="order_note">

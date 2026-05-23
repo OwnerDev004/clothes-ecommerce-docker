@@ -10,17 +10,19 @@
                 <template #header>
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="w-full lg:w-[360px]">
-                                <BaseInput v-model="filters.search_txt" placeholder="Search products..." clearable />
+                            <div class="w-full lg:max-w-[360px]">
+                                <BaseInput v-model="filters.search_txt" placeholder="Search categories..." clearable />
                             </div>
 
-                            <div class="flex flex-wrap gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-                                <BaseButton v-if="can('categories', 'create')" type="primary" @click="addCategory">Add Category</BaseButton>
+                                <BaseButton v-if="can('categories', 'create')" type="primary" @click="addCategory">
+                                    Add Category
+                                </BaseButton>
                             </div>
                         </div>
 
-                        <div class="grid gap-3 xl:grid-cols-4">
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <BaseSelect v-model="filters.status" :options="statusOption" placeholder="All Status"
                                 class="w-full" />
                             <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
@@ -59,17 +61,17 @@
 
                         <el-table-column fixed="right" label="Action">
                             <template #default="scope">
-                                <BaseButton v-if="can('categories', 'delete')" link type="danger" size="default" :loading="deletingId === scope.row.id"
-                                    @click="deleteCategory(scope.row.id)">
+                                <BaseButton v-if="can('categories', 'delete')" link type="danger" size="default"
+                                    :loading="deletingId === scope.row.id" @click="deleteCategory(scope.row.id)">
                                     <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </BaseButton>
-                                <BaseButton v-if="can('categories', 'edit')" link type="primary" size="default" @click="editCategory(scope.row)">
+                                <BaseButton v-if="can('categories', 'edit')" link type="primary" size="default"
+                                    @click="editCategory(scope.row)">
                                     <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </BaseButton>
                             </template>
                         </el-table-column>
                     </BaseTable>
-x
                     <section class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="m-0 text-sm text-slate-500">
                             Showing {{ dataTable.data.length }} of {{ pagination.total }} products

@@ -5,7 +5,7 @@
                 <NuxtImg src="/img/auth/graphic1.svg" alt="Login graphic" format="webp" loading="lazy" />
             </section>
             <section class=" flex justify-center items-center col-span-2 ">
-                <div class="w-[80vw] lg:w-[25vw] bg-surface p-6 rounded-element  space-y-6">
+                <div class="w-[80vw] lg:w-[30vw] bg-surface p-6 rounded-element  space-y-6">
                     <header>
                         <p class="text-xl font-semibold">Sign In to Your Account</p>
                     </header>

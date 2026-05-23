@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen ">
         <FrontendBaseNotificationHeader />
         <FrontendHeader />
         <main class="flex-1">

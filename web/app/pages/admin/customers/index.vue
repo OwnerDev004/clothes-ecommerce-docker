@@ -8,14 +8,13 @@
         <section class="space-y-6">
             <BaseCard>
                 <template #header>
-
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="w-full lg:w-[360px]">
+                            <div class="w-full lg:max-w-[360px]">
                                 <BaseInput v-model="filters.search_txt" placeholder="Search Customers..." clearable />
                             </div>
                         </div>
-                        <div class="grid gap-3 xl:grid-cols-4">
+                        <div class="grid grid-cols-2 gap-2">
                             <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="All Categories"
                                 class="w-full" />
                             <BaseSelect v-model="filters.status" :options="statusOptions" placeholder="All Status"
@@ -57,7 +56,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.gender || 'None'
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -68,7 +67,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.email || 'None'
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -78,7 +77,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.phone || 'None'
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -88,7 +87,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.address || 'None'
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -99,7 +98,7 @@
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-950">{{ scope.row.telegram_username
                                             || 'None'
-                                            }}</p>
+                                        }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -123,14 +122,16 @@
                                     @click="deleteCustomer(scope.row)">
                                     <Icon name="solar:trash-bin-minimalistic-2-broken" class="text-base" />
                                 </BaseButton> -->
-                                <BaseButton v-if="can('customers', 'view')" link type="info" size="default" @click="viewCustomer(scope.row)">
+                                <BaseButton v-if="can('customers', 'view')" link type="info" size="default"
+                                    @click="viewCustomer(scope.row)">
                                     <Icon name="ic:outline-remove-red-eye" class="text-base" />
                                 </BaseButton>
-                                <BaseButton v-if="can('customers', 'edit')" link type="primary" size="default" @click="editCustomer(scope.row)">
+                                <BaseButton v-if="can('customers', 'edit')" link type="primary" size="default"
+                                    @click="editCustomer(scope.row)">
                                     <Icon name="solar:pen-new-round-broken" class="text-base" />
                                 </BaseButton>
-                                <BaseButton v-if="can('customers', 'edit')" link type="warning" size="default" :loading="sendingMailId == scope.row.id"
-                                    @click="resetCustomerPassword(scope.row)">
+                                <BaseButton v-if="can('customers', 'edit')" link type="warning" size="default"
+                                    :loading="sendingMailId == scope.row.id" @click="resetCustomerPassword(scope.row)">
                                     <Icon name="material-symbols:mail-shield-outline" class="text-base" />
                                 </BaseButton>
                             </template>
@@ -139,7 +140,7 @@
 
                     <section class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="m-0 text-sm text-slate-500">
-                            Showing {{ dataTable?.data.length }} of {{ pagination.per_page }} products
+                            Showing {{ dataTable?.data.length }} of {{ pagination.total }} customers
                         </p>
 
                         <el-pagination v-model:current-page="filters.page" v-model:page-size="filters.per_page"

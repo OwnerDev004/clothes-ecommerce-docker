@@ -11,16 +11,16 @@
                 <template #header>
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="w-full lg:w-[360px]">
+                            <div class="w-full lg:max-w-[360px]">
                                 <BaseInput v-model="filters.search_txt" placeholder="Search collections..." clearable />
                             </div>
 
-                            <div class="flex flex-wrap gap-3">
-                                <!-- <BaseButton @click="s">Reset Filters</BaseButton> -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <BaseButton @click="resetFilters">Reset Filters</BaseButton>
                                 <BaseButton type="primary" @click="addCollection">Add Collection</BaseButton>
                             </div>
                         </div>
-                        <div class="grid gap-3 xl:grid-cols-4">
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <BaseSelect v-model="filters.category" :options="categoriesOptions"
                                 placeholder="All Categories" class="w-full" />
                             <BaseSelect v-model="filters.status" :options="statusOptions" placeholder="All Status"
@@ -117,6 +117,7 @@ const {
     collectionsData,
     selectedData,
     pagination,
+    resetFilters,
     statusOptions,
     deletingId,
     saving,

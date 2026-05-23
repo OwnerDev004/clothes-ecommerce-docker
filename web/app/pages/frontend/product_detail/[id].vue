@@ -247,13 +247,10 @@ const tabClick = (tab: TabsPaneContext) => {
       <h1 class="font-Poppins text-2xl md:text-4xl leading-tight text-center py-4 font-extrabold">
         You might also like
       </h1>
-      <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
-        <template v-for="item in relatedProducts" :key="item.id">
-          {{ item }}
-          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
-            :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
-        </template>
+      <div class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
+        <FrontendCardProduct v-for="item in relatedProducts" :key="item.id" :title="item.title" :price="item.price"
+          :img="item.img" :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+          :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
       </div>
       <div class="border-b border-zinc-300 mt-10"></div>
     </section>

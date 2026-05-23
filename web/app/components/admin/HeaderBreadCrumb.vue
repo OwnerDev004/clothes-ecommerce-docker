@@ -1,8 +1,8 @@
 <template>
     <!-- Header -->
-    <section class="flex justify-between mb-4 sm:mb-4 lg:mb-7">
-        <h3 class="font-bold text-2xl">{{ title }}</h3>
-        <el-breadcrumb :separator-icon="ElIconArrowRight" class="!text-xs">
+    <section class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:mb-7">
+        <h3 class="text-xl font-bold sm:text-2xl">{{ title }}</h3>
+        <el-breadcrumb :separator-icon="ElIconArrowRight" class="!text-xs sm:!text-sm">
             <slot />
         </el-breadcrumb>
     </section>

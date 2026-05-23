@@ -1,10 +1,15 @@
 <template>
-    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Category' : 'Add Category'" width="1100px"
-        body-class="p-0" footer-class="px-6 pb-6 pt-0">
+    <BaseModal
+        v-model="model"
+        :title="mode === 'edit' ? 'Edit Category' : 'Add Category'"
+        width="min(1100px, 96vw)"
+        body-class="p-0"
+        footer-class="px-4 pb-4 pt-0 sm:px-6 sm:pb-6"
+    >
         <el-form label-position="top">
 
-            <div class="grid gap-6 px-6 pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-                <section class="p-6 rounded-3xl border border-dashed border-muted bg-surface-2/10 ">
+            <div class="grid gap-4 px-4 pb-4 sm:px-6 sm:pb-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
+                <section class="p-5 rounded-3xl border border-border bg-surface sm:p-6">
                     <h3 class="category-panel__title">Category Image</h3>
                     <BaseImageUpload v-model="imagePreview" class-name="mx-auto" width="260px" height="260px"
                         @change="handleAvatarChange">
@@ -35,7 +40,7 @@
                         </p>
                     </div>
                 </section>
-                <section class="p-6 rounded-3xl border border-dashed border-muted bg-surface-2/10 ">
+                <section class="p-5 rounded-3xl border border-border bg-surface sm:p-6">
                     <div class="grid gap-5">
                         <el-form-item label="Category Name" prop="name">
                             <BaseInput v-model="form.name" placeholder="Enter category name" />
@@ -55,10 +60,12 @@
             </div>
         </el-form>
         <template #footer>
-            <BaseButton @click="closeModal">Cancel</BaseButton>
+            <div class="flex justify-end gap-3 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
+                <BaseButton @click="closeModal">Cancel</BaseButton>
             <BaseButton type="primary" :loading="loading" @click="submitForm">
                 {{ mode === 'edit' ? 'Update Category' : 'Save Category' }}
             </BaseButton>
+            </div>
         </template>
     </BaseModal>
 </template>
@@ -211,7 +218,7 @@ watch(
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 9999px;
-    background: linear-gradient(135deg, rgb(59 130 246), rgb(14 165 233));
+    background: rgb(59 130 246);
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
@@ -224,9 +231,7 @@ watch(
 }
 
 .category-panel--accent {
-    background:
-        radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 45%),
-        rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.96);
 }
 
 .category-panel__header {
@@ -287,7 +292,7 @@ watch(
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.18), rgba(15, 23, 42, 0.46));
+    background: rgba(15, 23, 42, 0.45);
 }
 
 .category-image-card :deep(.el-upload-list__item-preview),

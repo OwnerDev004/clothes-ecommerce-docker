@@ -34,7 +34,7 @@ const closeModal = () => {
 </script>
 
 <template>
-    <el-dialog v-model="model" class="admin-modal" v-bind="$attrs" :title="title" :width="width"
+    <el-dialog v-model="model" class="admin-modal size-fit" v-bind="$attrs" :title="title" :width="width"
         :close-on-click-modal="closeOnClickModal" :close-on-press-escape="closeOnPressEscape"
         :destroy-on-close="destroyOnClose">
         <div :class="bodyClass">
@@ -55,3 +55,44 @@ const closeModal = () => {
         </template>
     </el-dialog>
 </template>
+
+<style>
+.admin-modal {
+    margin: 0;
+    width: min(var(--el-dialog-width, 560px), calc(100vw - 1rem));
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.admin-modal .el-dialog__body {
+    padding: 0;
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+}
+
+.admin-modal .el-dialog__header {
+    padding-bottom: 0;
+}
+
+.admin-modal .el-dialog__footer {
+    padding: 0;
+}
+
+@media (max-width: 640px) {
+    .admin-modal {
+        width: calc(100vw - 0.75rem) !important;
+        max-width: calc(100vw - 0.75rem);
+        border-radius: 18px;
+    }
+
+    .admin-modal .el-dialog__header {
+        padding: 14px 14px 0;
+    }
+
+    .admin-modal .el-dialog__body {
+        max-height: calc(100dvh - 7rem);
+    }
+}
+</style>

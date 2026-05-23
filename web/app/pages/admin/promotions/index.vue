@@ -11,17 +11,17 @@
         <template #header>
           <div class="space-y-4">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div class="w-full lg:w-[360px]">
+              <div class="w-full lg:max-w-[360px]">
                 <BaseInput v-model="filters.search_txt" placeholder="Search voucher code or name..." clearable />
               </div>
 
-              <div class="flex flex-wrap gap-3">
+              <div class="grid grid-cols-2 gap-2">
                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
                 <BaseButton type="primary" @click="addVoucher">Add Promotion</BaseButton>
               </div>
             </div>
 
-            <div class="grid gap-3 xl:grid-cols-4">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <BaseSelect v-model="filters.is_active" :options="statusOptions" placeholder="All Status"
                 class="w-full" />
             </div>

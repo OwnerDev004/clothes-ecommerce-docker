@@ -6,26 +6,25 @@
             <el-breadcrumb-item>All Roles</el-breadcrumb-item>
         </HeaderBreadCrumb>
 
-        <BaseCard>
-            <template #header>
-                <div class="space-y-4">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between items-center">
-                        <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-                            <BaseInput v-model="filters.search_txt" placeholder="Search roles..." clearable />
-                        </div>
+    <BaseCard>
+      <template #header>
+        <div class="space-y-4">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="w-full lg:max-w-[360px]">
+              <BaseInput v-model="filters.search_txt" placeholder="Search roles..." clearable />
+            </div>
 
-                        <div class="flex gap-3">
-                            <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-                            <BaseButton v-if="can('roles', 'create')" type="primary" @click="openCreate">Add Role
-                            </BaseButton>
-                        </div>
-                    </div>
-                </div>
-            </template>
+            <div class="flex flex-wrap gap-3">
+              <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+              <BaseButton v-if="can('roles', 'create')" type="primary" @click="openCreate">Add Role</BaseButton>
+            </div>
+          </div>
+        </div>
+      </template>
 
-            <div class="space-y-5">
-                <div v-loading="pending">
-                    <BaseTable :table-data="tableData">
+      <div class="space-y-5">
+        <div v-loading="pending">
+          <BaseTable :table-data="tableData">
                         <el-table-column label="Role ID" prop="id" width="90" />
                         <el-table-column prop="name" label="Role Name" />
                         <el-table-column prop="slug" label="Slug" />

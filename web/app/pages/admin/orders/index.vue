@@ -1,31 +1,29 @@
 <template>
     <div>
-        <HeaderBreadCrumb title="Orders">
-            <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">Dashboard</el-breadcrumb-item>
-            <el-breadcrumb-item>Orders</el-breadcrumb-item>
-        </HeaderBreadCrumb>
-        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
-            <div v-for="card in ordersStates" :key="card.id">
-                <article
-                    class="flex items-center justify-between rounded-card border border-border bg-surface p-6 shadow-sm">
-                    <div class="space-y-6">
-                        <h3 class="text-base font-semibold font-sans text-slate-900">{{ card.title }}</h3>
-                        <p class="text-[2rem] font-bold leading-none text-slate-500">{{ card.amount }}</p>
-                    </div>
-                    <div class="rounded-card bg-orange-400/10 p-3">
-                        <Icon :name="card.icon" class="text-3xl text-orange-500" />
-                    </div>
-                </article>
-            </div>
-        </section>
+    <HeaderBreadCrumb title="Orders">
+      <el-breadcrumb-item :to="{ path: '/admin/dashboard' }">Dashboard</el-breadcrumb-item>
+      <el-breadcrumb-item>Orders</el-breadcrumb-item>
+    </HeaderBreadCrumb>
+    <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div v-for="card in ordersStates" :key="card.id">
+        <article class="flex items-center justify-between rounded-2xl border border-border bg-surface p-5 shadow-sm">
+          <div class="space-y-3">
+            <h3 class="text-base font-semibold text-slate-900">{{ card.title }}</h3>
+            <p class="text-[2rem] font-bold leading-none text-slate-500">{{ card.amount }}</p>
+          </div>
+          <div class="rounded-2xl bg-orange-400/10 p-3">
+            <Icon :name="card.icon" class="text-3xl text-orange-500" />
+          </div>
+        </article>
+      </div>
+    </section>
 
         <section class="space-y-6">
             <BaseCard>
                 <template #header>
-                    <h2 class="text-base font-semibold font-sans text-slate-800 mb-3">All Order List</h2>
                     <div class="space-y-4">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="w-full lg:w-[360px]">
+                            <div class="w-full lg:max-w-[360px]">
                                 <BaseInput v-model="filters.search_txt" placeholder="Search Customer, Order ID..."
                                     clearable />
 
@@ -36,7 +34,7 @@
                             </div>
                         </div>
 
-                        <div class="grid gap-3 xl:grid-cols-3">
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             <BaseSelect v-model="filters.status" :options="orderStatus" placeholder="All Status"
                                 class="w-full" />
                             <BaseSelect v-model="filters.payment_status" :options="paymentStatusOptions"
@@ -48,7 +46,7 @@
                 </template>
 
                 <div class="space-y-5">
-                    <div :v-loading="pending">
+                    <div v-loading="pending">
                         <BaseTable :table-data="tableData">
                             <el-table-column prop="order_id" label="Order ID" />
                             <el-table-column prop="created_at" label="Created At" />

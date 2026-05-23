@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
 
     <input ref="fileInputRef" type="file" class="sr-only" :accept="accept" @change="handleFileChange" />
 
-    <el-dialog v-model="previewVisible" width="560px" append-to-body>
+    <el-dialog v-model="previewVisible" width="min(560px, 96vw)" append-to-body>
       <img v-if="previewImageUrl" :src="previewImageUrl" alt="Image preview" class="base-image-upload__dialog-image" />
     </el-dialog>
   </div>

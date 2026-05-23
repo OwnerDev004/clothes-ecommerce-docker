@@ -8,15 +8,15 @@
 
     <BaseCard>
       <template #header>
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div class="space-y-1">
             <p class="m-0 text-sm text-slate-500">Manage app-wide values, shipping rules, and store metadata.</p>
             <p v-if="!canEdit" class="m-0 mt-1 text-xs font-medium text-amber-600">
               You have view access only.
             </p>
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex flex-wrap gap-3">
             <BaseButton @click="loadSetting">Refresh</BaseButton>
             <BaseButton v-if="canEdit" type="primary" :loading="saving" @click="saveSetting">
               Save Setting

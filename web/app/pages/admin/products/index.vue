@@ -10,19 +10,19 @@
             <BaseCard>
                 <template #header>
                     <div class="space-y-4">
-                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="w-full lg:w-[360px]">
+                        <div class="flex flex-col sm:flex-row gap-4 justify-between">
+                            <div class="w-[100%] sm:w-[30vw]">
                                 <BaseInput v-model="filters.search_txt" placeholder="Search products..." clearable />
                             </div>
 
-                            <div class="flex flex-wrap gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
                                 <BaseButton v-if="can('products', 'create')" type="primary" @click="addProduct">Add
                                     Product</BaseButton>
                             </div>
                         </div>
 
-                        <div class="grid gap-3 xl:grid-cols-4">
+                        <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
                             <BaseSelect v-model="filters.category" :options="categoryOptions"
                                 placeholder="All Categories" class="w-full" />
                             <BaseSelect v-model="filters.brand" :options="brandOptions" placeholder="All Brands"
@@ -31,11 +31,12 @@
                                 class="w-full" />
                             <BaseSelect v-model="filters.size" :options="sizeOptions" placeholder="All Sizes"
                                 class="w-full" />
+                            <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
+                                class="w-full" />
                         </div>
 
                         <div class="grid gap-3 xl:grid-cols-4">
-                            <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
-                                class="w-full" />
+
                         </div>
                     </div>
                 </template>

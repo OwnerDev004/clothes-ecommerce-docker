@@ -175,13 +175,13 @@ onMounted(async () => {
       </h1>
 
       <!-- card -->
-      <div class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
         <template v-if="isLoadingProducts">
           <FrontendCardProduct v-for="item in 8" :key="item" loading />
         </template>
-        <template v-else v-for="item in products" :key="item.id">
-          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+        <template v-else>
+          <FrontendCardProduct v-for="item in products" :key="item.id" :title="item.title" :price="item.price"
+            :img="item.img" :discount-amount="item.discount_amount" :discount-type="item.discount_type"
             :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
         </template>
       </div>
@@ -213,12 +213,10 @@ onMounted(async () => {
       </h1>
 
       <!-- card -->
-      <div class="grid gap-5 grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <template v-for="item in topSellingProducts" :key="`top-${item.id}`">
-          <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-            :discount-amount="item.discount_amount" :discount-type="item.discount_type"
-            :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
-        </template>
+      <div class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
+        <FrontendCardProduct v-for="item in topSellingProducts" :key="`top-${item.id}`" :title="item.title"
+          :price="item.price" :img="item.img" :discount-amount="item.discount_amount"
+          :discount-type="item.discount_type" :rating-amount="item.average_rating" @click="viewProduct(item.id)" />
       </div>
       <div class="flex justify-center mt-5">
         <button

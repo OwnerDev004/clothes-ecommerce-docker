@@ -172,21 +172,21 @@
 
             <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="mb-4" />
 
-            <div v-loading="isLoadingProducts" class="min-h-[220px]">
+            <div class="min-h-[220px]">
+              <div v-if="isLoadingProducts" class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
+                <FrontendCardProduct v-for="item in 8" :key="`product-loading-${item}`" loading />
+              </div>
 
-              <div v-if="!isLoadingProducts && displayProducts.length === 0"
-                class="rounded-xl border border-dashed border-gray-300 p-8">
+              <div v-else-if="displayProducts.length === 0" class="rounded-xl border border-dashed border-gray-300 p-8">
                 <el-empty description="No products found." />
               </div>
-              <div v-else class="grid gap-5 grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
-                <template v-for="item in displayProducts" :key="item.id">
 
-                  <div class="cursor-pointer" @click="viewProduct(item.id)">
-                    <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
-                      :discount-amount="item.discount_amount" :discount-type="item.discount_type"
-                      :rating-amount="item.average_rating" />
-                  </div>
-                </template>
+              <div v-else class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
+                <div v-for="item in displayProducts" :key="item.id" class="cursor-pointer" @click="viewProduct(item.id)">
+                  <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
+                    :discount-amount="item.discount_amount" :discount-type="item.discount_type"
+                    :rating-amount="item.average_rating" />
+                </div>
               </div>
             </div>
 

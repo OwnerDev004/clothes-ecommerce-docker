@@ -24,58 +24,33 @@ withDefaults(
 )
 </script>
 <template>
-    <div v-if="loading" class="card-product p-4 rounded-2xl border border-border shadow-sm" :class="[bgCard]">
-        <div class="rounded-2xl bg-white/40 p-3">
-            <el-skeleton :loading="loading" animated>
-                <template #template>
-                    <el-skeleton-item variant="rect" class="card-product__image" />
-                    <div class="mt-4 space-y-3">
-                        <el-skeleton-item variant="text" class="card-product__title" />
-                        <el-skeleton-item variant="text" class="card-product__rating" />
-                        <el-skeleton-item variant="text" class="card-product__price" />
-                    </div>
-                </template>
-            </el-skeleton>
-        </div>
-    </div>
+    <ProductCardSkeleton v-if="loading" :bg-card="bgCard" />
 
-    <div v-else class="p-4 rounded-2xl border border-border shadow-sm transition hover:shadow-md" :class="[bgCard]">
-        <section class="rounded-2xl cursor-pointer hover:scale-95 translate-all duration-300">
-            <div class="w-full aspect-[4/5] overflow-hidden rounded-xl bg-white/40">
-                <NuxtImg sizes="sm:100vw md:500px" :src="img" format="webp" densities="x1"
-                    class="w-full h-full object-cover" :alt="title || 'product image'" />
+    <div v-else class="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4" :class="[bgCard]">
+        <section class="group cursor-pointer overflow-hidden rounded-2xl">
+            <div class="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white/60">
+                <NuxtImg
+                    :src="img"
+                    format="webp"
+                    densities="x1 x2"
+                    sizes="(max-width: 575px) 100vw, (max-width: 992px) 50vw, 25vw"
+                    class="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-[1.03] sm:p-3"
+                    :alt="title || 'product image'"
+                />
             </div>
         </section>
-        <h2 class="text-lg font-semibold text-text my-2">{{ title }}</h2>
-        <SharesRating :rating-amount="ratingAmount" />
-        <SharesDiscount :discount-amount="discountAmount" :price="price" :discount-type="discountType"
-            :discountPercentage="'text-sm'" />
+
+        <div class="mt-3 flex flex-1 flex-col gap-2">
+            <h2 class="line-clamp-2 text-sm font-semibold leading-5 text-text sm:text-base lg:text-lg">
+                {{ title }}
+            </h2>
+            <SharesRating :rating-amount="ratingAmount" />
+            <SharesDiscount
+                :discount-amount="discountAmount"
+                :price="price"
+                :discount-type="discountType"
+                :discountPercentage="'text-sm'"
+            />
+        </div>
     </div>
 </template>
-
-
-<style scoped>
-.card-product__image {
-    width: 100%;
-    aspect-ratio: 4 / 5;
-    border-radius: 0.75rem;
-}
-
-.card-product__title {
-    height: 1.2rem;
-    width: 78%;
-    border-radius: 9999px;
-}
-
-.card-product__rating {
-    height: 0.95rem;
-    width: 52%;
-    border-radius: 9999px;
-}
-
-.card-product__price {
-    height: 1rem;
-    width: 64%;
-    border-radius: 9999px;
-}
-</style>

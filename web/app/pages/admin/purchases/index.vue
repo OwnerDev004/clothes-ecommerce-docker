@@ -9,15 +9,15 @@
             <BaseCard>
                 <template #header>
                     <div class="space-y-4">
-                        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                            <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
+                        <div class="flex flex-col gap-4 lg:flex-row  lg:justify-between">
+                            <div class="grid grid-cols-2 gap-3 w-full lg:w-[50%]">
                                 <BaseInput v-model="filters.search_txt"
                                     placeholder="Search product, size, color, note..." clearable />
                                 <BaseSelect v-model="filters.product_variant_id" :options="variantFilterOptions"
                                     placeholder="All Variants" class="w-full" />
                             </div>
 
-                            <div class="flex gap-3">
+                            <div class="flex flex-wrap gap-3 self-end">
                                 <BaseButton @click="resetFilters">Reset Filters</BaseButton>
                                 <BaseButton @click="exportPDF">Export</BaseButton>
                                 <BaseButton type="primary" @click="openPurchaseModal">Add Purchase</BaseButton>
@@ -27,9 +27,9 @@
                 </template>
 
                 <div class="space-y-5">
-                    <div v-loading="pending">
+                    <div v-loading="pending" class="rounded-2xl">
                         <BaseTable :table-data="tableData">
-                            <el-table-column label="Variant" min-width="240">
+                            <el-table-column label="Variant" min-width="260">
                                 <template #default="scope">
                                     <div class="min-w-0">
                                         <p class="m-0 truncate font-semibold text-slate-950">

@@ -242,8 +242,8 @@ watch(
 </script>
 
 <template>
-    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Collection' : 'Add Collection'" width="1100px"
-        body-class="p-0" footer-class="px-6 pb-6 pt-0">
+    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Collection' : 'Add Collection'" body-class="p-0"
+        footer-class="px-6 pb-6 pt-0">
         <el-form label-position="top">
             <div class="grid gap-6 px-6 pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
                 <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-6">

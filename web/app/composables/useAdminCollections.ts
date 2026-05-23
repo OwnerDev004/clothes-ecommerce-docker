@@ -116,6 +116,11 @@ export const useAdminCollections = () => {
       ? { Authorization: `Bearer ${accessToken.value}` }
       : undefined;
   };
+  //reset Filters
+  const resetFilters = () => {
+    filters.search_txt = "";
+    filters.sort_by = "";
+  };
 
   const buildQuery = () => {
     const query: Record<string, string | number> = {
@@ -389,6 +394,7 @@ export const useAdminCollections = () => {
     deleteCollection,
     editCollection,
     fetchCollections,
+    resetFilters,
     submitForm,
   };
 };

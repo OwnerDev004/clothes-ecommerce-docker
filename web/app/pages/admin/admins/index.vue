@@ -8,15 +8,18 @@
 
     <BaseCard>
       <template #header>
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div class="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <BaseInput v-model="filters.search_txt" placeholder="Search admins..." clearable />
+        <div class="space-y-4">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="w-full lg:max-w-[360px]">
+              <BaseInput v-model="filters.search_txt" placeholder="Search admins..." clearable />
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+              <BaseButton v-if="can('admins', 'create')" type="primary" @click="openCreate">Add Admin</BaseButton>
+            </div>
           </div>
 
-          <div class="flex gap-3">
-            <BaseButton @click="resetFilters">Reset Filters</BaseButton>
-            <BaseButton v-if="can('admins', 'create')" type="primary" @click="openCreate">Add Admin</BaseButton>
-          </div>
         </div>
       </template>
 
