@@ -24,11 +24,19 @@ class PaymentRepository
         private readonly OrderLifecycleRepository $orderLifecycleRepository,
         private readonly AppSettingRepository $appSettingRepository,
         private readonly VoucherRepository $promo_voucher,
+        private readonly \App\Services\Api\V1\OrderRealtimeAlertService $orderRealtimeAlertService,
     ) {
     }
 
-    public function createIntent(int $customerId, int $orderId, string $provider, string $currency = 'USD', bool $is_complete_coupon, string $promo_code, float $fee_province): array
-    {
+    public function createIntent(
+        int $customerId,
+        int $orderId,
+        string $provider,
+        string $currency = 'USD',
+        bool $is_complete_coupon = false,
+        string $promo_code = '',
+        float $fee_province = 0.0
+    ): array {
         $merchantConfig = $this->resolveKhrqrMerchantConfig();
         $provider = strtolower(trim($provider));
         $this->assertProviderSupported($provider);
@@ -634,7 +642,6 @@ class PaymentRepository
 
         if ($paymentTx) {
             $paymentTx->status = 'paid';
-            $order->payment_status === 'paid';
         }
 
         if ($order->payment_status === 'paid') {
@@ -654,6 +661,15 @@ class PaymentRepository
             if ($cart) {
                 $cart->items()->delete();
             }
+
+            $this->orderRealtimeAlertService->notifyAdminOrderCreated($order->fresh([
+                'customer:id,full_name,user_name,email,phone,address',
+                'items.variant.product:id,name,slug',
+                'items.variant.size:id,name',
+                'voucher:id,code,name',
+                'paymentTransactions',
+                'statusHistories',
+            ]));
         }
 
         if (config('services.telegram-bot-api.send_inline')) {

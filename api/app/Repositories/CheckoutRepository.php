@@ -19,8 +19,7 @@ class CheckoutRepository
         private readonly VoucherRepository $voucherRepository,
         private readonly OrderRealtimeAlertService $orderRealtimeAlertService,
         private readonly AppSettingRepository $appSettingRepository,
-    )
-    {
+    ) {
     }
 
     public function checkout(int $customerId, array $payload): array
@@ -158,7 +157,9 @@ class CheckoutRepository
                 'voucher:id,code,name',
             ]);
 
-            $this->orderRealtimeAlertService->notifyAdminOrderCreated($order);
+            if (($payload['payment_method'] ?? 'cash_on_delivery') !== 'khqr') {
+                $this->orderRealtimeAlertService->notifyAdminOrderCreated($order);
+            }
 
             return [
                 'order' => $order,

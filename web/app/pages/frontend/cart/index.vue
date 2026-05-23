@@ -199,7 +199,7 @@
 import { ArrowRight } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { useAuthStore } from '~/stores/authStore'
 import { useCartStore } from '~/stores/cartStore'
@@ -799,7 +799,7 @@ const createPaymentIntent = async (orderId: number) => {
   }
 }
 
-const checkout = async () => {
+const performCheckout = async () => {
   if (!cartItems.value.length) {
     ElMessage.warning('Cart is empty.')
     return
@@ -850,6 +850,28 @@ const checkout = async () => {
   } finally {
     checkingOut.value = false
   }
+}
+
+const checkout = async () => {
+  if (paymentMethod.value === 'cash_on_delivery') {
+    try {
+      await ElMessageBox.confirm(
+        'Please confirm that you want to place this Cash on Delivery order.',
+        'Confirm Cash on Delivery',
+        {
+          confirmButtonText: 'Place Order',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+          closeOnClickModal: false,
+          closeOnPressEscape: true,
+        },
+      )
+    } catch {
+      return
+    }
+  }
+
+  await performCheckout()
 }
 // downloadQr
 const downloadQr = () => {
