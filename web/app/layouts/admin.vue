@@ -93,7 +93,7 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Commerce',
         items: [
-            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', disabled: true, moduleKey: 'orders' },
+            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', moduleKey: 'orders' },
             { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Live', moduleKey: 'customers' },
             { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live', moduleKey: 'promotions' },
         ],
@@ -155,8 +155,8 @@ onMounted(() => {
         <div class="flex h-full min-h-0 xl:flex-row">
             <Transition enter-active-class="transition duration-200 ease-out"
                 enter-from-class="opacity-0 -translate-x-4" enter-to-class="opacity-100 translate-x-0"
-                leave-active-class="transition duration-150 ease-in"
-                leave-from-class="opacity-100 translate-x-0" leave-to-class="opacity-0 -translate-x-4">
+                leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 translate-x-0"
+                leave-to-class="opacity-0 -translate-x-4">
                 <div v-if="sidebarOpen" class="fixed inset-0 z-50 xl:hidden">
                     <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]" @click="closeSidebar" />
                     <aside
@@ -217,7 +217,8 @@ onMounted(() => {
                                 <div class="hidden items-center gap-3 px-3 py-2 sm:flex">
                                     <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                                     <div>
-                                        <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name }}</strong>
+                                        <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
+                                            }}</strong>
                                     </div>
                                 </div>
 
