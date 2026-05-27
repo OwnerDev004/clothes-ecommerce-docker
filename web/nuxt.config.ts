@@ -156,6 +156,7 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_PUSHER_SCHEME ||
         process.env.VITE_PUSHER_SCHEME ||
         "https",
+      beamsInstanceId: process.env.NUXT_PUBLIC_BEAMS_INSTANCE_ID || "",
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || "",
       facebookAppId: process.env.NUXT_PUBLIC_FACEBOOK_APP_ID || "",
       facebookGraphVersion:

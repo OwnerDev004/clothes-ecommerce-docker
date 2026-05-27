@@ -6040,6 +6040,51 @@
             "install-path": "../pusher/pusher-php-server"
         },
         {
+            "name": "pusher/pusher-push-notifications",
+            "version": "2.0.1",
+            "version_normalized": "2.0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pusher/push-notifications-php.git",
+                "reference": "b71748b72a1bc7d6a5ca15fafa976b829377c193"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pusher/push-notifications-php/zipball/b71748b72a1bc7d6a5ca15fafa976b829377c193",
+                "reference": "b71748b72a1bc7d6a5ca15fafa976b829377c193",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "firebase/php-jwt": "^7.0",
+                "guzzlehttp/guzzle": "^7.0",
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "doctrine/instantiator": "^1.5.0",
+                "overtrue/phplint": "^4.5 || ^5.5",
+                "phpunit/phpunit": "^9.0",
+                "symfony/yaml": "^5.0 || ^6.0"
+            },
+            "time": "2026-03-02T14:46:05+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Pusher\\PushNotifications\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "support": {
+                "issues": "https://github.com/pusher/push-notifications-php/issues",
+                "source": "https://github.com/pusher/push-notifications-php/tree/2.0.1"
+            },
+            "install-path": "../pusher/pusher-push-notifications"
+        },
+        {
             "name": "radebatz/type-info-extras",
             "version": "1.0.7",
             "version_normalized": "1.0.7.0",

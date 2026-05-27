@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "288f608331ccad6f0b3f889ccd60ff19",
+    "content-hash": "a6358a5bd533deafb86ba291fb9c8d4a",
     "packages": [
         {
             "name": "brick/math",
@@ -4409,6 +4409,48 @@
                 "source": "https://github.com/pusher/pusher-http-php/tree/7.2.7"
             },
             "time": "2025-01-06T10:56:20+00:00"
+        },
+        {
+            "name": "pusher/pusher-push-notifications",
+            "version": "2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pusher/push-notifications-php.git",
+                "reference": "b71748b72a1bc7d6a5ca15fafa976b829377c193"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pusher/push-notifications-php/zipball/b71748b72a1bc7d6a5ca15fafa976b829377c193",
+                "reference": "b71748b72a1bc7d6a5ca15fafa976b829377c193",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "firebase/php-jwt": "^7.0",
+                "guzzlehttp/guzzle": "^7.0",
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "doctrine/instantiator": "^1.5.0",
+                "overtrue/phplint": "^4.5 || ^5.5",
+                "phpunit/phpunit": "^9.0",
+                "symfony/yaml": "^5.0 || ^6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pusher\\PushNotifications\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "support": {
+                "issues": "https://github.com/pusher/push-notifications-php/issues",
+                "source": "https://github.com/pusher/push-notifications-php/tree/2.0.1"
+            },
+            "time": "2026-03-02T14:46:05+00:00"
         },
         {
             "name": "radebatz/type-info-extras",

@@ -19,6 +19,7 @@
         "laravel/tinker": "^2.10.1",
         "predis/predis": "*",
         "pusher/pusher-php-server": "^7.2",
+        "pusher/pusher-push-notifications": "*",
         "socialiteproviders/telegram": "^4.1",
         "tymon/jwt-auth": "^2.2"
     },

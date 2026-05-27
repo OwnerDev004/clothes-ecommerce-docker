@@ -52,6 +52,10 @@ return [
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'redirect' => env('GITHUB_REDIRECT_URI', rtrim(env('APP_URL', 'http://localhost'), '/') . '/auth/github/callback'),
     ],
+    'beams' => [
+        'instance_id' => env('PUSHER_BEAMS_INSTANCE_ID'),
+        'secret_key' => env('PUSHER_BEAMS_SECRET_KEY'),
+    ],
     'telegram-bot-api' => [
         'token' => env('TELEGRAM_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN')),
         'username' => env('TELEGRAM_BOT_USERNAME', env('TELEGRAM_BOT_NAME')),

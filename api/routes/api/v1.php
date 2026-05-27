@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CollectionController;
 use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\VoucherController;
+use App\Http\Controllers\Api\V1\BeamsAuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\Auth\CustomerAuthController;
 use App\Http\Controllers\Api\V1\TelegramLinkController;
@@ -90,6 +91,7 @@ Route::middleware(['jwt.cookie', 'auth:customer'])->group(function () {
     Route::post('/payments/simulate-paid', [PaymentController::class, 'simulatePaid']);
     Route::post('/telegram/connect-link', [TelegramLinkController::class, 'createLink']);
     Route::post('/telegram/poll-link', [TelegramLinkController::class, 'pollLink']);
+    Route::get('/beams/auth', [BeamsAuthController::class, 'auth']);
 
     Route::prefix('orders')->group(function () {
         Route::get('/', [OrderController::class, 'index']);

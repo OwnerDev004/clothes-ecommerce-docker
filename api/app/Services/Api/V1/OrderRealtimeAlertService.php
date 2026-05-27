@@ -5,12 +5,14 @@ namespace App\Services\Api\V1;
 use App\Events\Orders\AdminOrderRealtimeAlert;
 use App\Events\Orders\CustomerOrderRealtimeAlert;
 use App\Models\Order;
+use App\Services\Api\V1\Queue\BeamsSendingService;
 use App\Services\Api\V1\Queue\TelegramSendingService;
 use Illuminate\Support\Facades\DB;
 
 class OrderRealtimeAlertService
 {
     public function __construct(
+        private readonly BeamsSendingService $beamsSendingService,
         private readonly TelegramSendingService $telegramSendingService,
     ) {
     }
@@ -40,6 +42,12 @@ class OrderRealtimeAlertService
         $message = 'Your order has been received. We are packing it now.';
         $this->broadcastCustomerUpdate($order, 'processing', 'Order processing', $message);
         DB::afterCommit(function () use ($order, $message) {
+            $this->beamsSendingService->sendOrderStatusUpdate(
+                $order->fresh(),
+                'Order processing',
+                $message,
+                'processing',
+            );
             $this->telegramSendingService->sendOrderStatusUpdate($order->fresh(), $message);
         });
     }
@@ -50,6 +58,12 @@ class OrderRealtimeAlertService
         $message = "Your order has shipped. Tracking ID: {$trackingId}.";
         $this->broadcastCustomerUpdate($order, 'shipped', 'Order shipped', $message);
         DB::afterCommit(function () use ($order, $message) {
+            $this->beamsSendingService->sendOrderStatusUpdate(
+                $order->fresh(),
+                'Order shipped',
+                $message,
+                'shipped',
+            );
             $this->telegramSendingService->sendOrderStatusUpdate($order->fresh(), $message);
         });
     }
@@ -59,6 +73,12 @@ class OrderRealtimeAlertService
         $message = 'Your order has been delivered. Thank you for shopping with us.';
         $this->broadcastCustomerUpdate($order, 'delivered', 'Order delivered', $message);
         DB::afterCommit(function () use ($order, $message) {
+            $this->beamsSendingService->sendOrderStatusUpdate(
+                $order->fresh(),
+                'Order delivered',
+                $message,
+                'delivered',
+            );
             $this->telegramSendingService->sendOrderStatusUpdate($order->fresh(), $message);
         });
     }

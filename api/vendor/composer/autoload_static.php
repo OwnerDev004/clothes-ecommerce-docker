@@ -112,6 +112,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         ),
         'P' =>
         array (
+            'Pusher\\PushNotifications\\' => 25,
             'Pusher\\' => 7,
             'Psy\\' => 4,
             'Psr\\SimpleCache\\' => 16,
@@ -393,6 +394,10 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'Radebatz\\TypeInfoExtras\\' =>
         array (
             0 => __DIR__ . '/..' . '/radebatz/type-info-extras/src',
+        ),
+        'Pusher\\PushNotifications\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/pusher/pusher-push-notifications/src',
         ),
         'Pusher\\' =>
         array (
@@ -689,6 +694,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'App\\Http\\Controllers\\Api\\V1\\Admin\\ProductController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/ProductController.php',
         'App\\Http\\Controllers\\Api\\V1\\Admin\\ProductVariantController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/ProductVariantController.php',
         'App\\Http\\Controllers\\Api\\V1\\Admin\\RoleController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/RoleController.php',
+        'App\\Http\\Controllers\\Api\\V1\\Admin\\RolePermissionController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/RolePermissionController.php',
         'App\\Http\\Controllers\\Api\\V1\\Admin\\SettingController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/SettingController.php',
         'App\\Http\\Controllers\\Api\\V1\\Admin\\StockPurchaseController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/StockPurchaseController.php',
         'App\\Http\\Controllers\\Api\\V1\\Admin\\VoucherController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/V1/Admin/VoucherController.php',
@@ -1647,6 +1653,8 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'Database\\Seeders\\CatalogSeeder' => __DIR__ . '/../..' . '/database/seeders/CatalogSeeder.php',
         'Database\\Seeders\\DatabaseSeeder' => __DIR__ . '/../..' . '/database/seeders/DatabaseSeeder.php',
         'Database\\Seeders\\FiveCollectionsSeeder' => __DIR__ . '/../..' . '/database/seeders/FiveCollectionsSeeder.php',
+        'Database\\Seeders\\ProductionSeeder' => __DIR__ . '/../..' . '/database/seeders/ProductionSeeder.php',
+        'Database\\Seeders\\SuperAdminSeeder' => __DIR__ . '/../..' . '/database/seeders/SuperAdminSeeder.php',
         'DateError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateError.php',
         'DateException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateException.php',
         'DateInvalidOperationException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidOperationException.php',
@@ -7611,6 +7619,7 @@ class ComposerStaticInitc514d8f7b9fc5970bdd94287905ef584
         'Psy\\VersionUpdater\\NoopChecker' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/NoopChecker.php',
         'Psy\\VersionUpdater\\SelfUpdate' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/SelfUpdate.php',
         'Pusher\\ApiErrorException' => __DIR__ . '/..' . '/pusher/pusher-php-server/src/ApiErrorException.php',
+        'Pusher\\PushNotifications\\PushNotifications' => __DIR__ . '/..' . '/pusher/pusher-push-notifications/src/PushNotifications.php',
         'Pusher\\Pusher' => __DIR__ . '/..' . '/pusher/pusher-php-server/src/Pusher.php',
         'Pusher\\PusherCrypto' => __DIR__ . '/..' . '/pusher/pusher-php-server/src/PusherCrypto.php',
         'Pusher\\PusherException' => __DIR__ . '/..' . '/pusher/pusher-php-server/src/PusherException.php',
