@@ -3938,8 +3938,10 @@
                                     "currency": {
                                         "type": "string",
                                         "nullable": true,
-                                        "maxLength": 3,
-                                        "minLength": 3
+                                        "enum": [
+                                            "USD",
+                                            "KHR"
+                                        ]
                                     }
                                 },
                                 "type": "object"

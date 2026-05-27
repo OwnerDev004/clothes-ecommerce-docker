@@ -79,7 +79,9 @@ export const useAppSettingStore = defineStore(
 
     const fetchSettings = async () => {
       const config = useRuntimeConfig();
-      const apiBase = `${config.public.apiBase}`;
+      const apiBase = process.server
+        ? `${config.apiBaseInternal || config.public.apiBase}`
+        : `${config.public.apiBase}`;
       const response: any = await $fetch(`${apiBase}/app_setting`);
       setSettings(response);
     };

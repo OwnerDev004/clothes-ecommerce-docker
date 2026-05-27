@@ -8,6 +8,8 @@ const {
   brands,
   collections,
   isLoadingProducts,
+  isLoadingCatalogMeta,
+  isLoadingCustomerReview,
   productError,
   loadMoreTrigger,
   topSellingProducts,
@@ -18,6 +20,10 @@ const {
   getCollectionSpanClass,
   resolveVisualImage,
 } = useHomeProducts()
+
+onMounted(() => {
+  void loadInitialHomeData()
+})
 
 const onSlideChange = (swiper: any) => {
   const totalSlides = swiper.slides.length
@@ -95,53 +101,67 @@ const getBrandRoute = (id: number | string) => {
   }
 }
 
-onMounted(async () => {
-  await loadInitialHomeData()
-})
 </script>
 <template>
   <main>
-    <!-- Slide Section -->
-    <section class="">
-
-      <ClientOnly>
-        <Swiper :modules="[SwiperAutoplay]" :space-between="1" :autoplay="{
-          delay: 5000,
-          disableOnInteraction: false,
-        }">
-          <SwiperSlide v-for="slide in 10" :key="slide" class="bg-gray">
-            <div class="px-5  desktop:container flex flex-col lg:flex-row items-center gap-4 sm:gap-6 pt-5">
-              <!-- Text Section -->
-              <div class="w-full lg:w-1/2 xl:w-2/5 flex flex-col justify-center">
-                <p class="font-Poppins text-5xl md:text-5xl font-bold leading-tight">
-                  FIND CLOTHES THAT MATCH YOUR STYLE
-                </p>
-                <p class="font-Lato font-thin mt-2">
-                  Browse through our diverse range of meticulously crafted
-                  garments, designed to bring out your individuality and cater to
-                  your sense of style.
-                </p>
-                <button class="bg-black text-white rounded-full py-3 px-8 mt-4 w-full desktop:w-[210px]"
-                  @click="shopNow">
-                  Shop Now
-                </button>
-              </div>
-
-              <!-- Image Section -->
-              <div class="w-full desktop:w-1/2 flex justify-center ml-auto">
-                <NuxtImg sizes="sm:100vw md:400px lg:650px" src="/img/slide-1.png" format="webp" densities="x1"
-                  alt="Fashion Clothing" />
-              </div>
+    <!-- Hero Section -->
+    <section class="px-5 desktop:container pt-6">
+      <div
+        class="overflow-hidden rounded-[32px] border border-zinc-200 bg-[linear-gradient(135deg,#f7f7f7_0%,#ffffff_45%,#f1f5f9_100%)]"
+      >
+        <div class="grid min-h-[560px] items-center gap-8 px-6 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-10 xl:px-14">
+          <div class="max-w-2xl">
+            <p class="inline-flex rounded-full border border-zinc-300 bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-600">
+              New season
+            </p>
+            <h1 class="mt-5 font-Poppins text-5xl font-extrabold leading-[1.02] text-zinc-950 md:text-6xl xl:text-7xl">
+              Find clothes that match your style
+            </h1>
+            <p class="mt-5 max-w-xl text-base leading-7 text-zinc-600 md:text-lg">
+              Browse our curated collection of modern garments, crafted to keep
+              your style sharp and your shopping experience fast.
+            </p>
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+              <button
+                class="rounded-full bg-zinc-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                @click="shopNow"
+              >
+                Shop Now
+              </button>
+              <button
+                class="rounded-full border border-zinc-300 bg-white px-8 py-3 text-sm font-semibold text-zinc-900 transition hover:border-zinc-400 hover:bg-zinc-50"
+                @click="viewAllProduct"
+              >
+                View All Products
+              </button>
             </div>
-          </SwiperSlide>
-        </Swiper>
-      </ClientOnly>
+          </div>
+
+          <div class="relative flex justify-center lg:justify-end">
+            <div class="absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.08),transparent_60%)]"></div>
+            <NuxtImg
+              src="/img/slide-1.png"
+              alt="Fashion Clothing"
+              format="webp"
+              sizes="sm:100vw md:520px lg:650px"
+              densities="x1"
+              preload
+              loading="eager"
+              class="relative z-10 w-full max-w-[620px] object-contain"
+            />
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Brand Section -->
     <section class="py-10 bg-black">
-      <div v-if="brands.length != 0">
-
+      <div v-if="isLoadingCatalogMeta" class="desktop:container px-5">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div v-for="item in 4" :key="item" class="h-[96px] animate-pulse rounded-xl bg-white/10 md:h-[110px]"></div>
+        </div>
+      </div>
+      <div v-else-if="brands.length != 0">
         <ClientOnly>
           <Swiper :modules="[SwiperAutoplay]" :slides-per-view="2" :space-between="8" :breakpoints="{
             640: { slidesPerView: 3, spaceBetween: 10 },
@@ -276,10 +296,13 @@ onMounted(async () => {
       <h1
         class="px-2 desktop:container text-center font-Poppins text-[2rem] md:text-5xl leading-tight py-4 font-extrabold desktop:">
         OUR HAPPY CUSTOMERS
-
       </h1>
-      <div v-if="customers_review.length !== 0">
-
+      <div v-if="isLoadingCustomerReview" class="desktop:container px-5">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div v-for="item in 4" :key="item" class="h-[180px] animate-pulse rounded-element bg-slate-100"></div>
+        </div>
+      </div>
+      <div v-else-if="customers_review.length !== 0">
         <ClientOnly>
           <Swiper :modules="[SwiperAutoplay]" :slides-per-view="4.1" :space-between="20" :breakpoints="{
             '0': {

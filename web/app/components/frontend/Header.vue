@@ -33,13 +33,11 @@
 
           <!-- Brands Link -->
           <li class="relative group py-2">
-            <ClientOnly>
-              <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
-                <span>Brands</span>
-                <span
-                  class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
-              </NuxtLink>
-            </ClientOnly>
+            <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
+              <span>Brands</span>
+              <span
+                class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
+            </NuxtLink>
           </li>
         </ul>
       </div>
@@ -64,26 +62,21 @@
         <div class="flex items-center gap-3 sm:gap-4 desktop:gap-6 pl-2 sm:pl-4">
           <!-- Wishlist -->
           <NuxtLink to="/frontend/favorites" class="relative">
-            <ClientOnly>
-              <Icon name="mdi:heart"
-                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
-              <span v-if="favoriteCount > 0"
-                class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                {{ favoriteCount }}
-              </span>
-            </ClientOnly>
+            <Icon name="mdi:heart"
+              class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
+            <span v-if="favoriteCount > 0"
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {{ favoriteCount }}
+            </span>
           </NuxtLink>
 
           <!-- Cart -->
           <NuxtLink to="/frontend/cart" class="relative">
-            <ClientOnly>
-              <Icon name="mdi:cart"
-                class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
-              <span v-if="cartCount > 0"
-                class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                {{ cartCount }}
-              </span>
-            </ClientOnly>
+            <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
+            <span v-if="cartCount > 0"
+              class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              {{ cartCount }}
+            </span>
           </NuxtLink>
           <!-- Account -->
           <div class="relative account-menu-root">

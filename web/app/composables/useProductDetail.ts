@@ -344,10 +344,9 @@ export const useProductDetail = () => {
       return payload;
     },
     {
-      server: false,
+      server: true,
       immediate: true,
       watch: [productId],
-      getCachedData: () => undefined,
     },
   );
 

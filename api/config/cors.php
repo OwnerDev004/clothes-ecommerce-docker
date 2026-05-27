@@ -7,6 +7,7 @@ return [
 
     'allowed_origins' => array_values(array_unique(array_filter([
         env('FRONTEND_URL', 'https://clothes-ecommerce-docker.vercel.app'),
+        env('FRONTEND_URL_LOCAL', 'http://localhost:3000'),
         env('FRONTEND_URL_ALT', 'http://127.0.0.1:3000'),
     ]))),
 

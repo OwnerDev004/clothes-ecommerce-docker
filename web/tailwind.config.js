@@ -46,7 +46,7 @@ export default {
     },
     container: {
       center: true,
-      padding: '1rem',
+      padding: '4rem',
     },
   },
   plugins: [],

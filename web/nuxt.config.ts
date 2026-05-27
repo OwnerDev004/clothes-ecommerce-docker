@@ -124,16 +124,20 @@ export default defineNuxtConfig({
   },
 
   googleFonts: {
+    display: "swap",
+    preconnect: true,
     families: {
       Poppins: true,
       Lato: true,
     },
   },
   runtimeConfig: {
+    apiBaseInternal:
+      process.env.NUXT_API_BASE_INTERNAL || "http://api:8000/api/v1",
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || "Docker-Ecommerce",
       apiBase:
-        process.env.NUXT_PUBLIC_API_BASE || "http://127.0.0.1:8000/api/v1",
+        process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8000/api/v1",
       frontendUrl:
         process.env.NUXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
       pusherKey:

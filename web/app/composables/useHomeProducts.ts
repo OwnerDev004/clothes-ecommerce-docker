@@ -43,16 +43,35 @@ export const useHomeProducts = () => {
   const config = useRuntimeConfig();
   const apiBase = (config.public.apiBase || "").replace(/\/$/, "");
 
-  const products = ref<ProductCardItem[]>([]);
-  const brands = ref<BrandRecord[]>([]);
-  const categories = ref<CategoryRecord[]>([]);
-  const collections = ref<CollectionRecord[]>([]);
-  const customers_review = ref<CustomerReviewFeedback[]>([]);
-  const isLoadingProducts = ref(false);
-  const isLoadingCustomerReview = ref(false);
-  const productError = ref("");
-  const currentPage = ref(1);
-  const hasMoreProducts = ref(true);
+  const products = useState<ProductCardItem[]>("home-products", () => []);
+  const brands = useState<BrandRecord[]>("home-brands", () => []);
+  const categories = useState<CategoryRecord[]>("home-categories", () => []);
+  const collections = useState<CollectionRecord[]>(
+    "home-collections",
+    () => [],
+  );
+  const customers_review = useState<CustomerReviewFeedback[]>(
+    "home-customer-reviews",
+    () => [],
+  );
+  const isLoadingProducts = useState<boolean>(
+    "home-loading-products",
+    () => false,
+  );
+  const isLoadingCatalogMeta = useState<boolean>(
+    "home-loading-catalog-meta",
+    () => false,
+  );
+  const isLoadingCustomerReview = useState<boolean>(
+    "home-loading-customer-reviews",
+    () => false,
+  );
+  const productError = useState<string>("home-product-error", () => "");
+  const currentPage = useState<number>("home-current-page", () => 1);
+  const hasMoreProducts = useState<boolean>(
+    "home-has-more-products",
+    () => true,
+  );
   const perPage = 8;
   const loadMoreTrigger = ref<HTMLElement | null>(null);
 
@@ -117,28 +136,36 @@ export const useHomeProducts = () => {
   };
 
   const fetchCatalogMeta = async () => {
-    const [brandResponse, categoryResponse, collectionResponse] =
-      await Promise.allSettled([
-        $fetch(`${apiBase}/brands`, { method: "GET" }),
-        $fetch(`${apiBase}/categories`, { method: "GET" }),
-        $fetch(`${apiBase}/collections`, { method: "GET" }),
-      ]);
+    isLoadingCatalogMeta.value = true;
+    try {
+      const [brandResponse, categoryResponse, collectionResponse] =
+        await Promise.allSettled([
+          $fetch(`${apiBase}/brands`, { method: "GET" }),
+          $fetch(`${apiBase}/categories`, { method: "GET" }),
+          $fetch(`${apiBase}/collections`, { method: "GET" }),
+        ]);
 
-    const parseRows = <T>(result: PromiseSettledResult<any>): T[] => {
-      return result.status === "fulfilled" && Array.isArray(result.value?.data)
-        ? result.value.data
-        : [];
-    };
+      const parseRows = <T>(result: PromiseSettledResult<any>): T[] => {
+        return result.status === "fulfilled" &&
+          Array.isArray(result.value?.data)
+          ? result.value.data
+          : [];
+      };
 
-    const payload: HomeCatalogPayload = {
-      brands: parseRows<BrandRecord>(brandResponse),
-      categories: parseRows<CategoryRecord>(categoryResponse),
-      collections: parseRows<CollectionRecord>(collectionResponse),
-    };
+      const payload: HomeCatalogPayload = {
+        brands: parseRows<BrandRecord>(brandResponse),
+        categories: parseRows<CategoryRecord>(categoryResponse),
+        collections: parseRows<CollectionRecord>(collectionResponse),
+      };
 
-    brands.value = payload.brands;
-    categories.value = payload.categories;
-    collections.value = payload.collections;
+      brands.value = payload.brands;
+      categories.value = payload.categories;
+      collections.value = payload.collections;
+    } catch (error) {
+      console.warn("Failed to load home catalog meta:", error);
+    } finally {
+      isLoadingCatalogMeta.value = false;
+    }
   };
 
   const fetchCustomerReview = async () => {
@@ -149,14 +176,15 @@ export const useHomeProducts = () => {
       });
       customers_review.value = response.data;
     } catch (error: any) {
-      throw new Error(error);
+      customers_review.value = [];
+      console.warn("Failed to load customer reviews:", error);
     } finally {
       isLoadingCustomerReview.value = false;
     }
   };
 
   const loadInitialHomeData = async () => {
-    await Promise.all([
+    await Promise.allSettled([
       fetchCatalogMeta(),
       fetchProducts(true),
       fetchCustomerReview(),
@@ -180,6 +208,8 @@ export const useHomeProducts = () => {
     categories,
     collections,
     isLoadingProducts,
+    isLoadingCatalogMeta,
+    isLoadingCustomerReview,
     productError,
     currentPage,
     hasMoreProducts,

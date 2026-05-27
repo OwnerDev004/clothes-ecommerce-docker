@@ -35,7 +35,6 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Remove existing vendor and node_modules to ensure clean state
 RUN rm -rf vendor/ node_modules/
-
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 

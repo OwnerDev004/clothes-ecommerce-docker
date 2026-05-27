@@ -41,5 +41,7 @@ cp /var/www/html/nginx.conf /etc/nginx/sites-available/default
 # Start PHP-FPM in the background
 php-fpm -D
 
+#Start queue
+
 # Start Nginx in the foreground
 exec nginx -g "daemon off;"

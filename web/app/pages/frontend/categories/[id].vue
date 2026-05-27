@@ -173,7 +173,8 @@
             <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon class="mb-4" />
 
             <div class="min-h-[220px]">
-              <div v-if="isLoadingProducts" class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
+              <div v-if="isLoadingProducts"
+                class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
                 <FrontendCardProduct v-for="item in 8" :key="`product-loading-${item}`" loading />
               </div>
 
@@ -182,7 +183,8 @@
               </div>
 
               <div v-else class="grid gap-4 sm:grid-cols-2 tablet:grid-cols-3 desktop:grid-cols-4 xl:gap-6">
-                <div v-for="item in displayProducts" :key="item.id" class="cursor-pointer" @click="viewProduct(item.id)">
+                <div v-for="item in displayProducts" :key="item.id" class="cursor-pointer"
+                  @click="viewProduct(item.id)">
                   <FrontendCardProduct :title="item.title" :price="item.price" :img="item.img"
                     :discount-amount="item.discount_amount" :discount-type="item.discount_type"
                     :rating-amount="item.average_rating" />
@@ -359,6 +361,16 @@ const isToggleFilter = ref(false)
 
 const isFetching = computed(() => isLoadingCategories.value || isLoadingFilters.value || isLoadingProducts.value)
 
+const initializeCategoryState = () => {
+  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
+  selectedCategory.value = isCategoryLocked ? '' : (categoryParam.value || '')
+  dressStyleFilter.value = brandOnlyParam.value ? '' : (collectionParam.value || '')
+  brandFilter.value = collectionOnlyParam.value ? '' : (brandParam.value || '')
+  subCategoryFilter.value = isCategoryLocked ? '' : (subCategoryParam.value || '')
+  priceRange.value = isCategoryLocked ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
+  searchText.value = isCategoryLocked ? '' : (searchTxtParam.value || '')
+}
+
 const categoryParam = computed(() => {
   const raw = route.params.id
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
@@ -533,6 +545,15 @@ const fetchProducts = async () => {
   }
 }
 
+const loadInitialCategoryData = async () => {
+  initializeCategoryState()
+  await Promise.all([
+    fetchCategories(),
+    fetchFilterOptions(),
+    fetchProducts(),
+  ])
+}
+
 const applyFilters = async (closeDialog = false) => {
   page.value = 1
   const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
@@ -606,14 +627,10 @@ const checkScreenSize = () => {
   if (window.innerWidth >= 720) isToggleFilter.value = false
 }
 
+await useAsyncData('frontend-category-page', loadInitialCategoryData)
+
 watch(() => route.fullPath, async () => {
-  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
-  selectedCategory.value = isCategoryLocked ? '' : (categoryParam.value || '')
-  dressStyleFilter.value = brandOnlyParam.value ? '' : (collectionParam.value || '')
-  brandFilter.value = collectionOnlyParam.value ? '' : (brandParam.value || '')
-  subCategoryFilter.value = isCategoryLocked ? '' : (subCategoryParam.value || '')
-  priceRange.value = isCategoryLocked ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
-  searchText.value = isCategoryLocked ? '' : (searchTxtParam.value || '')
+  initializeCategoryState()
   page.value = 1
   await fetchCategories()
   await fetchFilterOptions()
@@ -621,16 +638,6 @@ watch(() => route.fullPath, async () => {
 })
 
 onMounted(async () => {
-  const isCategoryLocked = brandOnlyParam.value || collectionOnlyParam.value
-  selectedCategory.value = isCategoryLocked ? '' : (categoryParam.value || '')
-  dressStyleFilter.value = brandOnlyParam.value ? '' : (collectionParam.value || '')
-  brandFilter.value = collectionOnlyParam.value ? '' : (brandParam.value || '')
-  subCategoryFilter.value = isCategoryLocked ? '' : (subCategoryParam.value || '')
-  priceRange.value = isCategoryLocked ? [0, 200] : [priceMinParam.value, priceMaxParam.value]
-  searchText.value = isCategoryLocked ? '' : (searchTxtParam.value || '')
-  await fetchCategories()
-  await fetchFilterOptions()
-  await fetchProducts()
   if (import.meta.client) {
     checkScreenSize()
     window.addEventListener('resize', checkScreenSize)
