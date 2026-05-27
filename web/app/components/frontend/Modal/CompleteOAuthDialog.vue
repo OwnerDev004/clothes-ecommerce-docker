@@ -186,7 +186,9 @@ const connectTelegram = async () => {
             headers: getAuthHeaders(),
         })
         const deepLink = response?.data?.deep_link
-        console.log(deepLink);
+        if (import.meta.dev) {
+          console.log(deepLink);
+        }
 
         if (!deepLink) {
             telegramStatusMessage.value = 'Unable to generate Telegram link.'

@@ -1,6 +1,4 @@
 import { watch } from "vue";
-import Echo from "laravel-echo";
-import Pusher from "pusher-js";
 import { ElNotification } from "element-plus";
 import { useRoute } from "vue-router";
 import { useAdminAuthStore } from "~/stores/adminAuthStore";
@@ -9,8 +7,8 @@ import { useOrderRealtimeStore } from "~/stores/orderRealtimeStore";
 
 declare global {
   interface Window {
-    Echo?: Echo<"pusher">;
-    Pusher?: typeof Pusher;
+    Echo?: any;
+    Pusher?: any;
   }
 }
 
@@ -25,9 +23,17 @@ export default defineNuxtPlugin(() => {
   const authStore = useAuthStore();
   const realtimeStore = useOrderRealtimeStore();
 
-  window.Pusher = Pusher;
+  let echo: any = null;
 
-  let echo: Echo<"pusher"> | null = null;
+  const loadRealtimeClients = async () => {
+    const [{ default: Echo }, { default: Pusher }] = await Promise.all([
+      import("laravel-echo"),
+      import("pusher-js"),
+    ]);
+
+    window.Pusher = Pusher;
+    return Echo;
+  };
 
   const disconnect = () => {
     if (!echo) {
@@ -39,21 +45,22 @@ export default defineNuxtPlugin(() => {
     echo = null;
   };
 
-  const buildEcho = (
+  const buildEcho = async (
     authEndpoint: string,
     token: string,
-  ): Echo<"pusher"> | null => {
+  ): Promise<any | null> => {
     const pusherKey = String(config.public.pusherKey || "");
     if (!pusherKey || !token) {
       return null;
     }
 
+    const Echo = await loadRealtimeClients();
     const cluster = String(config.public.pusherCluster || "");
     const host = String(config.public.pusherHost || "");
     const scheme = String(config.public.pusherScheme || "https");
     const port = Number(config.public.pusherPort || 443);
 
-    return new Echo<"pusher">({
+    return new Echo({
       broadcaster: "pusher",
       key: pusherKey,
       cluster,
@@ -71,13 +78,13 @@ export default defineNuxtPlugin(() => {
     });
   };
 
-  const subscribeAdmin = () => {
+  const subscribeAdmin = async () => {
     const token = String(adminAuthStore.accessToken || "");
     if (!token) {
       return;
     }
 
-    echo = buildEcho(
+    echo = await buildEcho(
       `${String(config.public.apiBase || "").replace(/\/$/, "")}/broadcasting/auth`,
       token,
     );
@@ -99,7 +106,7 @@ export default defineNuxtPlugin(() => {
     });
   };
 
-  const subscribeCustomer = () => {
+  const subscribeCustomer = async () => {
     const token = String(authStore.accessToken || "");
     const customerId = Number(authStore.userProfile?.id || 0);
 
@@ -107,7 +114,7 @@ export default defineNuxtPlugin(() => {
       return;
     }
 
-    echo = buildEcho(
+    echo = await buildEcho(
       `${String(config.public.apiBase || "").replace(/\/$/, "")}/broadcasting/auth`,
       token,
     );
@@ -131,18 +138,18 @@ export default defineNuxtPlugin(() => {
       });
   };
 
-  const refreshConnection = () => {
+  const refreshConnection = async () => {
     disconnect();
 
     const isAdminRoute = route.path.startsWith("/admin");
 
     if (isAdminRoute && adminAuthStore.accessToken) {
-      subscribeAdmin();
+      await subscribeAdmin();
       return;
     }
 
     if (!isAdminRoute && authStore.accessToken && authStore.userProfile?.id) {
-      subscribeCustomer();
+      await subscribeCustomer();
     }
   };
 
@@ -153,7 +160,9 @@ export default defineNuxtPlugin(() => {
       () => authStore.accessToken,
       () => authStore.userProfile?.id,
     ],
-    refreshConnection,
+    () => {
+      void refreshConnection();
+    },
     { immediate: true },
   );
 });

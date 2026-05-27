@@ -116,8 +116,6 @@ const submitSignup = async () => {
     })
     // applyAuthFromResponse(response)
     const profile = response?.data?.user ?? response?.data?.customer ?? null
-    console.log(response?.data?.requires_profile_completion);
-    console.log(profile)
 
     if (shouldCompleteProfile(profile) || response?.data?.requires_profile_completion) {
       authCompleteDialogOpen.value = true

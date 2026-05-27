@@ -652,7 +652,6 @@ const pollPaymentOnce = async () => {
       headers: getAuthHeaders(),
     })
     const data = response?.data || {}
-    console.log(data);
 
     const orderStatus = String(data?.status || '').toLowerCase()
     const paymentStatus = String(data?.payment_status || '').toLowerCase()
@@ -782,9 +781,9 @@ const createPaymentIntent = async (orderId: number) => {
   payableAmount.value = parsedAmount ?? 0
 
   if (!qrString.value) {
-    // helpful debug when QR payload missing
-    // eslint-disable-next-line no-console
-    console.warn('QR payload missing from payment intent', response?.data)
+    if (import.meta.dev) {
+      console.warn('QR payload missing from payment intent', response?.data)
+    }
     ElMessage.warning('Invalid QR code: payload missing.')
   }
 
@@ -891,7 +890,9 @@ const downloadQr = () => {
       link.click()
     })
     .catch((err) => {
-      console.log(err)
+      if (import.meta.dev) {
+        console.error('Failed to export QR code image', err)
+      }
     })
 
 }

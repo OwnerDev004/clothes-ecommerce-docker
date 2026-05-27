@@ -11,13 +11,19 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
   ssr: true,
+  devtools: {
+    enabled: process.dev,
+  },
+  sourcemap: {
+    server: true,
+    client: process.dev ? true : "hidden",
+  },
 
   unhead: {
     renderSSRHeadOptions: {
       omitLineBreaks: false,
     },
   },
-  devtools: { enabled: true },
   imports: {
     dirs: ["enum"],
   },

@@ -503,7 +503,9 @@ const handleMobileSearch = () => {
     const searchTerm = mobileSearchInput.value.value
     if (searchTerm.trim()) {
       // Navigate to search results or perform search
-      console.log('Searching for:', searchTerm)
+      if (import.meta.dev) {
+        console.log('Searching for:', searchTerm)
+      }
       // You can add your search logic here
       toggleSearch()
     }
@@ -621,7 +623,9 @@ const fetchCategories = async () => {
     }
   }
   catch (err: any) {
-    console.error('Failed to fetch header menu data:', err)
+    if (import.meta.dev) {
+      console.error('Failed to fetch header menu data:', err)
+    }
   }
 }
 
