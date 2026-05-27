@@ -5,17 +5,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-04-03",
   app: {
     pageTransition: { name: "page", mode: "out-in" },
-    head: {
-      link: [
-        {
-          rel: "preload",
-          href: `${process.env.NUXT_PUBLIC_FRONTEND_URL}/_vercel/image?url=%2Fimg%2Fslide-1.png&w=768&q=100`,
-          as: "image",
-          fetchpriority: "high",
-        },
-        {},
-      ],
-    },
+    head: {},
   },
   future: {
     compatibilityVersion: 4,

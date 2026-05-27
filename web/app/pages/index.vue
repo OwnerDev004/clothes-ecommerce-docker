@@ -21,6 +21,17 @@ const {
   resolveVisualImage,
 } = useHomeProducts()
 
+useHead({
+  link: [
+    {
+      rel: 'preload',
+      as: 'image',
+      href: '/img/slide-1.webp',
+      fetchpriority: 'high',
+    },
+  ],
+})
+
 onMounted(() => {
   void loadInitialHomeData()
 })
@@ -139,14 +150,14 @@ const getBrandRoute = (id: number | string) => {
 
           <div class="relative flex justify-center lg:justify-end">
             <div class="absolute inset-0 rounded-[28px] bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.08),transparent_60%)]"></div>
-            <NuxtImg
-              src="/img/slide-1.png"
+            <img
+              src="/img/slide-1.webp"
               alt="Fashion Clothing"
-              format="webp"
-              sizes="sm:100vw md:520px lg:650px"
-              densities="x1"
-              preload
+              width="669"
+              height="663"
               loading="eager"
+              fetchpriority="high"
+              decoding="async"
               class="relative z-10 w-full max-w-[620px] object-contain"
             />
           </div>
