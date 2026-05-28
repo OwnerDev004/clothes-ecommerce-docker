@@ -1,105 +1,110 @@
-import { watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useAuthStore } from '~/stores/authStore'
+import { watch } from "vue";
+import { useRoute } from "vue-router";
+import { useAuthStore } from "~/stores/authStore";
 
-type BeamsSdk = typeof import('@pusher/push-notifications-web')
+type BeamsSdk = typeof import("@pusher/push-notifications-web");
 
 export default defineNuxtPlugin(() => {
   if (!import.meta.client) {
-    return
+    return;
   }
 
-  const config = useRuntimeConfig()
-  const route = useRoute()
-  const authStore = useAuthStore()
-  const apiBase = String(config.public.apiBase || '').replace(/\/$/, '')
-  const instanceId = String(config.public.beamsInstanceId || '').trim()
+  const config = useRuntimeConfig();
+  const route = useRoute();
+  const authStore = useAuthStore();
+  const apiBase = String(config.public.apiBase || "").replace(/\/$/, "");
+  const instanceId = String(config.public.beamsInstanceId || "").trim();
 
-  let beamsClient: import('@pusher/push-notifications-web').Client | null = null
-  let tokenProvider: import('@pusher/push-notifications-web').TokenProvider | null = null
-  let sdkPromise: Promise<BeamsSdk> | null = null
-  let registeredUserId: string | null = null
+  let beamsClient: import("@pusher/push-notifications-web").Client | null =
+    null;
+  let tokenProvider:
+    | import("@pusher/push-notifications-web").TokenProvider
+    | null = null;
+  let sdkPromise: Promise<BeamsSdk> | null = null;
+  let registeredUserId: string | null = null;
 
   const loadSdk = () => {
     if (!sdkPromise) {
-      sdkPromise = import('@pusher/push-notifications-web')
+      sdkPromise = import("@pusher/push-notifications-web");
     }
 
-    return sdkPromise
-  }
+    return sdkPromise;
+  };
 
   const ensureClient = async () => {
     if (!instanceId) {
-      return null
+      return null;
     }
-
     if (!beamsClient || !tokenProvider) {
-      const { Client, TokenProvider } = await loadSdk()
-      beamsClient = new Client({ instanceId })
+      return;
+    }
+    if (!beamsClient || !tokenProvider) {
+      const { Client, TokenProvider } = await loadSdk();
+      beamsClient = new Client({ instanceId });
       tokenProvider = new TokenProvider({
         url: `${apiBase}/beams/auth`,
-        credentials: 'include',
-      })
+        credentials: "include",
+      });
     }
 
-    return beamsClient
-  }
+    return beamsClient;
+  };
 
   const stopBeams = async () => {
     if (!beamsClient) {
-      registeredUserId = null
-      return
+      registeredUserId = null;
+      return;
     }
 
     try {
-      await beamsClient.stop()
+      await beamsClient.stop();
     } catch (error) {
       if (import.meta.dev) {
-        console.warn('Failed to stop Beams client', error)
+        console.warn("Failed to stop Beams client", error);
       }
     } finally {
-      registeredUserId = null
+      registeredUserId = null;
     }
-  }
+  };
 
   const syncBeams = async () => {
-    if (!instanceId || route.path.startsWith('/admin')) {
-      await stopBeams()
-      return
+    if (!instanceId || route.path.startsWith("/admin")) {
+      await stopBeams();
+      return;
     }
 
-    const userId = String(authStore.userProfile?.id || '').trim()
+    const userId = String(authStore.userProfile?.id || "").trim();
     if (!authStore.isAuthenticated || !authStore.accessToken || !userId) {
-      await stopBeams()
-      return
+      await stopBeams();
+      return;
     }
 
     if (registeredUserId === userId) {
-      return
+      return;
     }
 
-    const client = await ensureClient()
+    const client = await ensureClient();
     if (!client || !tokenProvider) {
-      return
+      return;
     }
 
     try {
-      await client.start()
+      await client.start();
 
-      const currentUserId = await client.getUserId().catch(() => '')
+      const currentUserId = await client.getUserId().catch(() => "");
       if (currentUserId && currentUserId !== userId) {
-        await client.stop()
-        await client.start()
+        await client.stop();
+        await client.start();
       }
 
-      await client.setUserId(userId, tokenProvider)
-      registeredUserId = userId
+      await client.setUserId(userId, tokenProvider);
+      registeredUserId = userId;
     } catch (error) {
       if (import.meta.dev) {
-        console.warn('Failed to initialize Pusher Beams', error)
+        console.warn("Failed to initialize Pusher Beams", error);
       }
     }
-  }
+  };
 
   watch(
     [
@@ -110,8 +115,8 @@ export default defineNuxtPlugin(() => {
       () => instanceId,
     ],
     () => {
-      void syncBeams()
+      void syncBeams();
     },
     { immediate: true },
-  )
-})
+  );
+});

@@ -29,7 +29,8 @@
                 <div class="item-name">{{ item.variant?.product?.name || 'Product' }}</div>
                 <div class="item-meta">Qty {{ item.quantity }}</div>
               </div>
-              <div class="item-price">{{ formatMoney(item.price ?? item.unit_price ?? item.sell_price ?? 0, defaultCurrencyCode) }}</div>
+              <div class="item-price">{{ formatMoney(item.price ?? item.unit_price ?? item.sell_price ?? 0,
+                defaultCurrencyCode) }}</div>
             </div>
           </div>
         </div>
@@ -63,6 +64,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '~/stores/authStore'
 import { useAppSetting } from '~/composables/useAppSetting'
 import { formatMoney } from '~/utils/currency'
+import LoadingPage from '~/components/shares/LoadingPage.vue'
 
 definePageMeta({
   middleware: []

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ProductCardSkeleton from './ProductCardSkeleton.vue';
+
 withDefaults(
     defineProps<{
         img?: string
@@ -26,17 +28,14 @@ withDefaults(
 <template>
     <ProductCardSkeleton v-if="loading" :bg-card="bgCard" />
 
-    <div v-else class="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4" :class="[bgCard]">
+    <div v-else
+        class="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4"
+        :class="[bgCard]">
         <section class="group cursor-pointer overflow-hidden rounded-2xl">
             <div class="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white/60">
-                <NuxtImg
-                    :src="img"
-                    format="webp"
-                    densities="x1 x2"
-                    sizes="(max-width: 575px) 100vw, (max-width: 992px) 50vw, 25vw"
+                <NuxtImg :src="img" format="webp" densities="x1 x2"
                     class="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-[1.03] sm:p-3"
-                    :alt="title || 'product image'"
-                />
+                    :alt="title || 'product image'" />
             </div>
         </section>
 
@@ -45,12 +44,8 @@ withDefaults(
                 {{ title }}
             </h2>
             <SharesRating :rating-amount="ratingAmount" />
-            <SharesDiscount
-                :discount-amount="discountAmount"
-                :price="price"
-                :discount-type="discountType"
-                :discountPercentage="'text-sm'"
-            />
+            <SharesDiscount :discount-amount="discountAmount" :price="price" :discount-type="discountType"
+                :discountPercentage="'text-sm'" />
         </div>
     </div>
 </template>
