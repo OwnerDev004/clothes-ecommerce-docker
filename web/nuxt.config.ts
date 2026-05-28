@@ -5,7 +5,11 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-04-03",
   app: {
     pageTransition: { name: "page", mode: "out-in" },
-    head: {},
+    head: {
+      htmlAttrs: {
+        lang: "en",
+      },
+    },
   },
   future: {
     compatibilityVersion: 4,
