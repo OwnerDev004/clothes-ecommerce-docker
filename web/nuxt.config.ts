@@ -18,6 +18,7 @@ export default defineNuxtConfig({
   experimental: {
     clientNodeCompat: false, // avoid legacy fallbacks
   },
+
   future: {
     compatibilityVersion: 4,
   },
@@ -174,18 +175,11 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_FACEBOOK_GRAPH_VERSION || "v19.0",
     },
   },
-  // piniaPluginPersistedstate: {
-  //   storage: 'cookies',
-  //   cookieOptions: {
-  //     path: '/',
-  //     sameSite: 'lax',
-  //     secure: isProduction,
-  //     maxAge: 60 * 60 * 24 * 30,
-  //   },
-  // },
-  // pinia: {
-  //   storesDirs: ["./stores/**", "./app/stores/**"],
-  // },
+  vite: {
+    build: {
+      cssCodeSplit: false, // combines all CSS into one file
+    },
+  },
 
   routeRules: {
     "/admin/**": { ssr: false },
