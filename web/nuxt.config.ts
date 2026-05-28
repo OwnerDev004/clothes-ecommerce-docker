@@ -11,6 +11,12 @@ export default defineNuxtConfig({
       },
     },
   },
+  build: {
+    transpile: [], // ensure no forced legacy transpilation
+  },
+  experimental: {
+    clientNodeCompat: false, // avoid legacy fallbacks
+  },
   future: {
     compatibilityVersion: 4,
   },
