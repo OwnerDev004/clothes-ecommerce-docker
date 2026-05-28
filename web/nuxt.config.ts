@@ -132,12 +132,13 @@ export default defineNuxtConfig({
   },
 
   googleFonts: {
-    display: "swap",
-    preconnect: true,
     families: {
       Poppins: true,
       Lato: true,
     },
+    display: "swap", //
+    download: true, // Download to local
+    preload: true,
   },
   runtimeConfig: {
     apiBaseInternal:
