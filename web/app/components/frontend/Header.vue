@@ -62,8 +62,8 @@
         <div class="flex items-center gap-3 sm:gap-4 desktop:gap-6 pl-2 sm:pl-4">
           <!-- Wishlist -->
           <NuxtLink to="/frontend/favorites" class="relative">
-            <Icon name="mdi:heart"
-              class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors" />
+            <Icon name="mdi:heart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors"
+              alt="Favorite" />
             <span v-if="favoriteCount > 0"
               class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
               {{ favoriteCount }}
@@ -72,7 +72,8 @@
 
           <!-- Cart -->
           <NuxtLink to="/frontend/cart" class="relative">
-            <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors" />
+            <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors"
+              alt="Cart" />
             <span v-if="cartCount > 0"
               class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
               {{ cartCount }}
@@ -82,7 +83,7 @@
           <div class="relative account-menu-root">
             <NuxtLink v-if="!isAuthenticated" to="/auth/login"
               class="group flex h-10 w-10 items-center justify-center rounded-full border border-transparent bg-gray-100 text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-gray-200 hover:bg-white hover:shadow-md">
-              <Icon name="mdi:user" class="text-xl transition-colors group-hover:text-black" />
+              <Icon name="mdi:user" class="text-xl transition-colors group-hover:text-black" alt="Profile" />
             </NuxtLink>
 
             <button v-else type="button"

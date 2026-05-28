@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   build: {
     transpile: [], // ensure no forced legacy transpilation
   },
+  // For Nuxt 3, it's modern by default, but check:
   experimental: {
     clientNodeCompat: false, // avoid legacy fallbacks
   },
