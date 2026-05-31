@@ -78,7 +78,8 @@
                 </div>
             </div>
 
-            <div class="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div
+                class="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-slate-500">
                     {{ siteName }} © {{ currentYear }}. All rights reserved.
                 </p>
@@ -118,7 +119,7 @@ const isLoading = ref(false)
 const email_sub_ref = ref<HTMLInputElement | null>(null)
 
 const siteName = computed(() => appSetting.value?.app_name || config.public.appName || 'Shop.co')
-const currentYear = new Date().getFullYear()
+const currentYear = ref('')
 
 const footerSections: FooterSection[] = [
     {
@@ -189,4 +190,7 @@ const subscribeNewsLetter = async () => {
         isLoading.value = false
     }
 }
+onMounted(() => {
+    currentYear.value = new Date().getFullYear().toString()
+})
 </script>

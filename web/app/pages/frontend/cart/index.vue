@@ -171,7 +171,7 @@
         <div class="flex flex-col">
           <p class="text-sm text-gray-600 text-center">Order #{{ currentOrderId || '-' }} | Poll hash: {{ pollHash ||
             '-'
-            }}
+          }}
           </p>
           <p class="text-sm text-gray-600 text-center">Status: <span class="font-semibold">{{ pollStatus }}</span></p>
           <p class="text-sm text-amber-600 text-center">Time left: {{ timeLeftLabel }}</p>
@@ -208,6 +208,7 @@ import { formatAnyDate } from '~/utils/date'
 import { watchDebounced } from '@vueuse/core'
 import { useAppSetting } from '~/composables/useAppSetting'
 import { formatMoney, normalizeCurrencyCode } from '~/utils/currency'
+import LoadingPage from '~/components/shares/LoadingPage.vue'
 type CartItem = {
   variant_id: number
   product_id: number
@@ -262,6 +263,9 @@ const autoCouponAttempted = ref(false)
 const autoCouponMessage = ref('')
 const autoCouponMessageType = ref<'success' | 'warning'>('warning')
 const isCouponComplete = ref(false)
+const timestamp = ref('')
+const userLocale = navigator.language || 'en-US'
+
 
 const shippingAddress = ref('')
 const shippingPhone = ref('')
@@ -879,8 +883,6 @@ const downloadQr = () => {
   }
   const appName = String(config.public.NUXT_PUBLIC_APP_NAME || 'Invoice').trim() || 'Invoice'
   const orderLabel = currentOrderId.value ? `order-${currentOrderId.value}` : 'order'
-  const userLocale = navigator.language || 'en-US'
-  const timestamp = formatAnyDate(new Date(), 'YYYY-MM-DD-HH-mm-ss', userLocale, 'timestamp')
   const filename = `${appName}-invoice-${orderLabel}-${timestamp}.png`
   toPng<any>(qrImage.value, { cacheBust: true })
     .then((dataUrl) => {
@@ -920,6 +922,7 @@ watch(
 )
 
 onMounted(() => {
+  timestamp.value = formatAnyDate(new Date(), 'YYYY-MM-DD-HH-mm-ss', userLocale, 'timestamp')
   fetchCart().then(() => autoApplySignupCoupon())
   void fetchAppSetting(true)
 })
