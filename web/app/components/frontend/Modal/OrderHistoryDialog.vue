@@ -46,20 +46,18 @@
                                     Payment: {{ order.payment_method || 'N/A' }}
                                 </p>
                             </div>
-                            <div class="flex items-center gap-2">
+
+                            <div class="grid auto-cols-auto gap-2">
                                 <el-tag size="small" :type="statusTagType(order.status)">
-                                    {{ order.status || 'unknown' }}
+                                    <span class="font-bold"> Order Status :</span> {{ order.status || 'unknown' }}
                                 </el-tag>
                                 <el-tag size="small"
                                     :type="paymentTagType(order.payment_status || order.payment_status)">
-                                    Payment: {{ order.payment_status || order.payment_status || 'unknown' }}
+                                    <span class="font-bold">Payment :</span> {{ order.payment_status ||
+                                        order.payment_status || 'unknown'
+                                    }}
                                 </el-tag>
-                                <el-tag size="small" :type="orderTagType(order.status)">
-                                    Shipping: {{ order.status || 'unknown' }}
-                                </el-tag>
-                                <span class="text-sm font-semibold text-gray-900">
-                                    {{ formatMoney(order.total_price, defaultCurrencyCode) }}
-                                </span>
+
                                 <el-button v-if="canRepay(order)" size="small" type="warning" plain
                                     :loading="repayingOrderId === order.id" @click="repayOrder(order)">
                                     Repay
@@ -74,11 +72,24 @@
                                     <p class="font-medium text-gray-800">
                                         {{ itemTitle(item) }}
                                     </p>
+                                    <p>
+                                        Shipping Fee:
+                                    </p>
+                                    <p>Total:</p>
                                     <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
                                 </div>
-                                <p class="font-medium text-gray-700">
-                                    {{ formatMoney(item.total_price, defaultCurrencyCode) }}
-                                </p>
+                                <div>
+                                    <p class="font-medium text-gray-700">
+                                        {{ formatMoney(item.total_price, defaultCurrencyCode) }}
+                                    </p>
+                                    <p>
+                                        {{ formatMoney(order?.shipping_fee, defaultCurrencyCode) }}
+                                    </p>
+                                    <p>
+                                        {{ formatMoney(order.total_price, defaultCurrencyCode) }}
+
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -128,6 +139,7 @@ type OrderRecord = {
     id: number | string
     payment_status?: string
     payment_provider?: string
+    shipping_fee?: number | string
     status?: string
     order_date?: string
     created_at?: string
