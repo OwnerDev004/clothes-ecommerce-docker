@@ -116,6 +116,7 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick, onMounted } from 'vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import BaseCard from '~/components/ui/BaseCard.vue'
@@ -147,6 +148,24 @@ const {
   deleteVoucher,
   submitForm,
 } = useAdminVoucher()
+
+const route = useRoute()
+const router = useRouter()
+
+const clearActionQuery = async () => {
+  const { action, ...query } = route.query
+  await router.replace({ path: route.path, query })
+}
+
+onMounted(async () => {
+  if (String(route.query.action || '') !== 'create') {
+    return
+  }
+
+  addVoucher()
+  await nextTick()
+  await clearActionQuery()
+})
 
 const formatDiscount = (voucher: AdminVoucherRecord) => {
   const value = voucher?.discount_value ?? 0

@@ -107,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick, onMounted } from 'vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import BaseCard from '~/components/ui/BaseCard.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
@@ -151,4 +152,22 @@ const {
     handleProductSubmit,
     deleteProduct,
 } = useAdminProducts()
+
+const route = useRoute()
+const router = useRouter()
+
+const clearActionQuery = async () => {
+    const { action, ...query } = route.query
+    await router.replace({ path: route.path, query })
+}
+
+onMounted(async () => {
+    if (String(route.query.action || '') !== 'create') {
+        return
+    }
+
+    addProduct()
+    await nextTick()
+    await clearActionQuery()
+})
 </script>

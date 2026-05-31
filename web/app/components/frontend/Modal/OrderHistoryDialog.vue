@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="dialogOpen" :close-on-click-modal="false" title="Order History"
+    <el-dialog v-model="dialogOpen" align-center :close-on-click-modal="false" title="Order History"
         class="order-history-dialog !w-full md:!w-[700px]" @closed="onDialogClosed">
         <div class="space-y-4">
 

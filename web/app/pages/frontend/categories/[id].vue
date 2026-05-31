@@ -201,7 +201,7 @@
         </section>
       </div>
 
-      <el-dialog v-model="isToggleFilter" title="Filters" width="auto" class="!rounded-t-3xl !-bottom-[100px] !pt-5">
+      <el-dialog v-model="isToggleFilter" title="Filters" width="auto" align-center class="!rounded-3xl !pt-5">
         <div>
           <section class="border-b border-b-gray py-2">
             <h1 class="text-lg font-bold font-Poppins">Categories</h1>

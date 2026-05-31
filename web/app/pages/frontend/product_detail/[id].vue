@@ -255,7 +255,7 @@ const tabClick = (tab: TabsPaneContext) => {
       <div class="border-b border-zinc-300 mt-10"></div>
     </section>
 
-    <el-dialog v-model="reviewFilterDialogOpen" title="Filter Reviews" width="420px">
+    <el-dialog v-model="reviewFilterDialogOpen" title="Filter Reviews" width="420px" align-center>
       <div class="space-y-4">
         <div>
           <p class="mb-2 text-sm font-semibold">Sort by</p>
@@ -289,7 +289,7 @@ const tabClick = (tab: TabsPaneContext) => {
       </template>
     </el-dialog>
 
-    <el-dialog v-model="writeReviewDialogOpen" title="Write a Review" width="520px">
+    <el-dialog v-model="writeReviewDialogOpen" title="Write a Review" width="520px" align-center>
       <div class="space-y-4">
         <div>
           <p class="mb-2 text-sm font-semibold">Rating</p>

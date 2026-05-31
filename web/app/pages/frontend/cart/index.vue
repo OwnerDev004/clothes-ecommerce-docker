@@ -131,7 +131,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="paymentDialogOpen" width="420px" :close-on-click-modal="false" title="Scan QR to Pay"
+    <el-dialog v-model="paymentDialogOpen" width="420px" align-center :close-on-click-modal="false" title="Scan QR to Pay"
       @closed="handlePaymentDialogClosed">
       <div class="space-y-4">
         <div class="grid place-items-center rounded-3xl bg-[#F5F5F5] p-5">

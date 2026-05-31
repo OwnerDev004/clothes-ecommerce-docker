@@ -23,7 +23,9 @@
                 <button class="text-red text-sm" @click="removeFavorite(item)">Remove</button>
               </div>
               <div class="mt-3 flex items-center justify-between">
-                <span class="text-lg font-semibold">${{ Number(item.price).toFixed(2) }}</span>
+                <span class="text-lg font-semibold">
+                  {{ formatMoney(resolvePrice(Number(item.price || 0)), defaultCurrencyCode) }}
+                </span>
                 <button class="bg-black rounded-3xl text-white px-4 py-2 text-sm" @click="addSingleToCart(item)">
                   Add to Cart
                 </button>
@@ -55,12 +57,25 @@
 
 <script setup lang="ts">
 import { ArrowRight } from '@element-plus/icons-vue'
+import { computed } from 'vue'
 import BaseBreadcrumb from '~/components/ui/BaseBreadcrumb.vue'
 import { storeToRefs } from 'pinia'
 import { useFavoritesStore } from '~/stores/favoritesStore'
+import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currency'
 
 const favoritesStore = useFavoritesStore()
 const { items, totalItems, isEmpty } = storeToRefs(favoritesStore)
+const { appSetting, defaultCurrencyCode, convertAmount } = useAppSetting()
+
+const baseCurrencyCode = computed(() =>
+  normalizeCurrencyCode(
+    appSetting.value.base_currency_code || defaultCurrencyCode.value,
+  ),
+)
+
+const resolvePrice = (value: number) =>
+  convertAmount(value, baseCurrencyCode.value, defaultCurrencyCode.value)
 
 const removeFavorite = (item: any) => {
   favoritesStore.removeFavorite(item.id, item.size, item.color)

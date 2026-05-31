@@ -15,7 +15,9 @@
 import { useAppSetting } from '~/composables/useAppSetting';
 
 const config = useRuntimeConfig();
-const { appSetting } = useAppSetting();
+const { appSetting, fetchAppSetting } = useAppSetting();
+
+await useAsyncData('app-setting', () => fetchAppSetting(true));
 
 watchEffect(() => {
     useHead({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useAppSetting } from '~/composables/useAppSetting'
-import { formatMoney } from '~/utils/currency'
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currency'
 
 type ProductImage = {
   image_url?: string | null
@@ -47,7 +47,13 @@ const props = withDefaults(
   },
 )
 
-const { defaultCurrencyCode, fetchAppSetting } = useAppSetting()
+const { appSetting, defaultCurrencyCode, convertAmount, fetchAppSetting } = useAppSetting()
+
+const baseCurrencyCode = computed(() =>
+  normalizeCurrencyCode(
+    appSetting.value.base_currency_code || defaultCurrencyCode.value,
+  ),
+)
 
 const resolvedProduct = computed<ProductDetail | null>(() => {
   const value = props.product
@@ -78,8 +84,21 @@ const variants = computed(() => resolvedProduct.value?.variants || [])
 const displayPrice = computed(() => {
   const firstVariant = variants.value[0]
   const variantPrice = Number(firstVariant?.sell_price || 0)
-  return variantPrice > 0 ? variantPrice : Number(resolvedProduct.value?.price || 0)
+  const rawPrice =
+    variantPrice > 0 ? variantPrice : Number(resolvedProduct.value?.price || 0)
+
+  return convertAmount(
+    rawPrice,
+    baseCurrencyCode.value,
+    defaultCurrencyCode.value,
+  )
 })
+
+const formatBaseMoney = (value: unknown) =>
+  formatMoney(
+    convertAmount(value, baseCurrencyCode.value, defaultCurrencyCode.value),
+    defaultCurrencyCode.value,
+  )
 
 const stockQuantity = computed(() => {
   return variants.value.reduce((sum, variant) => sum + Number(variant.stock_quantity || 0), 0)
@@ -222,11 +241,15 @@ onMounted(() => {
               </div>
               <div>
                 <span class="block">Sale</span>
-                <strong class="text-slate-900">{{ variant.sell_price ?? '-' }}</strong>
+                <strong class="text-slate-900">
+                  {{ variant.sell_price != null ? formatBaseMoney(variant.sell_price) : '-' }}
+                </strong>
               </div>
               <div>
                 <span class="block">Cost</span>
-                <strong class="text-slate-900">{{ variant.cost_price ?? '-' }}</strong>
+                <strong class="text-slate-900">
+                  {{ variant.cost_price != null ? formatBaseMoney(variant.cost_price) : '-' }}
+                </strong>
               </div>
             </div>
           </article>

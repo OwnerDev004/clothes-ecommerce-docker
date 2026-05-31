@@ -68,7 +68,7 @@
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label class="mb-2 block text-sm font-medium text-slate-700">Default Currency Code</label>
-                  <el-select v-model="form.default_currency_code" :disabled="true" class="w-full" placeholder="USD">
+                  <el-select v-model="form.default_currency_code" class="w-full" placeholder="USD">
                     <el-option label="USD" value="USD" />
                     <el-option label="KHR" value="KHR" />
                   </el-select>

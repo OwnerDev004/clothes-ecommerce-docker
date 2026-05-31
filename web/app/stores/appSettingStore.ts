@@ -64,6 +64,7 @@ export const useAppSettingStore = defineStore(
         ? setting.shipping_rates.map(normalizeShippingRate)
         : settings.value.shipping_rates;
       settings.value.base_currency_code =
+        setting.base_currency_code ??
         setting.default_currency_code ??
         setting.currency_code ??
         settings.value.base_currency_code;

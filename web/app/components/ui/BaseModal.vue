@@ -34,7 +34,7 @@ const closeModal = () => {
 </script>
 
 <template>
-    <el-dialog v-model="model" class="admin-modal size-fit" v-bind="$attrs" :title="title" :width="width"
+    <el-dialog v-model="model" class="admin-modal size-fit" v-bind="$attrs" align-center :title="title" :width="width"
         :close-on-click-modal="closeOnClickModal" :close-on-press-escape="closeOnPressEscape"
         :destroy-on-close="destroyOnClose">
         <div :class="bodyClass">

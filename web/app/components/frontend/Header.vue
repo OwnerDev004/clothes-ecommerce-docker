@@ -64,7 +64,7 @@
           <NuxtLink to="/frontend/favorites" class="relative">
             <Icon name="mdi:heart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-red-500 transition-colors"
               alt="Favorite" />
-            <span v-if="favoriteCount > 0"
+            <span v-show="favoriteCount > 0"
               class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
               {{ favoriteCount }}
             </span>
@@ -72,12 +72,14 @@
 
           <!-- Cart -->
           <NuxtLink to="/frontend/cart" class="relative">
-            <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors"
-              alt="Cart" />
-            <span v-if="cartCount > 0"
-              class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
-              {{ cartCount }}
-            </span>
+            <ClientOnly>
+              <Icon name="mdi:cart" class="text-xl sm:text-[25px] desktop:text-2xl hover:text-black transition-colors"
+                alt="Cart" />
+              <span v-show="cartCount > 0"
+                class="absolute -top-2 -right-2 bg-red-500 text-black text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                {{ cartCount }}
+              </span>
+            </ClientOnly>
           </NuxtLink>
           <!-- Account -->
           <div class="relative account-menu-root">

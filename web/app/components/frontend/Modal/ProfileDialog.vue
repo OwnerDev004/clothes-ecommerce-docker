@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="dialogOpen" :close-on-click-modal="false" title="Edit Profile" class="profile-dialog  !w-fit"
+    <el-dialog v-model="dialogOpen" :close-on-click-modal="false" title="Edit Profile" class="profile-dialog  !w-fit" align-center
         @closed="onProfileDialogClosed">
         <div class="space-y-4">
             <el-alert title="Username and password updates are not available in the current API yet." type="info"

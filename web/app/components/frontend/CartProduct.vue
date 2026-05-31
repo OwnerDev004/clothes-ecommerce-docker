@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useAppSetting } from '~/composables/useAppSetting'
+import { formatMoney, normalizeCurrencyCode } from '~/utils/currency'
 
 const props = defineProps({
   variantId: {
@@ -31,6 +33,22 @@ const props = defineProps({
     default: ''
   }
 })
+
+const { appSetting, defaultCurrencyCode, convertAmount } = useAppSetting()
+
+const baseCurrencyCode = computed(() =>
+  normalizeCurrencyCode(
+    appSetting.value.base_currency_code || defaultCurrencyCode.value,
+  ),
+)
+
+const displayPrice = computed(() =>
+  convertAmount(
+    props.price,
+    baseCurrencyCode.value,
+    defaultCurrencyCode.value,
+  ),
+)
 const qtyAmount = ref(1);
 
 // increment
@@ -87,7 +105,9 @@ watch(() => props.quantity, (value) => {
           <Icon name="ep:delete-filled" class="text-red ml-auto cursor-pointer " @click="removeProduct" />
         </div>
         <div class="flex justify-between mt-12">
-          <h3 class="text-xl font-semibold">${{ price.toFixed(2) }}</h3>
+          <h3 class="text-xl font-semibold">
+            {{ formatMoney(displayPrice, defaultCurrencyCode) }}
+          </h3>
 
           <div class="flex gap-3 items-center border rounded-2xl">
             <button

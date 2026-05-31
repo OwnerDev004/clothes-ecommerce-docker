@@ -63,11 +63,19 @@ const statusType = (status: string) => {
 }
 
 const quickActions = [
-  { label: 'Add product', icon: Goods },
-  { label: 'Create category', icon: Histogram },
-  { label: 'Review orders', icon: ShoppingCart },
-  { label: 'Launch promo', icon: Tickets },
+  { label: 'Add product', icon: Goods, direction: { path: '/admin/products', query: { action: 'create' } } },
+  { label: 'Create category', icon: Histogram, direction: { path: '/admin/categories', query: { action: 'create' } } },
+  { label: 'Review orders', icon: ShoppingCart, direction: '/admin/orders' },
+  { label: 'Launch promo', icon: Tickets, direction: { path: '/admin/promotions', query: { action: 'create' } } },
 ]
+
+const fastAction = async (direction?: string | Record<string, any>) => {
+  if (!direction) {
+    return
+  }
+
+  await navigateTo(direction)
+}
 
 const statCards = computed(() => [
   {
@@ -129,7 +137,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">This week revenue</span>
           <strong class="mt-1 block text-lg text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-            }}</strong>
+          }}</strong>
         </div>
         <div class="rounded-[20px] border border-slate-200 bg-white/75 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <span class="block text-sm text-slate-500">Customers</span>
@@ -189,7 +197,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
             <div class="text-right">
               <span class="block text-sm text-slate-500">Sales velocity</span>
               <strong class="text-[1.15rem] text-slate-950">{{ formatMoney(dashboardState.stats.revenue_this_week)
-                }}</strong>
+              }}</strong>
             </div>
           </div>
 
@@ -240,6 +248,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
 
           <div class="grid gap-2">
             <button v-for="action in quickActions" :key="action.label" type="button"
+              @click="fastAction(action.direction)"
               class="flex w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-4 py-3 text-left text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
               <el-icon class="text-base text-indigo-700">
                 <component :is="action.icon" />
