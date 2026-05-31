@@ -1,51 +1,55 @@
 <script setup lang="ts">
-import ProductCardSkeleton from './ProductCardSkeleton.vue';
+import { computed } from 'vue'
+import ProductCardSkeleton from './ProductCardSkeleton.vue'
 
-withDefaults(
-    defineProps<{
-        img?: string
-        title?: string
-        price?: number
-        discountType?: number
-        discountAmount?: number
-        starsNum?: number
-        ratingAmount?: number
-        bgCard?: string
-        loading?: boolean
-    }>(),
-    {
-        img: '',
-        title: '',
-        price: 0,
-        discountAmount: 0,
-        starsNum: 0,
-        ratingAmount: 0,
-        bgCard: 'bg-surface',
-        loading: false,
-    },
+const props = withDefaults(
+  defineProps<{
+    img?: string
+    title?: string
+    price?: number
+    discountType?: number
+    discountAmount?: number
+    starsNum?: number
+    ratingAmount?: number
+    bgCard?: string
+    loading?: boolean
+  }>(),
+  {
+    img: '',
+    title: '',
+    price: 0,
+    discountAmount: 0,
+    starsNum: 0,
+    ratingAmount: 0,
+    bgCard: 'bg-surface',
+    loading: false,
+  },
 )
+
+const resolvedImg = computed(() => props.img || '/img/products/default_image.webp')
 </script>
+
 <template>
-    <ProductCardSkeleton v-if="loading" :bg-card="bgCard" />
+  <ProductCardSkeleton v-if="loading" :bg-card="bgCard" />
 
-    <div v-else
-        class="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4"
-        :class="[bgCard]">
-        <section class="group cursor-pointer overflow-hidden rounded-2xl">
-            <div class="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white/60">
-                <NuxtImg :src="img" format="webp" densities="x1 x2"
-                    class="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-[1.03] sm:p-3"
-                    :alt="title || 'product image'" />
-            </div>
-        </section>
+  <div v-else
+    class="flex h-full flex-col rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4"
+    :class="[bgCard]">
+    <section class="group cursor-pointer overflow-hidden rounded-2xl">
+      <div class="aspect-[4/5] w-full overflow-hidden rounded-xl bg-white/60">
+        <img :src="resolvedImg"
+          class="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-[1.03] sm:p-3"
+          :alt="title || 'product image'" loading="lazy" decoding="async" />
+      </div>
+    </section>
 
-        <div class="mt-3 flex flex-1 flex-col gap-2">
-            <h2 class="line-clamp-2 text-sm font-semibold leading-5 text-text sm:text-base lg:text-lg">
-                {{ title }}
-            </h2>
-            <SharesRating :rating-amount="ratingAmount" />
-            <SharesDiscount :discount-amount="discountAmount" :price="price" :discount-type="discountType"
-                :discountPercentage="'text-sm'" />
-        </div>
+    <div class="mt-3 flex flex-1 flex-col gap-2">
+      <h2 class="line-clamp-2 text-sm font-semibold leading-5 text-text sm:text-base lg:text-lg">
+        {{ title }}
+      </h2>
+      <SharesRating :rating-amount="ratingAmount" />
+      <SharesDiscount :discount-amount="discountAmount" :price="price" :discount-type="discountType"
+        :discountPercentage="'text-sm'" />
     </div>
+  </div>
 </template>

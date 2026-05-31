@@ -1,25 +1,32 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps({
-    ratingAmount: {
-        type: Number,
-        default: 0
-    }
-});
+  ratingAmount: {
+    type: Number,
+    default: 0,
+  },
+})
 
-// Create a computed property that uses the prop
-const ratingValue = computed({
-    get: () => props.ratingAmount,
-    set: (value) => {
-        // Emit event if you want to allow changes from parent
-        // emit('update:ratingAmount', value);
-    }
-});
+const stars = computed(() => {
+  const normalized = Number.isFinite(props.ratingAmount) ? props.ratingAmount : 0
+  return Array.from({ length: 5 }, (_, index) => index < Math.round(normalized))
+})
 </script>
 
 <template>
-    <div class="flex gap-1">
-        <el-rate v-model="ratingValue" disabled text-color="#ff9900" score-template="{value} points" />
-    </div>
+  <div class="flex items-center gap-1" :aria-label="`Rating ${ratingAmount} out of 5`">
+    <span
+      v-for="(filled, index) in stars"
+      :key="index"
+      class="text-sm leading-none"
+      :class="filled ? 'text-amber-400' : 'text-slate-300'"
+      aria-hidden="true"
+    >
+      ★
+    </span>
+    <span class="ml-1 text-xs text-slate-500">
+      {{ Number.isFinite(ratingAmount) ? ratingAmount.toFixed(1) : '0.0' }}
+    </span>
+  </div>
 </template>
