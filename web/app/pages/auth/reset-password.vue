@@ -2,7 +2,7 @@
     <div class="bg-surface-2 box-border flex items-center justify-center h-screen">
         <div class="grid grid-cols-1 lg:grid-cols-3  w-[100vw] h-[100vh]">
             <section class="bg-primary hidden lg:flex justify-center items-center">
-                <NuxtImg src="/img/auth/graphic1.svg" alt="Login graphic" format="webp" loading="lazy" />
+                <img src="/img/auth/graphic1.svg" alt="Login graphic" format="webp" densities="x1" loading="lazy" />
             </section>
             <section class=" flex justify-center items-center col-span-2 ">
                 <div class="w-[80vw] lg:w-[25vw] bg-surface p-6 rounded-element  space-y-6">
