@@ -2,8 +2,8 @@
 
 namespace App\Services\Api\V1\Image;
 
+use App\Contracts\ImageStorageInterface;
 use App\Models\Product;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\DB;
 
 class ImageService
@@ -11,10 +11,13 @@ class ImageService
     private const THUMBNAIL_FOLDER = '/clothes_ecommerce/products/thumbnail';
     private const GALLERY_FOLDER = '/clothes_ecommerce/products/gallery';
 
+    public function __construct(private readonly ImageStorageInterface $imageStorage)
+    {
+    }
+
     public function uploadImage($file, $folder = 'clothes_ecommerce')
     {
-        $upload = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-            'folder' => $folder,
+        $upload = $this->imageStorage->upload($file, $folder, [
             'transformation' => [
                 'quality' => 'auto',
                 'fetch_format' => 'auto'
@@ -22,23 +25,14 @@ class ImageService
         ]);
 
         return [
-            'url' => $upload['secure_url'] ?? null,
-            'public_id' => $upload['public_id'] ?? null,
+            'url' => $upload->url,
+            'public_id' => $upload->publicId,
         ];
     }
 
     public function deleteImage(string $publicId): bool
     {
-        try {
-            $result = Cloudinary::uploadApi()->destroy($publicId, [
-                'resource_type' => 'image',
-                'type' => 'upload',
-            ]);
-
-            return in_array($result['result'] ?? null, ['ok', 'not found'], true);
-        } catch (\Throwable $e) {
-            return false;
-        }
+        return $this->imageStorage->delete($publicId);
     }
 
     public function syncProductImages(
@@ -68,7 +62,7 @@ class ImageService
         if ($clearImages) {
             $publicIdsToDelete = $currentImages
                 ->map(function ($image) {
-                    return $image->cloudinary_public_id ?: $this->extractPublicIdFromUrl($image->image_url);
+                    return $image->cloudinary_public_id ?: $this->imageStorage->extractPublicIdFromUrl($image->image_url);
                 })
                 ->filter()
                 ->values()
@@ -90,7 +84,7 @@ class ImageService
 
             $publicIdsToDelete = $imagesToDelete
                 ->map(function ($image) {
-                    return $image->cloudinary_public_id ?: $this->extractPublicIdFromUrl($image->image_url);
+                    return $image->cloudinary_public_id ?: $this->imageStorage->extractPublicIdFromUrl($image->image_url);
                 })
                 ->filter()
                 ->values()
@@ -124,7 +118,7 @@ class ImageService
         } elseif ($hasNewImagesPayload) {
             $publicIdsToDelete = $currentImages
                 ->map(function ($image) {
-                    return $image->cloudinary_public_id ?: $this->extractPublicIdFromUrl($image->image_url);
+                    return $image->cloudinary_public_id ?: $this->imageStorage->extractPublicIdFromUrl($image->image_url);
                 })
                 ->filter()
                 ->values()
@@ -160,42 +154,4 @@ class ImageService
         return $imageType === 'thumbnail' ? self::THUMBNAIL_FOLDER : self::GALLERY_FOLDER;
     }
 
-    private function extractPublicIdFromUrl(?string $url): ?string
-    {
-        if (empty($url)) {
-            return null;
-        }
-
-        $path = parse_url($url, PHP_URL_PATH);
-        if (!is_string($path) || strpos($path, '/upload/') === false) {
-            return null;
-        }
-
-        $afterUpload = substr($path, strpos($path, '/upload/') + 8);
-        $parts = array_values(array_filter(explode('/', ltrim($afterUpload, '/'))));
-        if (empty($parts)) {
-            return null;
-        }
-
-        $versionIndex = null;
-        foreach ($parts as $index => $part) {
-            if (preg_match('/^v\d+$/', $part)) {
-                $versionIndex = $index;
-                break;
-            }
-        }
-
-        if ($versionIndex !== null) {
-            $parts = array_slice($parts, $versionIndex + 1);
-        }
-
-        if (empty($parts)) {
-            return null;
-        }
-
-        $publicIdWithExtension = implode('/', $parts);
-        $publicId = preg_replace('/\.[^.\/]+$/', '', $publicIdWithExtension);
-
-        return is_string($publicId) && $publicId !== '' ? urldecode($publicId) : null;
-    }
 }

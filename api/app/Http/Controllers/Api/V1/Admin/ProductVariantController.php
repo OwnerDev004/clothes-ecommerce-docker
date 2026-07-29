@@ -56,6 +56,7 @@ class ProductVariantController extends Controller
                     new OA\Property(property: 'product_id', type: 'integer'),
                     new OA\Property(property: 'sku', type: 'string', maxLength: 255, nullable: true),
                     new OA\Property(property: 'color', type: 'string', maxLength: 64, nullable: true),
+                    new OA\Property(property: 'color_name', type: 'string', maxLength: 64),
                     new OA\Property(property: 'size_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'stock_quantity', type: 'integer', minimum: 0, nullable: true),
                     new OA\Property(property: 'sell_price', type: 'number', format: 'float', minimum: 0),
@@ -118,6 +119,7 @@ class ProductVariantController extends Controller
                     new OA\Property(property: 'product_id', type: 'integer'),
                     new OA\Property(property: 'sku', type: 'string', maxLength: 255, nullable: true),
                     new OA\Property(property: 'color', type: 'string', maxLength: 64, nullable: true),
+                    new OA\Property(property: 'color_name', type: 'string', maxLength: 64, nullable: true),
                     new OA\Property(property: 'size_id', type: 'integer', nullable: true),
                     new OA\Property(property: 'stock_quantity', type: 'integer', minimum: 0, nullable: true),
                     new OA\Property(property: 'sell_price', type: 'number', format: 'float', minimum: 0),
@@ -132,6 +134,7 @@ class ProductVariantController extends Controller
     )]
     public function update(ProductVariantUpdateRequest $request, $id)
     {
+        \Log::info($request->validated());
         $payload = $request->validated();
         $productVariant = $this->productVariantRepository->updateVariant($id, $payload);
         return $this->success("Updated Product Variant Success", $productVariant, 200);

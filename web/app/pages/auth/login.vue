@@ -9,13 +9,15 @@
                     <header>
                         <p class="text-xl font-semibold">Sign In to Your Account</p>
                     </header>
-                    <el-form label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off">
-                        <el-form-item label="Username" prop="userName">
-                            <BaseInput placeholder="Your username" type="text" :prefix-icon="User" v-model="userName" />
+                    <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-position="top"
+                        class="w-full grid grid-cols-1 items-center" autocomplete="off" @submit.prevent="submitLogin">
+                        <el-form-item label="Username" prop="user_name">
+                            <BaseInput placeholder="Your username" type="text" :prefix-icon="User"
+                                v-model="loginForm.user_name" />
                         </el-form-item>
                         <el-form-item label="Password" prop="password">
                             <BaseInput placeholder="Your Password" type="password" :prefix-icon="Key"
-                                v-model="password" />
+                                v-model="loginForm.password" show-password />
                         </el-form-item>
                     </el-form>
                     <div v-if="errorMessage" class="text-danger text-xs grid place-items-center">{{ errorMessage }}
@@ -27,7 +29,7 @@
                                 Forgot password?
                             </NuxtLink>
                         </BaseButton>
-                        <BaseButton type="primary" class="w-[300px]" @click="submitLogin">
+                        <BaseButton type="primary" class="w-[300px]" :loading="loading" @click="submitLogin">
                             Sign In
                         </BaseButton>
 
@@ -72,6 +74,7 @@ import { User, Key } from '@element-plus/icons-vue'
 import CompleteOAuthDialog from '~/components/frontend/Modal/CompleteOAuthDialog.vue'
 import CompleteTelegramDialong from '~/components/frontend/Modal/CompleteTelegramDialong.vue';
 import { useAuthStore } from '~/stores/authStore'
+import type { FormInstance, FormRules } from 'element-plus'
 
 declare global {
     interface Window {
@@ -101,8 +104,18 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-const userName = ref('')
-const password = ref('')
+const loginFormRef = ref<FormInstance>()
+const loginForm = reactive({
+    user_name: '',
+    password: '',
+})
+const loginRules: FormRules<typeof loginForm> = {
+    user_name: [{ required: true, message: 'Username is required', trigger: 'blur' }],
+    password: [
+        { required: true, message: 'Password is required', trigger: 'blur' },
+        { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' },
+    ],
+}
 const loading = ref(false)
 const errorMessage = ref('')
 const oAuthCompleteDialogOpen = ref(false)
@@ -126,8 +139,8 @@ const shouldTelegramAuthCompleteProfile = (profile: any) => {
 
 const submitLogin = async () => {
     errorMessage.value = ''
-    if (!userName.value || !password.value) {
-        errorMessage.value = 'Username and password are required'
+    const valid = await loginFormRef.value?.validate().catch(() => false)
+    if (!valid) {
         return
     }
     loading.value = true
@@ -137,8 +150,8 @@ const submitLogin = async () => {
             method: 'POST',
             credentials: 'include',
             body: {
-                user_name: userName.value,
-                password: password.value
+                user_name: loginForm.user_name.trim(),
+                password: loginForm.password
             }
         })
         applyAuthFromResponse(response)

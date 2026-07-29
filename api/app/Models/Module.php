@@ -2,25 +2,15 @@
 
 namespace App\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Model;
 
 class Module extends Model
 {
-    use Sluggable;
+    use HasSlug;
     protected $fillable = [
         'name',
         'slug'
     ];
-
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name',
-                'onUpdate' => true,
-            ],
-        ];
-    }
 
 }

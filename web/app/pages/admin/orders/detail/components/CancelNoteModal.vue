@@ -29,7 +29,7 @@
             </el-form>
             <template #footer>
                 <div class="flex justify-end gap-3 px-6 pb-6 pt-0">
-                    <BaseButton @click="closeModal">Cancel</BaseButton>
+                <BaseButton @click="closeModal">Cancel</BaseButton>
                     <BaseButton type="primary" :loading="loading" @click="submitForm">
                         Cancel Order
                     </BaseButton>

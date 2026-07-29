@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Model;
 
 class Collection extends Model
 {
-    use Sluggable;
+    use HasSlug;
 
     protected $fillable = [
         'category_id',
@@ -20,16 +20,6 @@ class Collection extends Model
         'image_url',
         'image_public_id',
     ];
-
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name',
-                'onUpdate' => true,
-            ],
-        ];
-    }
 
     public function products()
     {

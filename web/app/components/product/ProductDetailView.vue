@@ -17,6 +17,7 @@ type ProductVariant = {
   id?: number | string
   sku?: string | null
   color?: string | null
+  color_name?: string | null
   size?: ProductSize | null
   stock_quantity?: number | string | null
   sell_price?: number | string | null
@@ -106,7 +107,7 @@ const stockQuantity = computed(() => {
 
 const colorOptions = computed(() => {
   return variants.value
-    .map((variant) => String(variant.color || '').trim())
+    .map((variant) => String(variant.color_name || variant.color || '').trim())
     .filter(Boolean)
     .filter((value, index, array) => array.indexOf(value) === index)
 })
@@ -229,7 +230,7 @@ onMounted(() => {
               <div>
                 <strong class="block text-sm text-slate-950">{{ variant.sku || 'Variant' }}</strong>
                 <p class="mt-1 text-xs text-slate-500">
-                  {{ variant.size?.name || 'No size' }}
+                  {{ variant.color_name || 'Unknown color' }} · {{ variant.size?.name || 'No size' }}
                 </p>
               </div>
               <span class="h-5 w-5 rounded-full border border-slate-300" :style="{ backgroundColor: variant.color || '#e2e8f0' }"></span>

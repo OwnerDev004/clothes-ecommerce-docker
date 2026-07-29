@@ -1,0 +1,64 @@
+{
+    "packages": [
+        {
+            "name": "pisethchhun/bakong-khqr-php",
+            "version": "v1.0.4",
+            "version_normalized": "1.0.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Yeezuu-web/bakong-khqr-php.git",
+                "reference": "7386af619e6252c3a5c76ef83698f4669237645b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Yeezuu-web/bakong-khqr-php/zipball/7386af619e6252c3a5c76ef83698f4669237645b",
+                "reference": "7386af619e6252c3a5c76ef83698f4669237645b",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.8",
+                "pestphp/pest-plugin-drift": "^3.0",
+                "phpstan/phpstan": "^1.10",
+                "squizlabs/php_codesniffer": "^3.7"
+            },
+            "time": "2025-06-05T03:07:33+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Piseth\\BakongKhqr\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Piseth",
+                    "email": "chhunpiseth.mail@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "PHP package for generating and parsing Bakong KHQR (Cambodian QR payment) codes",
+            "keywords": [
+                "bakong",
+                "cambodia",
+                "khqr",
+                "payment",
+                "php",
+                "qr-code"
+            ],
+            "support": {
+                "issues": "https://github.com/Yeezuu-web/bakong-khqr-php/issues",
+                "source": "https://github.com/Yeezuu-web/bakong-khqr-php/tree/v1.0.4"
+            },
+            "install-path": "../pisethchhun/bakong-khqr-php"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

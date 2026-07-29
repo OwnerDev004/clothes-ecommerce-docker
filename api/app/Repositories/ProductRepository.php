@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Product;
+use App\Models\SubCategory;
 use App\Repositories\BaseRepository;
 use DB;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -21,6 +22,7 @@ class ProductRepository extends BaseRepository
 
     public function getAll(array $filters = []): LengthAwarePaginator
     {
+
         $normalized = array_filter($filters, function ($value) {
             return $value !== null && $value !== '';
         });
@@ -42,6 +44,7 @@ class ProductRepository extends BaseRepository
             $size = $filters['size'] ?? null;
             $brand = $filters['brand'] ?? null;
             $collection = $filters['collection'] ?? ($filters['dress_style'] ?? null);
+            $newArrivals = !empty($filters['new_arrivals']);
             $sortBy = trim((string) ($filters['sort_by'] ?? 'latest'));
 
             $query = $this->model->newQuery()->select('products.*')->with([
@@ -114,13 +117,14 @@ class ProductRepository extends BaseRepository
                     $query->where('products.sub_category_id', (int) $subCategory);
                 } else {
                     $query->whereExists(function (Builder $sub) use ($subCategory) {
-                        $sub->selectRaw('1')
+                        $test = $sub->selectRaw('1')
                             ->from('sub_categories')
                             ->whereColumn('sub_categories.id', 'products.sub_category_id')
                             ->where('sub_categories.slug', $subCategory);
                     });
                 }
             }
+
 
             if (!is_null($brand) && $brand !== '') {
                 if (is_numeric($brand)) {
@@ -143,7 +147,7 @@ class ProductRepository extends BaseRepository
                     $sub->selectRaw('1')
                         ->from('product_variants')
                         ->whereColumn('product_variants.product_id', 'products.id')
-                        ->where('product_variants.color', 'like', '%' . $color . '%');
+                        ->where('product_variants.color_name', 'like', '%' . $color . '%');
                 });
             }
 
@@ -175,6 +179,10 @@ class ProductRepository extends BaseRepository
                 $query->where('products.price', '<=', (float) $priceMax);
             }
 
+            if ($newArrivals) {
+                $query->where('products.created_at', '>=', now()->subDays(30));
+            }
+
             match ($sortBy) {
                 'oldest' => $query->orderBy('products.id'),
                 'price_low' => $query->orderBy('products.price'),
@@ -191,8 +199,10 @@ class ProductRepository extends BaseRepository
             if ($perPage > 50) {
                 $perPage = 50;
             }
-
-            return $query->orderByDesc('products.id')->paginate($perPage);
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+            \Log::info('Product query SQL', ['sql' => $sql, 'bindings' => $bindings]);
+            return $query->paginate($perPage);
         };
 
         if (!$shouldCache) {
@@ -213,6 +223,13 @@ class ProductRepository extends BaseRepository
 
         Cache::put($cacheKey, $result, self::PUBLIC_LIST_TTL_SECONDS);
         return $result;
+    }
+
+    // filter product by AI service
+    public function filterProductByAI($filters = []): LengthAwarePaginator
+    {
+        // AI and the normal catalog must share exactly the same filter semantics.
+        return $this->getAll(array_merge(['per_page' => 12], $filters));
     }
 
     public static function bumpPublicListCacheVersion(): void
@@ -248,7 +265,7 @@ class ProductRepository extends BaseRepository
                         ->orderBy('sort_order');
                 },
                 'variants' => function ($q) {
-                    $q->select('id', 'product_id', 'color', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
+                    $q->select('id', 'product_id', 'color', 'color_label', 'color_name', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
                         ->with([
                             'size:id,name,sort_order',
                         ]);

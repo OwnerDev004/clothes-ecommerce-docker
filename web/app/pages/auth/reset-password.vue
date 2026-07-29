@@ -9,16 +9,17 @@
                     <header>
                         <p class="text-xl font-semibold">Set new password</p>
                     </header>
-                    <el-form label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off">
+                    <el-form ref="resetFormRef" :model="form" :rules="resetRules" label-position="top"
+                        class="w-full grid grid-cols-1 items-center" autocomplete="off" @submit.prevent="submitForm">
                         <input type="hidden" v-model="form.token" />
                         <input type="hidden" v-model="form.email" />
-                        <el-form-item label="New Password" prop="new_password">
+                        <el-form-item label="New Password" prop="password">
                             <BaseInput placeholder="Enter New Password" type="password" :prefix-icon="Key"
-                                v-model="form.password" />
+                                v-model="form.password" show-password />
                         </el-form-item>
-                        <el-form-item label="Password" prop="password">
+                        <el-form-item label="Confirm Password" prop="password_confirmation">
                             <BaseInput placeholder="Confirm Password" type="password" :prefix-icon="Key"
-                                v-model="form.password_confirmation" />
+                                v-model="form.password_confirmation" show-password />
                         </el-form-item>
                     </el-form>
                     <div v-if="errors.password" class="text-red-500 text-xs mt-1">
@@ -31,8 +32,8 @@
                                 Back to login
                             </NuxtLink>
                         </BaseButton>
-                        <BaseButton type="primary" class="w-[300px]" @click="submitForm">
-                            Reset Paswword
+                        <BaseButton type="primary" class="w-[300px]" :loading="loading" @click="submitForm">
+                            Reset Password
                         </BaseButton>
 
                     </div>
@@ -51,6 +52,7 @@ import BaseInput from '~/components/ui/BaseInput.vue';
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter, useRuntimeConfig } from '#app'
 import { Key } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules } from 'element-plus'
 
 definePageMeta({
     layout: 'guest',
@@ -69,6 +71,27 @@ const form = reactive({
     password_confirmation: ''
 })
 
+const resetFormRef = ref<FormInstance>()
+const resetRules: FormRules<typeof form> = {
+    password: [
+        { required: true, message: 'New password is required', trigger: 'blur' },
+        { min: 8, message: 'Password must be at least 8 characters', trigger: 'blur' },
+    ],
+    password_confirmation: [
+        { required: true, message: 'Please confirm your password', trigger: 'blur' },
+        {
+            validator: (_rule, value, callback) => {
+                if (value !== form.password) {
+                    callback(new Error('Passwords do not match'))
+                    return
+                }
+                callback()
+            },
+            trigger: ['blur', 'change'],
+        },
+    ],
+}
+
 const errors = ref<any>({})
 const loading = ref(false)
 const message = reactive({
@@ -76,7 +99,9 @@ const message = reactive({
     text: ''
 })
 
-const canSubmit = computed(() => !!form.token && !!form.email)
+const canSubmit = computed(() => {
+    return !!form.token && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)
+})
 
 const messageClass = computed(() => {
     return message.type === 'success'
@@ -110,6 +135,11 @@ const submitForm = async () => {
     if (!canSubmit.value) {
         message.type = 'error'
         message.text = 'Please use a valid reset link'
+        return
+    }
+
+    const valid = await resetFormRef.value?.validate().catch(() => false)
+    if (!valid) {
         return
     }
 

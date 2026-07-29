@@ -1,7 +1,6 @@
 import { watch } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "~/stores/authStore";
-
 type BeamsSdk = typeof import("@pusher/push-notifications-web");
 
 export default defineNuxtPlugin(() => {

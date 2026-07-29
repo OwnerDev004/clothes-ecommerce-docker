@@ -10,6 +10,8 @@ export type AdminProductVariantRecord = {
   id?: number | string;
   sku?: string | null;
   color?: string | null;
+  color_label?: string | null;
+  color_name?: string | null;
   size?: {
     id?: number | string;
     name?: string | null;
@@ -32,9 +34,14 @@ export type AdminProductRecord = {
   thumbnail?: { image_url?: string | null } | null;
   images?: AdminProductImageRecord[];
   variants?: AdminProductVariantRecord[];
-  category?: { name?: string | null } | null;
-  subCategory?: { name?: string | null } | null;
-  brand?: { name?: string | null } | null;
+  category?: { id?: number | string; name?: string | null; slug?: string | null } | null;
+  subCategory?: {
+    id?: number | string;
+    category_id?: number | string | null;
+    name?: string | null;
+    slug?: string | null;
+  } | null;
+  brand?: { id?: number | string; name?: string | null; slug?: string | null } | null;
   collections?: Array<{ name?: string | null }> | null;
 };
 

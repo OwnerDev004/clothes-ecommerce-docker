@@ -35,7 +35,7 @@ export type CategorySubmitPayload = {
   form: {
     name: string;
     desc: string;
-    status: boolean;
+    status: boolean | number;
   };
   image: File | null;
   remove_image: boolean;

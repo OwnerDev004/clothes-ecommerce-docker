@@ -34,7 +34,9 @@ class SubCategoryController extends Controller
         $category = $request->query('category');
 
         $subCategories = SubCategory::query()
-            ->select('id', 'category_id', 'name', 'slug', 'des')
+            ->select('id', 'category_id', 'parent_id', 'name', 'slug', 'des', 'image_url', 'level', 'status')
+            ->with('category:id,name,slug')
+            ->where('status', true)
             ->when($category, function ($query) use ($category) {
                 if (is_numeric($category)) {
                     $query->where('category_id', (int) $category);

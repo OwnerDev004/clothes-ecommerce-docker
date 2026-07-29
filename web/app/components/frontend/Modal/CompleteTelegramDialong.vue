@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '~/stores/authStore'
 
@@ -63,6 +63,7 @@ const authCompleteFormMessage = ref('');
 const authCompleteFormMessageType = ref<'success' | 'warning' | 'error' | 'info'>('info');
 const telegramStatusMessage = ref('');
 const connectingTelegram = ref(false);
+let telegramPollTimer: ReturnType<typeof setInterval> | null = null
 const config = useRuntimeConfig();
 const authStore = useAuthStore()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '');
@@ -111,7 +112,7 @@ const fillFromProfile = () => {
 }
 
 const pollTelegramLink = async () => {
-    await $fetch(`${apiBase}/telegram/poll-link`, {
+    return await $fetch(`${apiBase}/telegram/poll-link`, {
         method: 'POST',
         credentials: 'include',
         headers: getAuthHeaders(),
@@ -129,11 +130,43 @@ const fetchProfile = async () => {
 
 const refreshProfile = async () => {
     try {
-        await pollTelegramLink()
+        const response: any = await pollTelegramLink()
         await fetchProfile()
+        telegramStatusMessage.value = response?.data?.linked || telegramLinked.value
+            ? 'Telegram connected successfully.'
+            : 'Not connected yet. Open Telegram and tap Start.'
     } catch {
         // No-op: handled by parent auth logic
     }
+}
+
+const stopTelegramPolling = () => {
+    if (telegramPollTimer) {
+        clearInterval(telegramPollTimer)
+        telegramPollTimer = null
+    }
+}
+
+const startTelegramPolling = () => {
+    stopTelegramPolling()
+    const startedAt = Date.now()
+    telegramPollTimer = setInterval(async () => {
+        if (Date.now() - startedAt > 90_000 || telegramLinked.value) {
+            stopTelegramPolling()
+            return
+        }
+
+        try {
+            const response: any = await pollTelegramLink()
+            if (response?.data?.linked) {
+                await fetchProfile()
+                telegramStatusMessage.value = 'Telegram connected successfully.'
+                stopTelegramPolling()
+            }
+        } catch {
+            // Keep the link dialog usable while Telegram/webhook delivery catches up.
+        }
+    }, 2000)
 }
 
 const connectTelegram = async () => {
@@ -155,7 +188,8 @@ const connectTelegram = async () => {
             return
         }
         window.open(deepLink, '_blank', 'noopener,noreferrer')
-        telegramStatusMessage.value = 'Telegram opened. Tap Start in the bot, then click Refresh.'
+        telegramStatusMessage.value = 'Telegram opened. Tap Start in the bot; we will check the connection automatically.'
+        startTelegramPolling()
     } catch (err: any) {
         telegramStatusMessage.value = err?.data?.message || 'Failed to connect Telegram.'
     } finally {
@@ -167,8 +201,12 @@ watch(dialogOpen, (open) => {
     if (open) {
         fillFromProfile()
         telegramStatusMessage.value = ''
+    } else {
+        stopTelegramPolling()
     }
 })
+
+onBeforeUnmount(stopTelegramPolling)
 
 const submitAuthComplete = async () => {
     if (!profileFormRef.value) {

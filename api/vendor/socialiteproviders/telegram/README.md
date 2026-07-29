@@ -20,7 +20,7 @@ Then, you need to add your bot's configuration to `config/services.php`. The bot
 'telegram' => [
     'bot' => env('TELEGRAM_BOT_NAME'),  // The bot's username
     'client_id' => null,
-    'client_secret' => env('TELEGRAM_BOT_TOKEN'),
+    'client_secret' => env('TELEGRAM_TOKEN'),
     'redirect' => env('TELEGRAM_REDIRECT_URI'),
 ],
 ```

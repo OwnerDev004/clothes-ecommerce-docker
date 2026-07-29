@@ -25,6 +25,8 @@
                         <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
                             <BaseSelect v-model="filters.category" :options="categoryOptions"
                                 placeholder="All Categories" class="w-full" />
+                            <BaseSelect v-model="filters.sub_category" :options="subCategoryOptions"
+                                placeholder="All Sub Categories" class="w-full" />
                             <BaseSelect v-model="filters.brand" :options="brandOptions" placeholder="All Brands"
                                 class="w-full" />
                             <BaseSelect v-model="filters.color" :options="colorOptions" placeholder="All Colors"
@@ -99,8 +101,15 @@
             </BaseCard>
         </section>
 
-        <ProductModal v-model="isFormModal" :mode="modalMode" :product="selectedProduct" :size-options="sizeOptions"
-            :loading="saving" @submit="handleProductSubmit" />
+        <ProductModal
+            v-model="isFormModal"
+            :mode="modalMode"
+            :product="selectedProduct"
+            :size-options="sizeOptions"
+            :category-options="categoryOptions"
+            :loading="saving"
+            @submit="handleProductSubmit"
+        />
 
         <ProductDetailModal v-model="detailModalOpen" :product="selectedDetailProduct" :loading="detailLoading" />
     </div>
@@ -130,6 +139,7 @@ const {
     filters,
     sortOptions,
     categoryOptions,
+    subCategoryOptions,
     brandOptions,
     colorOptions,
     sizeOptions,

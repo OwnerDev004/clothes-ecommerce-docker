@@ -8,6 +8,13 @@ use Illuminate\Validation\Rule;
 
 class ProductVariantUpdateRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (!$this->has('color_name') && $this->filled('color_label')) {
+            $this->merge(['color_name' => $this->input('color_label')]);
+        }
+    }
+
     public function authorize()
     {
         return true;
@@ -35,6 +42,18 @@ class ProductVariantUpdateRequest extends FormRequest
                         ->where("size_id", $sizeId);
                 })->ignore($variantId),
             ],
+            "color_label" => [
+                "sometimes",
+                "nullable",
+                "string",
+                "max:64",
+                Rule::unique('product_variants', "color_label")->where(function ($query) use ($productId, $sizeId) {
+                    return $query
+                        ->where("product_id", $productId)
+                        ->where("size_id", $sizeId);
+                })->ignore($variantId),
+            ],
+            "color_name" => ["sometimes", "required", "string", "max:64"],
             "size_id" => ["sometimes", "nullable", "integer", "exists:sizes,id"],
             "stock_quantity" => ["sometimes", "nullable", "integer", "min:0"],
             "sell_price" => ["sometimes", "required", "numeric", "min:0"],

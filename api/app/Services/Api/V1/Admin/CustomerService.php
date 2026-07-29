@@ -2,17 +2,18 @@
 
 namespace App\Services\Api\V1\Admin;
 
+use App\Contracts\ImageStorageInterface;
 use App\Models\Customer;
 use App\Repositories\Admin\CustomerRepository;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class CustomerService
 {
-    public function __construct(private CustomerRepository $customerRepostitory)
-    {
-
+    public function __construct(
+        private CustomerRepository $customerRepostitory,
+        private readonly ImageStorageInterface $imageStorage,
+    ) {
     }
 
     // Pagination
@@ -65,22 +66,15 @@ class CustomerService
         if (array_key_exists('status', $validated)) {
             $payload['status'] = $validated['status'];
         }
-
-
         if (($image || ($validated['remove_image'] ?? false)) && $customer->avatar_public_id) {
-            Cloudinary::uploadApi()->destroy($customer->avatar_public_id);
+            $this->imageStorage->delete($customer->avatar_public_id);
         }
 
         if ($image) {
-            $upload = Cloudinary::uploadApi()->upload(
-                $image->getRealPath(),
-                [
-                    'folder' => 'clothes_ecommerce/customers/profile'
-                ]
-            );
-            $payload['avatar_url'] = $upload['secure_url'] ?? null;
-            $payload['avatar_public_id'] = $upload['public_id'] ?? null;
-        } else if (($validated['remove_image'] ?? false)) {
+            $upload = $this->imageStorage->upload($image, 'clothes_ecommerce/customers/profile');
+            $payload['avatar_url'] = $upload->url;
+            $payload['avatar_public_id'] = $upload->publicId;
+        } elseif (($validated['remove_image'] ?? false)) {
             $payload['avatar_url'] = null;
             $payload['avatar_public_id'] = null;
         }
@@ -90,9 +84,7 @@ class CustomerService
     // delete
     public function delete(Customer $customer): void
     {
-        if ($customer['avatar_public_id']) {
-            Cloudinary::uploadApi()->destroy($customer['avatar_public_id']);
-        }
+        $this->imageStorage->delete($customer['avatar_public_id'] ?? null);
         $customer->update(['status' => 'inactive']);
     }
 

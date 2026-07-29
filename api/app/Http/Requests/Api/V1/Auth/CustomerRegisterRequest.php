@@ -22,7 +22,7 @@
       public function rules(): array
       {
           return [
-              'full_name' => 'nullable|string|max:255',
+              'full_name' => 'required|string|min:2|max:255',
               'gender' => 'required|in:male,female',
               'email' => 'required|email|max:255|unique:customers,email',
               'user_name' => 'required|string|max:255|unique:customers,user_name',

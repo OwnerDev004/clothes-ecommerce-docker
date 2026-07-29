@@ -242,10 +242,10 @@ watch(
 </script>
 
 <template>
-    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Collection' : 'Add Collection'" body-class="p-0"
-        footer-class="px-6 pb-6 pt-0">
+    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Collection' : 'Add Collection'" width="min(1100px, 96vw)"
+        body-class="p-0" footer-class="px-4 pb-4 sm:px-6 sm:pb-4pt-0">
         <el-form label-position="top">
-            <div class="grid gap-6 px-6 pb-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+            <div class="grid gap-4 px-4 pb-4 sm:px-6 sm:pb-4 md:grid-cols-2">
                 <section class="rounded-3xl border border-dashed border-muted bg-surface-2/10 p-6">
                     <h3 class="mb-4 text-lg font-bold text-slate-950">Collection Image</h3>
 
@@ -367,7 +367,7 @@ watch(
                     </div>
 
                     <div v-if="filteredProducts.length"
-                        class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        class="mt-4 grid gap-2 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
                         <button v-for="product in filteredProducts" :key="product.id" type="button"
                             class="group overflow-hidden rounded-3xl border bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                             :class="selectedProductIds.some((id) => Number(id) === Number(product.id))

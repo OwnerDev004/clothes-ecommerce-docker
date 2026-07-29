@@ -70,8 +70,10 @@ class ProductController extends Controller
         $price = $request->query('price');
         $priceMin = $request->query('price_min');
         $priceMax = $request->query('price_max');
+        $color = $request->query('color');
+        $size = $request->query('size');
 
-        $applyProductFilters = function ($query, array $options = []) use ($searchText, $category, $subCategory, $collection, $brand, $price, $priceMin, $priceMax) {
+        $applyProductFilters = function ($query, array $options = []) use ($searchText, $category, $subCategory, $collection, $brand, $price, $priceMin, $priceMax, $color, $size) {
             $ignoreSubCategory = $options['ignore_sub_category'] ?? false;
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
@@ -146,6 +148,31 @@ class ProductController extends Controller
                 }
             }
 
+            if (!is_null($color) && $color !== '') {
+                $query->whereExists(function ($sub) use ($color) {
+                    $sub->selectRaw('1')
+                        ->from('product_variants as pv')
+                        ->whereColumn('pv.product_id', 'p.id')
+                        ->where('pv.color_name', 'like', '%' . $color . '%');
+                });
+            }
+
+            if (!is_null($size) && $size !== '') {
+                $query->whereExists(function ($sub) use ($size) {
+                    $sub->selectRaw('1')
+                        ->from('product_variants as pv')
+                        ->join('sizes as s', 's.id', '=', 'pv.size_id')
+                        ->whereColumn('pv.product_id', 'p.id')
+                        ->where(function ($where) use ($size) {
+                            if (is_numeric($size)) {
+                                $where->where('s.id', (int) $size);
+                            } else {
+                                $where->where('s.name', 'like', '%' . $size . '%');
+                            }
+                        });
+                });
+            }
+
             if (!is_null($price) && $price !== '') {
                 $query->where('p.price', '<=', (float) $price);
             }
@@ -175,10 +202,11 @@ class ProductController extends Controller
 
         // Colors Query
         $colors = DB::table('product_variants as pv')
-            ->selectRaw('DISTINCT pv.color as id, pv.color as name, pv.color as hex_code')
+            ->selectRaw('DISTINCT pv.color_name as id, pv.color_name as name, pv.color as hex_code')
             ->whereIn('pv.product_id', $productIdsQuery)
-            ->whereNotNull('pv.color')
-            ->orderBy('pv.color')
+            ->whereNotNull('pv.color_name')
+            ->where('pv.color_name', '<>', '')
+            ->orderBy('pv.color_name')
             ->get();
 
         //Sizes Query
@@ -427,6 +455,64 @@ class ProductController extends Controller
             'rating_and_reviews' => $reviews,
             'faqs_detail' => $faqs,
         ], 'Product detail sections', 200);
+    }
+
+    #[OA\Get(
+        path: '/api/v1/products/top-selling',
+        tags: ['Products'],
+        summary: 'Get top selling products by actual order quantity',
+        responses: [
+            new OA\Response(response: 200, description: 'Top selling products'),
+        ]
+    )]
+    public function topSelling()
+    {
+        $limit = 8;
+
+        $topProductIds = DB::table('order_items')
+            ->join('product_variants', 'product_variants.id', '=', 'order_items.product_variant_id')
+            ->join('products', 'products.id', '=', 'product_variants.product_id')
+            ->select('products.id', DB::raw('SUM(order_items.quantity) as total_sold'))
+            ->groupBy('products.id')
+            ->orderByDesc('total_sold')
+            ->limit($limit)
+            ->pluck('products.id')
+            ->toArray();
+
+        if (empty($topProductIds)) {
+            return $this->success([], 'Top selling products');
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $topProductIds)
+            ->with([
+                'thumbnail:id,product_id,image_url,image_type,sort_order',
+                'images' => function ($q) {
+                    $q->select('id', 'product_id', 'image_url', 'image_type', 'sort_order')
+                        ->orderBy('sort_order');
+                },
+                'brand:id,name,slug,image_url',
+                'subCategory:id,category_id,name,slug',
+                'collections:id,name,slug',
+            ])->withCount([
+                'reviews as total_reviews' => function ($q) {
+                    $q->select(\DB::raw('count(*)'));
+                },
+                'reviews as total_rating_sum' => function ($q) {
+                    $q->select(\DB::raw('coalesce(sum(rating), 0)'));
+                },
+                'reviews as average_rating' => function ($q) {
+                    $q->select(\DB::raw('coalesce(avg(rating), 0)'));
+                }
+            ])
+            ->get();
+
+        // Preserve the order from the topProductIds query
+        $ordered = collect($topProductIds)->map(function ($id) use ($products) {
+            return $products->firstWhere('id', $id);
+        })->filter();
+
+        return $this->success($ordered->values(), 'Top selling products');
     }
 
     #[OA\Get(

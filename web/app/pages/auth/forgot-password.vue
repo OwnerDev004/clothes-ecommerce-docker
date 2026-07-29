@@ -9,10 +9,13 @@
           <header>
             <p class="text-xl font-semibold">Forgot password</p>
           </header>
-          <el-form label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off">
+          <el-form ref="forgotPasswordFormRef" :model="forgotPasswordForm" :rules="forgotPasswordRules"
+            label-position="top" class="w-full grid grid-cols-1 items-center" autocomplete="off"
+            @submit.prevent="submitForgotPassword">
 
-            <el-form-item label="New Password" prop="new_password">
-              <BaseInput placeholder="you@example.com" type="email" :prefix-icon="MessageBox" v-model="email" />
+            <el-form-item label="Email" prop="email">
+              <BaseInput placeholder="you@example.com" type="email" :prefix-icon="MessageBox"
+                v-model="forgotPasswordForm.email" />
             </el-form-item>
           </el-form>
 
@@ -23,8 +26,8 @@
                 Back to Sign in
               </NuxtLink>
             </BaseButton>
-            <BaseButton type="primary" class="w-[300px]" @click="submitForgotPassword">
-              {{ loading ? 'Sending...' : 'Send reset link' }} Reset Paswword
+            <BaseButton type="primary" class="w-[300px]" :loading="loading" @click="submitForgotPassword">
+              {{ loading ? 'Sending...' : 'Send reset link' }}
             </BaseButton>
 
           </div>
@@ -40,6 +43,7 @@
 import { MessageBox } from '@element-plus/icons-vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import BaseInput from '~/components/ui/BaseInput.vue'
+import type { FormInstance, FormRules } from 'element-plus'
 
 definePageMeta({
   layout: 'guest',
@@ -49,14 +53,20 @@ definePageMeta({
 const config = useRuntimeConfig()
 const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 
-const email = ref('')
+const forgotPasswordFormRef = ref<FormInstance>()
+const forgotPasswordForm = reactive({ email: '' })
+const forgotPasswordRules: FormRules<typeof forgotPasswordForm> = {
+  email: [
+    { required: true, message: 'Email is required', trigger: 'blur' },
+    { type: 'email', message: 'Please enter a valid email address', trigger: ['blur', 'change'] },
+  ],
+}
 const loading = ref(false)
 
 
 const submitForgotPassword = async () => {
-
-  if (!email.value) {
-    ElMessage({ message: 'Email is required', type: 'error' })
+  const valid = await forgotPasswordFormRef.value?.validate().catch(() => false)
+  if (!valid) {
     return
   }
 
@@ -65,7 +75,7 @@ const submitForgotPassword = async () => {
     const response: any = await $fetch(`${apiBase}/auth/forgot_password`, {
       method: 'POST',
       body: {
-        email: email.value
+        email: forgotPasswordForm.email.trim()
       }
     })
 

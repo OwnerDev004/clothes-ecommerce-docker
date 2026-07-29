@@ -155,6 +155,7 @@ import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import { useAdminCustomer } from '~/composables/useAdminCustomer'
 import { customerStatus, getDisplayCustomerStatus } from '~/enums/customerStatus'
 import { formatAnyDate } from '~/utils/date'
+import LoadingPage from '~/components/shares/LoadingPage.vue'
 
 definePageMeta({
   layout: 'admin',

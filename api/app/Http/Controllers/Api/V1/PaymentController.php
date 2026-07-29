@@ -101,9 +101,9 @@ class PaymentController extends Controller
                 (int) $payload['order_id'],
                 (string) $payload['provider'],
                 strtoupper((string) ($payload['currency'] ?? '')),
-                (bool) $payload['is_complete_coupon'],
-                (string) $payload['promo_code'],
-                (float) $payload['fee_province']
+                (bool) ($payload['is_complete_coupon'] ?? false),
+                (string) ($payload['promo_code'] ?? ''),
+                (float) ($payload['fee_province'] ?? 0)
             );
         } catch (ValidationException $e) {
             $this->paymentRepository->cleanupFailedKhqrOrder((int) $payload['order_id']);

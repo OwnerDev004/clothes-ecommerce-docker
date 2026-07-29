@@ -45,7 +45,7 @@ class ProductVariantRepository extends BaseRepository
             }
 
             if (!is_null($color) && $color !== '') {
-                $query->where('product_variants.color', 'like', '%' . $color . '%');
+                $query->where('product_variants.color_name', 'like', '%' . $color . '%');
             }
 
             if (!is_null($size) && $size !== '') {

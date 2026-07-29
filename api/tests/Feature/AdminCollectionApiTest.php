@@ -197,7 +197,7 @@ class AdminCollectionApiTest extends TestCase
     private function createAdmin(): User
     {
         return User::factory()->create([
-            'role' => 'admin',
+            'role' => 'super_admin',
         ]);
     }
 

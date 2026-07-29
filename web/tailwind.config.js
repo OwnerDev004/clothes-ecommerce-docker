@@ -28,7 +28,7 @@ export default {
         'red-50': 'rgba(255, 51, 51, 0.1)',
       },
       screens: {
-        mobile: '375',
+        mobile: '375px',
         tablet: '575px',
         desktop: '992px',
       },

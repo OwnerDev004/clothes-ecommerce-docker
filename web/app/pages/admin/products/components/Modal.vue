@@ -8,10 +8,16 @@ import BaseSelect from '~/components/ui/BaseSelect.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import type { AdminProductRecord, AdminProductImageRecord, AdminProductVariantRecord } from '~/composables/useAdminProduct'
 
+type SelectOption = {
+    id: string | number
+    label: string
+}
+
 type ProductForm = {
     mode: 'edit' | 'create'
     name: string
     category_id: string | number | null
+    sub_category_id: string | number | null
     status: 'draft' | 'active' | 'archived'
     unit_price: string
     description: string
@@ -20,7 +26,9 @@ type ProductForm = {
 type ProductVariantForm = {
     id?: number | string | null
     sku: string
-    color: string
+    color: string,
+    color_label: string,
+    color_name: string,
     size: string | number | null
     stock_quantity: string
     sale_price: string
@@ -37,24 +45,26 @@ type ProductImageForm = {
     cloudinary_public_id?: string | null
 }
 
-type ProductVariantRuleKeys = keyof Pick<ProductVariantForm, 'sku' | 'color' | 'stock_quantity' | 'sale_price' | 'cost_price'>
+type ProductVariantRuleKeys = keyof Pick<ProductVariantForm, 'sku' | 'color' | 'color_label' | 'color_name' | 'stock_quantity' | 'sale_price' | 'cost_price'>
 
 const props = withDefaults(
     defineProps<{
         modelValue: boolean
         mode?: 'create' | 'edit'
         product?: AdminProductRecord | null
+        categoryOptions?: SelectOption[]
         sizeOptions?: Array<{ id: number | string; label: string }>
         loading?: boolean
     }>(),
     {
         mode: 'create',
         product: null,
+        categoryOptions: () => [],
         sizeOptions: () => [{ id: "", label: 'Select size' }],
         loading: false,
     },
 )
-
+const defaultPrice = ref<any>('0')
 const emit = defineEmits<{
     (e: 'update:modelValue', value: boolean): void
     (e: 'submit', payload: {
@@ -86,12 +96,20 @@ const dialogOpen = computed({
 
 const formRef = ref<FormInstance>()
 const imageInputRef = ref<HTMLInputElement | null>(null)
+const config = useRuntimeConfig()
+const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
+const subCategoryOptions = ref<SelectOption[]>([])
+const subCategoryLoading = ref(false)
+const selectedCategoryLabel = computed(() => {
+    return props.categoryOptions?.find((item) => String(item.id) === String(form.product.category_id))?.label || ''
+})
+const subCategoryPlaceholder = computed(() => {
+    if (!form.product.category_id) {
+        return 'Choose a category first'
+    }
 
-const categoryOptions = [
-    { id: 1, label: 'T-Shirts' },
-    { id: 2, label: 'Pants' },
-    { id: 3, label: 'Shoes' },
-]
+    return subCategoryLoading.value ? 'Loading sub categories...' : 'Select sub category'
+})
 
 const statusOptions = [
     { id: 'draft', label: 'Draft' },
@@ -109,10 +127,12 @@ const createVariant = (index = 0, productName = ''): ProductVariantForm => {
     return {
         sku: `${prefix}-${Date.now().toString(36).toUpperCase()}-${index + 1}`,
         color: '#000000',
+        color_label: '',
+        color_name: '',
         size: null,
         stock_quantity: '',
         sale_price: '',
-        cost_price: '',
+        cost_price: defaultPrice.value,
     }
 }
 
@@ -124,6 +144,7 @@ const form = reactive<{
         mode: 'create',
         name: '',
         category_id: null,
+        sub_category_id: null,
         status: 'active',
         unit_price: '',
         description: '',
@@ -142,6 +163,8 @@ const rules: FormRules<any> = {
 const variantFieldRules: Record<ProductVariantRuleKeys, FormItemRule[]> = {
     sku: [],
     color: [{ required: true, message: 'Color is required', trigger: 'change' }],
+    color_label: [{ required: true, message: 'Color Label is required', trigger: 'blur' }],
+    color_name: [{ required: true, message: 'Color name is required', trigger: 'blur' }],
     stock_quantity: [{ required: true, message: 'Quantity is required', trigger: 'blur' }],
     sale_price: [{ required: true, message: 'Sale price is required', trigger: 'blur' }],
     cost_price: [{ required: true, message: 'Cost price is required', trigger: 'blur' }],
@@ -155,9 +178,11 @@ const revokePreview = (item: ProductImageForm) => {
 
 const resetForm = () => {
     imageItems.value.forEach(revokePreview)
+    subCategoryOptions.value = []
 
     form.product.name = ''
     form.product.category_id = null
+    form.product.sub_category_id = null
     form.product.status = 'active'
     form.product.unit_price = ''
     form.product.description = ''
@@ -178,6 +203,7 @@ const hydrateFromProduct = (product: AdminProductRecord | null) => {
 
     form.product.name = product.name || ''
     form.product.category_id = product.category_id ?? null
+    form.product.sub_category_id = product.subCategory?.id ?? null
     form.product.unit_price = String(product.price ?? '')
     form.product.description = product.desc || ''
 
@@ -194,6 +220,8 @@ const hydrateFromProduct = (product: AdminProductRecord | null) => {
                 id: item?.id ?? null,
                 sku: String(item?.sku || createVariant(index, product.name).sku),
                 color: String(item?.color || '#000000'),
+                color_label: String(item?.color_label || ''),
+                color_name: String(item?.color_name || item?.color_label || ''),
                 size: item?.size_id ?? item?.size?.id ?? null,
                 stock_quantity: String(item?.stock_quantity ?? ''),
                 sale_price: String(item?.sell_price ?? product.price ?? ''),
@@ -236,6 +264,41 @@ const ensureThumbnail = () => {
     }
 
     imageItems.value[0]!.image_type = 'thumbnail'
+}
+
+const loadSubCategories = async (categoryId: string | number | null) => {
+    if (!categoryId) {
+        subCategoryOptions.value = []
+        form.product.sub_category_id = null
+        return
+    }
+
+    subCategoryLoading.value = true
+    try {
+        const response: any = await $fetch(`${apiBase}/sub-categories`, {
+            method: 'GET',
+            query: {
+                category: categoryId,
+            },
+        })
+
+        const rows = Array.isArray(response?.data) ? response.data : []
+        subCategoryOptions.value = rows.map((item: any) => ({
+            id: item.id,
+            label: item.name || 'Sub Category',
+        }))
+
+        if (
+            form.product.sub_category_id &&
+            !subCategoryOptions.value.some((item) => String(item.id) === String(form.product.sub_category_id))
+        ) {
+            form.product.sub_category_id = null
+        }
+    } catch {
+        subCategoryOptions.value = []
+    } finally {
+        subCategoryLoading.value = false
+    }
 }
 
 const openImagePicker = () => {
@@ -357,6 +420,9 @@ const submitForm = async () => {
     })
 }
 
+// computed
+
+
 watch(
     () => dialogOpen.value,
     (open) => {
@@ -379,13 +445,35 @@ watch(
     { deep: true },
 )
 
+watch(
+    () => form.product.category_id,
+    (categoryId) => {
+        void loadSubCategories(categoryId)
+    },
+)
+
+watch(
+    () => form.product.unit_price,
+    (price: string, oldPrice: string | undefined) => {
+        const prev = defaultPrice.value
+        defaultPrice.value = price
+
+        // Update variant cost_price when it's empty or still equals previous default
+        form.product_variants.forEach((v) => {
+            if (!v.cost_price || v.cost_price === prev) {
+                v.cost_price = price
+            }
+        })
+    }
+)
+
 onBeforeUnmount(() => {
     imageItems.value.forEach(revokePreview)
 })
 </script>
 
 <template>
-    <BaseModal v-model="dialogOpen" :title="mode === 'edit' ? 'Edit Product' : 'Add Product'" width="1100px"
+    <BaseModal v-model="dialogOpen" :title="mode === 'edit' ? 'Edit Product' : 'Add Product'" width="1200px"
         :show-footer="false" body-class="p-0">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
             <section class="border-b p-6 mb-3  rounded-3xl border border-dashed border-muted bg-surface-2/10">
@@ -457,8 +545,24 @@ onBeforeUnmount(() => {
                         </el-form-item>
 
                         <el-form-item label="Category" prop="product.category_id">
-                            <BaseSelect v-model="form.product.category_id" :options="categoryOptions"
-                                placeholder="Select category" class="w-full" />
+                            <BaseSelect v-model="form.product.category_id" :options="props.categoryOptions || []"
+                                placeholder="Select category" class="w-full" clearable filterable
+                                no-match-text="No matching category" />
+                            <p v-if="selectedCategoryLabel" class="mt-2 text-xs text-slate-500">
+                                Sub categories will update for <strong class="font-semibold text-slate-700">{{
+                                    selectedCategoryLabel }}</strong>.
+                            </p>
+                        </el-form-item>
+
+                        <el-form-item label="Sub Category" prop="product.sub_category_id">
+                            <BaseSelect v-model="form.product.sub_category_id" :options="subCategoryOptions"
+                                :disabled="!form.product.category_id || subCategoryLoading"
+                                :loading="subCategoryLoading" :placeholder="subCategoryPlaceholder" class="w-full"
+                                clearable filterable no-match-text="No matching sub category"
+                                no-data-text="Pick a category to load sub categories" />
+                            <p class="mt-2 text-xs text-slate-500">
+                                Keep the parent category first, then narrow down to a sub category.
+                            </p>
                         </el-form-item>
                     </div>
 
@@ -490,7 +594,7 @@ onBeforeUnmount(() => {
 
                 <div v-for="(variant, index) in form.product_variants" :key="variant.id ?? index"
                     class="relative my-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div class="grid gap-4 lg:grid-cols-6">
+                    <div class="grid gap-4 lg:grid-cols-7">
                         <el-form-item :label="`SKU ${index + 1}`" :prop="`product_variants.${index}.sku`"
                             :rules="variantFieldRules.sku">
                             <div class="space-y-1">
@@ -505,6 +609,14 @@ onBeforeUnmount(() => {
                                 <el-color-picker v-model="variant.color" />
                                 <BaseInput v-model="variant.color" class="flex-1" placeholder="#000000" />
                             </div>
+                        </el-form-item>
+                        <el-form-item :label="`Color Label ${index + 1}`"
+                            :prop="`product_variants.${index}.color_label`" :rules="variantFieldRules.color_label">
+                            <BaseInput v-model="variant.color_label" />
+                        </el-form-item>
+                        <el-form-item :label="`Color Name ${index + 1}`"
+                            :prop="`product_variants.${index}.color_name`" :rules="variantFieldRules.color_name">
+                            <BaseInput v-model="variant.color_name" placeholder="e.g. Navy Blue" />
                         </el-form-item>
 
                         <el-form-item :label="`Size ${index + 1}`" :prop="`product_variants.${index}.size_id`">
@@ -525,7 +637,7 @@ onBeforeUnmount(() => {
 
                         <el-form-item :label="`Cost Price ${index + 1}`" :prop="`product_variants.${index}.cost_price`"
                             :rules="variantFieldRules.cost_price">
-                            <BaseInput v-model="variant.cost_price" type="number" min="0" placeholder="0" />
+                            <BaseInput v-model="variant.cost_price" type="number" />
                         </el-form-item>
                     </div>
 

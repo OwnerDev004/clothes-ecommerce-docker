@@ -2,28 +2,40 @@
 
 namespace App\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Model;
 
 class SubCategory extends Model
 {
-    use Sluggable;
+    use HasSlug;
 
     protected $fillable = [
         'category_id',
+        'parent_id',
         'name',
         'slug',
         'des',
+        'order_num',
+        'status',
+        'image_url',
+        'image_public_id',
+        'level'
     ];
 
-    public function sluggable(): array
+    protected $casts = [
+        'category_id' => 'integer',
+        'parent_id' => 'integer',
+        'order_num' => 'integer',
+        'level' => 'integer',
+        'status' => 'boolean',
+    ];
+
+    protected static function booted()
     {
-        return [
-            'slug' => [
-                'source' => 'name',
-                'onUpdate' => true,
-            ],
-        ];
+        static::creating(function ($item) {
+            $maxOrder = static::max('order_num');
+            $item->order_num = is_null($maxOrder) ? 1 : $maxOrder + 1;
+        });
     }
 
     public function category()
@@ -31,9 +43,18 @@ class SubCategory extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(SubCategory::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(SubCategory::class, 'parent_id');
+    }
+
     public function products()
     {
         return $this->hasMany(Product::class);
     }
 }
-

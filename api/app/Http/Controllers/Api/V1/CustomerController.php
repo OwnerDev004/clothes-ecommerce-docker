@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Customer\CustomerUpdateRequest;
 use App\Http\Requests\Api\V1\Customer\CustomerAvatarRequest;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use App\Contracts\ImageStorageInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Arr;
@@ -21,7 +21,10 @@ class CustomerController extends Controller
 
     protected $customerRepository;
 
-    public function __construct(CustomerRepository $customerRepo)
+    public function __construct(
+        CustomerRepository $customerRepo,
+        private readonly ImageStorageInterface $imageStorage,
+    )
     {
         $this->customerRepository = $customerRepo;
     }
@@ -189,19 +192,16 @@ class CustomerController extends Controller
             return $this->error("Unauthorized", 401);
         }
         if ($customer->avatar_public_id) {
-            Cloudinary::uploadApi()->destroy($customer->avatar_public_id);
+            $this->imageStorage->delete($customer->avatar_public_id);
         }
 
-        $upload = Cloudinary::uploadApi()->upload(
-            $request->file('avatar')->getRealPath(),
-            ['folder' => 'clothes_ecommerce/customer-avatars']
-        );
+        $upload = $this->imageStorage->upload($request->file('avatar'), 'clothes_ecommerce/customer-avatars');
         // Resize
         // $imageUrl = (string) Cloudinary::image($upload['public_id'])
         //     ->resize(Resize::fill(200, 200)->gravity(Gravity::auto()));
 
-        $customer->avatar_url = $upload['secure_url'] ?? null;
-        $customer->avatar_public_id = $upload['public_id'] ?? null;
+        $customer->avatar_url = $upload->url;
+        $customer->avatar_public_id = $upload->publicId;
 
 
         $customer->save();
@@ -227,7 +227,7 @@ class CustomerController extends Controller
             return $this->error("Unauthorized", 401);
         }
         if ($customer->avatar_public_id) {
-            Cloudinary::uploadApi()->destroy($customer->avatar_public_id);
+            $this->imageStorage->delete($customer->avatar_public_id);
         }
         $customer->avatar_url = null;
         $customer->avatar_public_id = null;

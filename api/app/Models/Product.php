@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Traits\HasSkuAndSlug;
-use Cviebrock\EloquentSluggable\Sluggable;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    use HasSkuAndSlug, Sluggable;
+    use HasSkuAndSlug, HasSlug;
 
     protected $fillable = [
         "sku",
@@ -27,16 +27,6 @@ class Product extends Model
         'total_reviews' => 'integer',
         'price' => 'decimal:2',
     ];
-
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name',
-                'onUpdate' => true,
-            ],
-        ];
-    }
 
     public function category()
     {

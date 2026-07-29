@@ -25,6 +25,7 @@ type AdminProductListResponse = {
 
 type ProductFiltersPayload = {
   categories?: Array<{ id: number | string; name?: string | null }>;
+  sub_categories?: Array<{ id: number | string; name?: string | null; category_id?: number | string | null }>;
   colors?: Array<{ id: string; name?: string | null }>;
   sizes?: Array<{ id: number | string; name?: string | null }>;
   brands?: Array<{ id: number | string; name?: string | null }>;
@@ -37,6 +38,7 @@ export type ProductSubmitPayload = {
     product: {
       name: string;
       category_id: string | number | null;
+      sub_category_id: string | number | null;
       status: "draft" | "active" | "archived";
       unit_price: string;
       description: string;
@@ -45,6 +47,8 @@ export type ProductSubmitPayload = {
       id?: number | string | null;
       sku: string;
       color: string;
+      color_label: string;
+      color_name: string;
       size: string | number | null;
       stock_quantity: string;
       sale_price: string;
@@ -75,6 +79,7 @@ export const useAdminProducts = () => {
   const filters = reactive({
     search_txt: "",
     category: null as string | number | null,
+    sub_category: null as string | number | null,
     brand: null as string | number | null,
     color: null as string | number | null,
     size: null as string | number | null,
@@ -133,6 +138,7 @@ export const useAdminProducts = () => {
 
     add("search_txt", filters.search_txt.trim());
     add("category", filters.category);
+    add("sub_category", filters.sub_category);
     add("brand", filters.brand);
     add("color", filters.color);
     add("size", filters.size);
@@ -183,6 +189,16 @@ export const useAdminProducts = () => {
       id: item.id,
       label: item.name || "Uncategorized",
     })),
+  ]);
+
+  const subCategoryOptions = computed(() => [
+    { id: "", label: "All Sub Categories" },
+    ...(filterOptionsResponse.value?.sub_categories || [])
+      .filter((item) => !filters.category || !item.category_id || String(item.category_id) === String(filters.category))
+      .map((item) => ({
+        id: item.id,
+        label: item.name || "Sub Category",
+      })),
   ]);
 
   const brandOptions = computed(() => [
@@ -249,6 +265,7 @@ export const useAdminProducts = () => {
   const resetFilters = () => {
     filters.search_txt = "";
     filters.category = null;
+    filters.sub_category = null;
     filters.brand = null;
     filters.color = null;
     filters.size = null;
@@ -333,6 +350,8 @@ export const useAdminProducts = () => {
       id?: number | string | null;
       sku: string;
       color: string;
+      color_label: string;
+      color_name: string;
       size: string | number | null;
       stock_quantity: string;
       sale_price: string;
@@ -365,7 +384,9 @@ export const useAdminProducts = () => {
         product_id: productId,
         sku: normalizedSku,
         color: variant.color,
-        size: variant.size ?? null,
+        color_label: variant.color_label,
+        color_name: variant.color_name,
+        size_id: variant.size ?? null,
         stock_quantity: Number(variant.stock_quantity || 0),
         sell_price: Number(variant.sale_price || 0),
         cost_price: Number(variant.cost_price || 0),
@@ -416,6 +437,7 @@ export const useAdminProducts = () => {
     appendFormValue(formData, "desc", payload.form.product.description || "");
     appendFormValue(formData, "price", payload.form.product.unit_price);
     appendFormValue(formData, "category_id", payload.form.product.category_id);
+    appendFormValue(formData, "sub_category_id", payload.form.product.sub_category_id);
     appendFormValue(formData, "images", payload.images.new_images);
 
     const response: any = await $fetch(`${apiBase}/admin/products`, {
@@ -449,6 +471,7 @@ export const useAdminProducts = () => {
     appendFormValue(formData, "desc", payload.form.product.description || "");
     appendFormValue(formData, "price", payload.form.product.unit_price);
     appendFormValue(formData, "category_id", payload.form.product.category_id);
+    appendFormValue(formData, "sub_category_id", payload.form.product.sub_category_id);
 
     if (
       !payload.images.existing_images.length &&
@@ -536,10 +559,19 @@ export const useAdminProducts = () => {
     }
   };
 
+  // Clear sub_category when category changes to prevent stale/invalid filter
+  watch(
+    () => filters.category,
+    () => {
+      filters.sub_category = null;
+    },
+  );
+
   watchDebounced(
     [
       () => filters.search_txt,
       () => filters.category,
+      () => filters.sub_category,
       () => filters.brand,
       () => filters.color,
       () => filters.size,
@@ -577,6 +609,7 @@ export const useAdminProducts = () => {
     filters,
     sortOptions,
     categoryOptions,
+    subCategoryOptions,
     brandOptions,
     colorOptions,
     sizeOptions,

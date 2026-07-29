@@ -6,7 +6,7 @@
         <Icon name="ic:round-menu-open" class="text-2xl sm:text-[30px] block desktop:hidden cursor-pointer"
           @click="toggleMenu" />
         <NuxtLink to="/" class="flex items-center">
-          <span class="text-2xl sm:text-[28p. x] desktop:text-3xl font-bold">SHOP.CO</span>
+          <span class="text-2xl sm:text-[28p. x] desktop:text-3xl font-bold">LD.SHOP</span>
         </NuxtLink>
         <!-- Desktop Navigation -->
         <ul class="hidden desktop:flex items-center gap-8 ml-8">
@@ -24,7 +24,7 @@
 
           <!-- New Arrivals Link -->
           <li class="relative group py-2">
-            <NuxtLink to="/" class="text-gray-700 hover:text-black font-medium relative inline-block">
+            <NuxtLink to="/frontend/new-arrivals" class="text-gray-700 hover:text-black font-medium relative inline-block">
               <span>New Arrivals</span>
               <span
                 class="absolute left-0 bottom-0 w-0 h-0.5 bg-black group-hover:w-full transition-all duration-300"></span>
@@ -180,9 +180,14 @@
                 placeholder="Type and press Enter to search products..." />
             </div>
             <button type="submit"
-              class="rounded-2xl bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors whitespace-nowrap">
+              class="rounded-2xl bg-primary px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 transition-colors whitespace-nowrap">
               Search all products
             </button>
+            <BaseButton type="plain" @click="handleAiSearch" class="!py-5">
+              Ask
+              <Icon name="mingcute:ai-fill" />
+            </BaseButton>
+
           </form>
         </div>
       </div>
@@ -200,14 +205,26 @@
         <!-- Shop by Category -->
         <div>
           <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Category</h3>
-          <ul class="space-y-3">
+          <ul class="space-y-2">
             <li v-for="category in categories" :key="category.id">
-              <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
-                class="text-gray-600 hover:text-black transition-colors flex items-center group">
-                <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                {{ category.name }}
-                <Icon name="mdi:chevron-right" class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-              </NuxtLink>
+              <div class="flex items-center gap-2">
+                <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
+                  class="min-w-0 flex-1 text-gray-600 hover:text-black transition-colors flex items-center group">
+                  <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
+                  {{ category.name }}
+                </NuxtLink>
+                <button v-if="category.child?.length" type="button" class="rounded p-1 hover:bg-gray-100"
+                  :aria-expanded="isCategoryExpanded(category.id)" @click="toggleCategory(category.id)">
+                  <Icon name="mdi:chevron-down" class="transition-transform" :class="isCategoryExpanded(category.id) ? 'rotate-180' : ''" />
+                </button>
+              </div>
+              <ul v-if="isCategoryExpanded(category.id)" class="ml-5 mt-2 space-y-1 border-l border-gray-200 pl-3">
+                <li v-for="child in category.child" :key="child.id">
+                  <NuxtLink :to="`/frontend/categories/${child.slug || child.id}`" class="block py-1 text-sm text-gray-500 hover:text-black">
+                    {{ child.name }}
+                  </NuxtLink>
+                </li>
+              </ul>
             </li>
           </ul>
         </div>
@@ -284,16 +301,27 @@
 
             <div>
               <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">Shop by Category</h3>
-              <ul class="space-y-3">
+              <ul class="space-y-2">
                 <li v-for="category in categories" :key="`mobile-${category.id}`">
-                  <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
-                    class="text-gray-600 hover:text-black transition-colors flex items-center group"
-                    @click="toggleMenu">
-                    <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
-                    {{ category.name }}
-                    <Icon name="mdi:chevron-right"
-                      class="ml-auto text-gray-400 group-hover:text-black transition-colors" />
-                  </NuxtLink>
+                  <div class="flex items-center gap-2">
+                    <NuxtLink :to="`/frontend/categories/${category.slug || category.id}`"
+                      class="flex-1 text-gray-600 hover:text-black transition-colors flex items-center group"
+                      @click="toggleMenu">
+                      <span class="w-1 h-1 bg-gray-400 rounded-full mr-3 group-hover:bg-black transition-colors"></span>
+                      {{ category.name }}
+                    </NuxtLink>
+                    <button v-if="category.child?.length" type="button" class="rounded p-2 hover:bg-gray-100"
+                      :aria-expanded="isCategoryExpanded(category.id)" @click="toggleCategory(category.id)">
+                      <Icon name="mdi:chevron-down" class="transition-transform" :class="isCategoryExpanded(category.id) ? 'rotate-180' : ''" />
+                    </button>
+                  </div>
+                  <ul v-if="isCategoryExpanded(category.id)" class="ml-5 mt-1 space-y-1 border-l border-gray-200 pl-3">
+                    <li v-for="child in category.child" :key="`mobile-child-${child.id}`">
+                      <NuxtLink :to="`/frontend/categories/${child.slug || child.id}`" class="block py-2 text-sm text-gray-500" @click="toggleMenu">
+                        {{ child.name }}
+                      </NuxtLink>
+                    </li>
+                  </ul>
                 </li>
               </ul>
             </div>
@@ -341,7 +369,7 @@
           </div> -->
         </div>
         <div class="border-b pb-4">
-          <NuxtLink to="/" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu"><span>New
+          <NuxtLink to="/frontend/new-arrivals" class="block font-medium text-lg hover:text-black py-2" @click="toggleMenu"><span>New
               Arrivals</span>
           </NuxtLink>
         </div>
@@ -368,7 +396,7 @@
 
     <ProfileDialog v-model="profileDialogOpen" />
     <OrderHistoryDialog v-model="orderHistoryDialogOpen" />
-
+    <AiSeachDialog v-model="isModalAiSeach" />
     <!-- Backdrop for mobile menu -->
     <div v-if="isMenuOpen || showMobileSearch" class="fixed inset-0 bg-black bg-opacity-50 z-30 desktop:hidden"
       @click="closeAll"></div>
@@ -385,6 +413,8 @@ import { useFavoritesStore } from '~/stores/favoritesStore'
 import { useCartStore } from '~/stores/cartStore'
 import ProfileDialog from './Modal/ProfileDialog.vue'
 import OrderHistoryDialog from './Modal/OrderHistoryDialog.vue'
+import BaseButton from '../ui/BaseButton.vue'
+import AiSeachDialog from './Modal/AiSeachDialog.vue'
 
 const authStore = useAuthStore()
 const { isAuthenticated, accessToken, userProfile } = storeToRefs(authStore)
@@ -411,12 +441,19 @@ const telegramLinked = ref(false)
 const telegramStatusMessage = ref('')
 const profileDialogOpen = ref(false)
 const orderHistoryDialogOpen = ref(false)
+const isModalAiSeach = ref(false)
 const router = useRouter()
-type CategoryOption = { id: number | string; name: string; slug?: string }
+type CategoryOption = {
+  id: number | string
+  name: string
+  slug?: string
+  child?: Array<{ id: number | string; name: string; slug?: string }>
+}
 type DressTypeOption = { id: number | string; name: string; slug?: string }
 const cartCount = computed(() => totalItems.value || 0)
 const categories = ref<CategoryOption[]>([])
 const collectionItems = ref<DressTypeOption[]>([])
+const expandedCategoryIds = ref<Set<string>>(new Set())
 const priceRanges = [
   { slug: 'under-50', label: 'Under $50', query: { price_min: 0, price_max: 50 } },
   { slug: '50-100', label: '$50 - $100', query: { price_min: 50, price_max: 100 } },
@@ -462,6 +499,16 @@ const toggleShopMenu = () => {
   isShopMenuOpen.value = !isShopMenuOpen.value
 }
 
+const isCategoryExpanded = (id: number | string) => expandedCategoryIds.value.has(String(id))
+
+const toggleCategory = (id: number | string) => {
+  const next = new Set(expandedCategoryIds.value)
+  const key = String(id)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  expandedCategoryIds.value = next
+}
+
 // Toggle mobile search
 const toggleSearch = () => {
   showMobileSearch.value = !showMobileSearch.value
@@ -501,18 +548,25 @@ const submitDesktopSearch = async () => {
 }
 
 // Handle mobile search
-const handleMobileSearch = () => {
+const handleMobileSearch = async () => {
   if (mobileSearchInput.value) {
     const searchTerm = mobileSearchInput.value.value
     if (searchTerm.trim()) {
-      // Navigate to search results or perform search
-      if (import.meta.dev) {
-        console.log('Searching for:', searchTerm)
-      }
-      // You can add your search logic here
+      await router.push({
+        path: '/frontend/categories',
+        query: { search_txt: searchTerm.trim() },
+      })
       toggleSearch()
     }
   }
+}
+
+// Handle AI search 
+
+const handleAiSearch = () => {
+  console.log('hello');
+
+  isModalAiSeach.value = true;
 }
 
 // Close all mobile overlays
@@ -611,7 +665,10 @@ const fetchCategories = async () => {
         credentials: 'include'
       }),
     ])
-    categories.value = categoryResponse?.data || []
+    const hierarchy = filterResponse?.data?.category_hierarchy?.parents
+    categories.value = Array.isArray(hierarchy) && hierarchy.length
+      ? hierarchy
+      : (categoryResponse?.data || [])
     collectionItems.value = filterResponse?.data?.collections || []
 
     if (accessToken.value || isAuthenticated.value) {

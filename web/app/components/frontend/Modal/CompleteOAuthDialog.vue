@@ -1,6 +1,6 @@
 <template>
-    <el-dialog v-model="dialogOpen" width="680px" align-center :close-on-click-modal="false" title="Complete Your Profile"
-        class="profile-dialog" @closed="onProfileDialogClosed">
+    <el-dialog v-model="dialogOpen" width="680px" align-center :close-on-click-modal="false"
+        title="Complete Your Profile" class="profile-dialog" @closed="onProfileDialogClosed">
         <div class="space-y-4">
 
             <el-alert v-if="authCompleteFormMessage" :title="authCompleteFormMessage"
@@ -187,7 +187,7 @@ const connectTelegram = async () => {
         })
         const deepLink = response?.data?.deep_link
         if (import.meta.dev) {
-          console.log(deepLink);
+            console.log(deepLink);
         }
 
         if (!deepLink) {

@@ -1,8 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const isProduction = process.env.NODE_ENV === "production";
 
+
 export default defineNuxtConfig({
   compatibilityDate: "2024-04-03",
+  srcDir: "app/",
+  dir: {
+    public: "../public",
+  },
   app: {
     pageTransition: { name: "page", mode: "out-in" },
     head: {
@@ -14,17 +19,7 @@ export default defineNuxtConfig({
           rel: "icon",
           type: "image/png",
           href: "/favicon.png",
-          sizes: "32x32",
-        },
-        {
-          rel: "icon",
-          type: "image/x-icon",
-          href: "/favicon.ico",
-        },
-        {
-          rel: "apple-touch-icon",
-          href: "/favicon.png",
-          sizes: "32x32",
+          sizes: "64x64",
         },
       ],
     },
@@ -32,15 +27,10 @@ export default defineNuxtConfig({
   build: {
     transpile: [], // ensure no forced legacy transpilation
   },
-  // For Nuxt 3, it's modern by default, but check:
-  experimental: {
-    clientNodeCompat: false, // avoid legacy fallbacks
-  },
 
-  future: {
-    compatibilityVersion: 4,
-  },
-  ssr: true,
+  // SPA mode (no SSR)
+  ssr: false,
+
   devtools: {
     enabled: process.dev,
   },
@@ -59,7 +49,6 @@ export default defineNuxtConfig({
   },
   modules: [
     "@pinia/nuxt",
-    "@nuxtjs/tailwindcss",
     "@nuxtjs/google-fonts",
     "@nuxt/icon",
     "@nuxt/image",
@@ -73,14 +62,20 @@ export default defineNuxtConfig({
     //----------------------
     prefix: "Swiper",
     styleLang: "css",
-    modules: ["autoplay"], // all modules are imported by default
+    modules: ["autoplay", "pagination"], // all modules are imported by default
   },
   icon: {
     fetchTimeout: 5000, // 15 seconds
   },
-  tailwindcss: {
-    configPath: "~/tailwind.config.ts",
-    cssPath: "./assets/css/tailwind.css",
+  css: ["./assets/css/tailwind.css"],
+
+  // Tailwind CSS v3 as PostCSS plugin (v4 @tailwindcss/postcss conflicts
+  // with postcss-import resolving the old tailwindcss package)
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
   },
 
   elementPlus: {
@@ -195,6 +190,9 @@ export default defineNuxtConfig({
     },
   },
   vite: {
+    optimizeDeps: {
+      include: ["@pusher/push-notifications-web"],
+    },
     build: {
       cssCodeSplit: false, // combines all CSS into one file
     },

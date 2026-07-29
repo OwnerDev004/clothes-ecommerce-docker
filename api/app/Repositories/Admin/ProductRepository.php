@@ -37,7 +37,7 @@ class ProductRepository extends BaseRepository
                     ->orderBy('id');
             },
             'variants' => function ($query) {
-                $query->select('id', 'product_id', 'sku', 'color', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
+                $query->select('id', 'product_id', 'sku', 'color', 'color_label', 'color_name', 'size_id', 'stock_quantity', 'sell_price', 'cost_price')
                     ->with(['size:id,name,sort_order']);
             },
             'subCategory:id,category_id,name,slug',
@@ -154,7 +154,7 @@ class ProductRepository extends BaseRepository
                         ->from('product_variants')
                         ->whereColumn('product_variants.product_id', 'products.id')
                         ->where(function ($w) use ($color) {
-                            $w->where('product_variants.color', 'like', '%' . $color . '%');
+                            $w->where('product_variants.color_name', 'like', '%' . $color . '%');
                         });
                 });
             }

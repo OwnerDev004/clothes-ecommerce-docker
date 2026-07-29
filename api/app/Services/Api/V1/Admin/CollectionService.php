@@ -2,16 +2,18 @@
 
 namespace App\Services\Api\V1\Admin;
 
+use App\Contracts\ImageStorageInterface;
 use App\Models\Collection;
 use App\Repositories\Admin\CollectionRepository;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 
 class CollectionService
 {
-    public function __construct(private readonly CollectionRepository $collectionRepository)
-    {
+    public function __construct(
+        private readonly CollectionRepository $collectionRepository,
+        private readonly ImageStorageInterface $imageStorage,
+    ) {
     }
 
     public function paginate(array $filters = []): LengthAwarePaginator
@@ -38,13 +40,9 @@ class CollectionService
         ];
 
         if ($image) {
-            $upload = Cloudinary::uploadApi()->upload(
-                $image->getRealPath(),
-                ['folder' => 'clothes_ecommerce/collections']
-            );
-
-            $payload['image_url'] = $upload['secure_url'] ?? null;
-            $payload['image_public_id'] = $upload['public_id'] ?? null;
+            $upload = $this->imageStorage->upload($image, 'clothes_ecommerce/collections');
+            $payload['image_url'] = $upload->url;
+            $payload['image_public_id'] = $upload->publicId;
         }
 
         $collection = $this->collectionRepository->create($payload);
@@ -75,18 +73,14 @@ class CollectionService
         }
 
         if ((($validated['remove_image'] ?? false) || $image) && $collection->image_public_id) {
-            Cloudinary::uploadApi()->destroy($collection->image_public_id);
+            $this->imageStorage->delete($collection->image_public_id);
         }
 
         if ($image) {
-            $upload = Cloudinary::uploadApi()->upload(
-                $image->getRealPath(),
-                ['folder' => 'clothes_ecommerce/collections']
-            );
-
-            $payload['image_url'] = $upload['secure_url'] ?? null;
-            $payload['image_public_id'] = $upload['public_id'] ?? null;
-        } else if (($validated['remove_image'] ?? false)) {
+            $upload = $this->imageStorage->upload($image, 'clothes_ecommerce/collections');
+            $payload['image_url'] = $upload->url;
+            $payload['image_public_id'] = $upload->publicId;
+        } elseif (($validated['remove_image'] ?? false)) {
             $payload['image_url'] = null;
             $payload['image_public_id'] = null;
         }
@@ -102,9 +96,7 @@ class CollectionService
 
     public function destroy(Collection $collection): void
     {
-        if ($collection->image_public_id) {
-            Cloudinary::uploadApi()->destroy($collection->image_public_id);
-        }
+        $this->imageStorage->delete($collection->image_public_id);
 
         $this->collectionRepository->delete($collection);
     }

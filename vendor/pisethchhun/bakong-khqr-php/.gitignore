@@ -1,0 +1,30 @@
+# Composer
+/vendor/
+/composer.lock
+
+# PHPUnit
+/.phpunit.cache
+/.phpunit.result.cache
+/phpunit.xml.bak
+
+# IDE Files
+/.idea/
+/.vscode/
+
+# Environment files
+/.env
+/.env.local
+/.env.*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cache files
+/.php_cs.cache
+/.php-cs-fixer.cache

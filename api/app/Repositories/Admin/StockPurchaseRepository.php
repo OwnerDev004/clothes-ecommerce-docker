@@ -52,7 +52,7 @@ class StockPurchaseRepository
                         $sizeQuery->where('sizes.name', 'like', '%' . $search . '%');
                     })
                     ->orWhereHas('variant', function ($variantQuery) use ($search) {
-                        $variantQuery->where('product_variants.color', 'like', '%' . $search . '%');
+                        $variantQuery->where('product_variants.color_name', 'like', '%' . $search . '%');
                     });
             });
         }

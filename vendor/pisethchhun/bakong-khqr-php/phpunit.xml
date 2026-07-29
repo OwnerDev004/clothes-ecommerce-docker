@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd" bootstrap="vendor/autoload.php" colors="true" executionOrder="depends,defects" testdox="true">
+  <testsuites>
+    <testsuite name="Unit">
+      <directory suffix="Test.php">./tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Feature">
+      <directory suffix="Test.php">./tests/Feature</directory>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="BAKONG_TEST_TOKEN" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiODkyMDVhZTI0NmVlNDA3NiJ9LCJpYXQiOjE3NDkwNTc1NDYsImV4cCI6MTc1NjgzMzU0Nn0.PbHHfBuogbXBSqkMer2T4vEd3tgU6EqbHNOeWsiiVlQ"/>
+  </php>
+  <source>
+    <include>
+      <directory suffix=".php">./src</directory>
+    </include>
+    <exclude>
+      <directory>./src/Exceptions</directory>
+    </exclude>
+  </source>
+</phpunit>

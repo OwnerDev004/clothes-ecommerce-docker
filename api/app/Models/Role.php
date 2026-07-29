@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    use Sluggable;
+    use HasSlug;
 
     protected $fillable = [
         'name',
@@ -21,16 +21,6 @@ class Role extends Model
         'status' => 'boolean',
         'is_system' => 'boolean',
     ];
-
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name',
-                'onUpdate' => true,
-            ],
-        ];
-    }
 
     public function rolePermissions()
     {

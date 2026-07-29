@@ -39,6 +39,19 @@ type CustomerReviewFeedback = {
   comment?: string;
 };
 
+export type HeroSlideItem = {
+  id: number | string;
+  title: string;
+  subtitle?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  gradient?: string | null;
+  link_url?: string | null;
+  link_text?: string | null;
+  sort_order: number;
+  status: boolean | number;
+};
+
 export const useHomeProducts = () => {
   const config = useRuntimeConfig();
   const apiBase = (config.public.apiBase || "").replace(/\/$/, "");
@@ -75,7 +88,17 @@ export const useHomeProducts = () => {
   const perPage = 8;
   const loadMoreTrigger = ref<HTMLElement | null>(null);
 
-  const topSellingProducts = computed(() => products.value.slice(0, 4));
+  const topSellingProducts = useState<ProductCardItem[]>(
+    "home-top-selling",
+    () => [],
+  );
+  const isLoadingTopSelling = useState<boolean>(
+    "home-loading-top-selling",
+    () => false,
+  );
+  const heroSlides = useState<HeroSlideItem[]>("home-hero-slides", () => []);
+  const isLoadingHeroSlides = useState<boolean>("home-loading-hero-slides", () => false);
+
   const collectionItems = computed(() => collections.value.slice(0, 4));
 
   const resolveVisualImage = (
@@ -131,7 +154,9 @@ export const useHomeProducts = () => {
     } catch (error: any) {
       productError.value = error?.data?.message || "Failed to load products.";
     } finally {
-      isLoadingProducts.value = false;
+      setTimeout(() => {
+        isLoadingProducts.value = false;
+      }, 150);
     }
   };
 
@@ -164,6 +189,7 @@ export const useHomeProducts = () => {
     } catch (error) {
       console.warn("Failed to load home catalog meta:", error);
     } finally {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
       isLoadingCatalogMeta.value = false;
     }
   };
@@ -183,11 +209,47 @@ export const useHomeProducts = () => {
     }
   };
 
+  const fetchHeroSlides = async () => {
+    isLoadingHeroSlides.value = true;
+    try {
+      const response: any = await $fetch(`${apiBase}/hero-slides`, {
+        method: "GET",
+      });
+      heroSlides.value = Array.isArray(response?.data) ? response.data : [];
+    } catch (error) {
+      console.warn("Failed to load hero slides:", error);
+      heroSlides.value = [];
+    } finally {
+      isLoadingHeroSlides.value = false;
+    }
+  };
+
+  const fetchTopSellingProducts = async () => {
+    if (isLoadingTopSelling.value) return;
+    isLoadingTopSelling.value = true;
+    try {
+      const response: any = await $fetch(`${apiBase}/products/top-selling`, {
+        method: "GET",
+      });
+      const rows = Array.isArray(response?.data) ? response.data : [];
+      topSellingProducts.value = rows.map((row: ProductApiRecord) =>
+        normalizeProductCard(row, apiBase),
+      );
+    } catch (error) {
+      console.warn("Failed to load top selling products:", error);
+      topSellingProducts.value = [];
+    } finally {
+      isLoadingTopSelling.value = false;
+    }
+  };
+
   const loadInitialHomeData = async () => {
     await Promise.allSettled([
+      fetchHeroSlides(),
       fetchCatalogMeta(),
       fetchProducts(true),
       fetchCustomerReview(),
+      fetchTopSellingProducts(),
     ]);
   };
 
@@ -207,9 +269,12 @@ export const useHomeProducts = () => {
     brands,
     categories,
     collections,
+    heroSlides,
+    isLoadingHeroSlides,
     isLoadingProducts,
     isLoadingCatalogMeta,
     isLoadingCustomerReview,
+    isLoadingTopSelling,
     productError,
     currentPage,
     hasMoreProducts,
@@ -218,6 +283,7 @@ export const useHomeProducts = () => {
     collectionItems,
     customers_review,
     fetchProducts,
+    fetchTopSellingProducts,
     loadInitialHomeData,
     getCollectionSpanClass,
     resolveVisualImage,

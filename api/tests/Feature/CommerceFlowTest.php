@@ -149,7 +149,7 @@ class CommerceFlowTest extends TestCase
             'data' => [
                 'order_id' => $orderId,
                 'provider_payment_id' => $providerPaymentId,
-                'amount' => 31.50,
+                'amount' => $intent->json('data.amount'),
                 'currency' => 'USD',
             ],
         ];
@@ -198,7 +198,7 @@ class CommerceFlowTest extends TestCase
             'data' => [
                 'order_id' => $orderId,
                 'provider_payment_id' => $intent->json('data.provider_payment_id'),
-                'amount' => 81.50,
+                'amount' => $intent->json('data.amount'),
                 'currency' => 'USD',
             ],
         ];
@@ -378,7 +378,7 @@ class CommerceFlowTest extends TestCase
             'phone' => '85520000' . random_int(100, 999),
             'email' => "admin_{$suffix}@example.com",
             'password' => Hash::make('password123'),
-            'role' => 'admin',
+            'role' => 'super_admin',
         ]);
 
         $token = auth('admin')->login($admin);
@@ -397,16 +397,11 @@ class CommerceFlowTest extends TestCase
             'updated_at' => now(),
         ]);
         $collectionId = DB::table('collections')->insertGetId([
+            'category_id' => $categoryId,
             'name' => 'Collection ' . $suffix,
             'slug' => 'collection-' . $suffix,
             'sort_order' => 0,
             'img' => 'default_empty',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $colorId = DB::table('colors')->insertGetId([
-            'name' => 'Color ' . $suffix,
-            'hex_code' => '#' . substr(md5($suffix), 0, 6),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -433,7 +428,8 @@ class CommerceFlowTest extends TestCase
 
         return ProductVariant::create([
             'product_id' => $product->id,
-            'color_id' => $colorId,
+            'color' => '#' . substr(md5($suffix), 0, 6),
+            'color_name' => 'Color ' . $suffix,
             'size_id' => $sizeId,
             'stock_quantity' => $stock,
             'sell_price' => $sellPrice,

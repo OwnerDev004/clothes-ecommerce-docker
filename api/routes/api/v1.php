@@ -1,5 +1,6 @@
 <?php
 // Client
+use App\Http\Controllers\Api\V1\AiController;
 use App\Http\Controllers\Api\V1\AppSettingController;
 use App\Http\Controllers\Api\V1\NewsLetterSubScribeController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\BrandController;
 use App\Http\Controllers\Api\V1\CollectionController;
+use App\Http\Controllers\Api\V1\HeroSlideController as PublicHeroSlideController;
 use App\Http\Controllers\Api\V1\SubCategoryController;
 use App\Http\Controllers\Api\V1\VoucherController;
 use App\Http\Controllers\Api\V1\BeamsAuthController;
@@ -35,6 +37,8 @@ use App\Http\Controllers\Api\V1\Admin\ModuleController as AdminModuleController;
 use App\Http\Controllers\Api\V1\Admin\RoleController as AdminRolesController;
 use App\Http\Controllers\Api\V1\Admin\AdminController as AdminUsersController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
+use App\Http\Controllers\Api\V1\Admin\SubCategoryController as AdminSubCategoryController;
+use App\Http\Controllers\Api\V1\Admin\HeroSlideController as AdminHeroSlideController;
 use Illuminate\Support\Facades\Broadcast;
 
 
@@ -116,6 +120,7 @@ Route::prefix('products')->group(function () {
     Route::get('/{id}/detail-sections', [ProductController::class, 'detailSections']);
     Route::get('/{id}/reviews', [ProductController::class, 'reviewByProduct']);
     Route::get('/top_review', [ProductController::class, 'topFiveReviews']);
+    Route::get('/top-selling', [ProductController::class, 'topSelling']);
     Route::get('/{id}', [ProductController::class, 'show']);
 });
 
@@ -135,6 +140,10 @@ Route::prefix('categories')->group(function () {
 
 Route::prefix('sub-categories')->group(function () {
     Route::get('/', [SubCategoryController::class, 'index']);
+});
+
+Route::prefix('hero-slides')->group(function () {
+    Route::get('/', [PublicHeroSlideController::class, 'index']);
 });
 
 Route::prefix('vouchers')->group(function () {
@@ -157,6 +166,9 @@ Route::post('newsletters/subscribe', [NewsLetterSubScribeController::class, 'sub
 //app setting 
 Route::get('app_setting', [AppSettingController::class, 'index']);
 
+Route::post('/ai-chat', [AiController::class, 'index']);
+Route::post('/ai-chat/product/filter', [AiController::class, 'productFilter']);
+Route::post('/ai-chat-text-speech', [AiController::class, 'textToSpeech']);
 
 
 
@@ -223,12 +235,27 @@ Route::prefix('admin')->group(function () {
             Route::delete('/{id}', [AdminVoucherController::class, 'destroy']);
         });
 
+        Route::prefix('hero-slides')->group(function () {
+            Route::get('/', [AdminHeroSlideController::class, 'index']);
+            Route::get('/{heroSlide:id}', [AdminHeroSlideController::class, 'show']);
+            Route::post('/', [AdminHeroSlideController::class, 'store']);
+            Route::put('/{heroSlide:id}', [AdminHeroSlideController::class, 'update']);
+            Route::delete('/{heroSlide:id}', [AdminHeroSlideController::class, 'destroy']);
+        });
+
         Route::prefix('categories')->group(function () {
             Route::get('/', [AdminCategoryController::class, 'index']);
             Route::get('/{category:id}', [AdminCategoryController::class, 'show']);
             Route::post('/', [AdminCategoryController::class, 'store']);
-            Route::put('/{category:id}', [AdminCategoryController::class, 'update']);
+            Route::put('/{category:id}', [AdminCategoryController::class, 'u pdate']);
             Route::delete('/{category:id}', [AdminCategoryController::class, 'destroy']);
+        });
+        Route::prefix('sub_categories')->group(function () {
+            Route::get('/', [AdminSubCategoryController::class, 'index']);
+            Route::get('/{sub_categories:id}', [AdminSubCategoryController::class, 'show']);
+            Route::post('/', [AdminSubCategoryController::class, 'store']);
+            Route::put('/{sub_categories:id}', [AdminSubCategoryController::class, 'update']);
+            Route::delete('/{sub_categories:id}', [AdminSubCategoryController::class, 'destroy']);
         });
         Route::prefix('customers')->group(function () {
             Route::get('/', [AdminCustomerController::class, 'index']);

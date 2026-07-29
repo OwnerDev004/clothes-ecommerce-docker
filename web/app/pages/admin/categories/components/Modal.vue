@@ -1,11 +1,6 @@
 <template>
-    <BaseModal
-        v-model="model"
-        :title="mode === 'edit' ? 'Edit Category' : 'Add Category'"
-        width="min(1100px, 96vw)"
-        body-class="p-0"
-        footer-class="px-4 pb-4 pt-0 sm:px-6 sm:pb-6"
-    >
+    <BaseModal v-model="model" :title="mode === 'edit' ? 'Edit Category' : 'Add Category'" width="min(1100px, 96vw)"
+        body-class="p-0" footer-class="px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
         <el-form label-position="top">
 
             <div class="grid gap-4 px-4 pb-4 sm:px-6 sm:pb-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
@@ -62,9 +57,9 @@
         <template #footer>
             <div class="flex justify-end gap-3 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
                 <BaseButton @click="closeModal">Cancel</BaseButton>
-            <BaseButton type="primary" :loading="loading" @click="submitForm">
-                {{ mode === 'edit' ? 'Update Category' : 'Save Category' }}
-            </BaseButton>
+                <BaseButton type="primary" :loading="loading" @click="submitForm">
+                    {{ mode === 'edit' ? 'Update Category' : 'Save Category' }}
+                </BaseButton>
             </div>
         </template>
     </BaseModal>

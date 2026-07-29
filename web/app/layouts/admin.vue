@@ -77,10 +77,17 @@ const navigationGroups: NavGroup[] = [
         items: [{ index: '/admin/dashboard', label: 'Dashboard', icon: House, badge: 'Live', moduleKey: 'dashboard' }],
     },
     {
+        title: 'Home',
+        items: [
+            { index: '/admin/hero-slides', label: 'Hero Slides', icon: Tickets, badge: 'New', moduleKey: 'hero-slides' },
+        ],
+    },
+    {
         title: 'Catalog',
         items: [
             { index: '/admin/products', label: 'Products', icon: Box, badge: 'Live', moduleKey: 'products' },
             { index: '/admin/categories', label: 'Categories', icon: Grid, badge: 'Live', moduleKey: 'categories' },
+            { index: '/admin/sub_categories', label: 'Sub Categories', icon: Grid, badge: 'Live', moduleKey: 'categories' },
             { index: '/admin/collections', label: 'Collections', icon: Goods, badge: 'Live', moduleKey: 'collections' },
         ],
     },
@@ -93,7 +100,7 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Commerce',
         items: [
-            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Soon', moduleKey: 'orders' },
+            { index: '/admin/orders', label: 'Orders', icon: ShoppingCart, badge: 'Live', moduleKey: 'orders' },
             { index: '/admin/customers', label: 'Customers', icon: User, badge: 'Live', moduleKey: 'customers' },
             { index: '/admin/promotions', label: 'Promotions', icon: Tickets, badge: 'Live', moduleKey: 'promotions' },
         ],
@@ -107,8 +114,8 @@ const navigationGroups: NavGroup[] = [
     {
         title: 'Settings',
         items: [
-            { index: '/admin/roles', label: 'Admin Role', icon: User, badge: 'Soon', moduleKey: 'roles' },
-            { index: '/admin/roles/permission', label: 'Role Permission', icon: User, badge: 'Soon', moduleKey: 'roles' },
+            { index: '/admin/roles', label: 'Admin Role', icon: User, badge: 'Live', moduleKey: 'roles' },
+            { index: '/admin/roles/permission', label: 'Role Permission', icon: User, badge: 'Live', moduleKey: 'roles' },
             { index: '/admin/admins', label: 'Admins', icon: User, badge: 'Live', moduleKey: 'admins' },
             { index: '/admin/setting', label: 'Admin Setting', icon: Setting, badge: 'Live', moduleKey: 'setting' }
         ],
@@ -218,7 +225,7 @@ onMounted(() => {
                                     <el-avatar :size="34">{{ userInitialsHelper(adminProfile?.user_name) }}</el-avatar>
                                     <div>
                                         <strong class="block text-sm text-slate-950">{{ adminProfile?.user_name
-                                            }}</strong>
+                                        }}</strong>
                                     </div>
                                 </div>
 

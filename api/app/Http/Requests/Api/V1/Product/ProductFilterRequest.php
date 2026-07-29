@@ -25,6 +25,7 @@ class ProductFilterRequest extends FormRequest
             "brand" => "nullable|string",
             "collection" => "nullable|string",
             "dress_style" => "nullable|string",
+            "new_arrivals" => "nullable|boolean",
             "sort_by" => "nullable|in:latest,oldest,price_low,price_high,name_asc,name_desc",
             "page" => "nullable|integer|min:1",
             "per_page" => "nullable|integer|min:1|max:50",

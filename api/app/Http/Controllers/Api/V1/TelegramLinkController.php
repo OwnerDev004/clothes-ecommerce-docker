@@ -32,6 +32,7 @@ class TelegramLinkController extends Controller
     public function createLink(Request $request)
     {
         $customer = auth()->guard('customer')->user();
+        
         if (!$customer) {
             return $this->error('Unauthorized', 401);
         }
@@ -238,7 +239,6 @@ class TelegramLinkController extends Controller
 
             DB::transaction(function () use ($token, $customer, $telegramUserId, $telegramChatId, $telegramUsername, &$linked) {
                 $linkToken = CustomerTelegramLinkToken::where('token', $token)
-                    ->where('customer_id', $customer->id)
                     ->whereNull('consumed_at')
                     ->where('expires_at', '>', now())
                     ->lockForUpdate()
@@ -248,19 +248,24 @@ class TelegramLinkController extends Controller
                     return;
                 }
 
+                $targetCustomer = Customer::whereKey($linkToken->customer_id)->lockForUpdate()->first();
+                if (!$targetCustomer) {
+                    return;
+                }
+
                 $alreadyLinked = Customer::where('telegram_user_id', $telegramUserId)
-                    ->where('id', '!=', $customer->id)
+                    ->where('id', '!=', $targetCustomer->id)
                     ->exists();
 
                 if ($alreadyLinked) {
                     return;
                 }
 
-                $customer->telegram_user_id = $telegramUserId;
-                $customer->telegram_chat_id = $telegramChatId;
-                $customer->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
-                $customer->enable_telegram_alerts = true;
-                $customer->save();
+                $targetCustomer->telegram_user_id = $telegramUserId;
+                $targetCustomer->telegram_chat_id = $telegramChatId;
+                $targetCustomer->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
+                $targetCustomer->enable_telegram_alerts = true;
+                $targetCustomer->save();
 
                 $linkToken->consumed_at = now();
                 $linkToken->telegram_user_id = $telegramUserId;
@@ -268,7 +273,10 @@ class TelegramLinkController extends Controller
                 $linkToken->telegram_username = $telegramUsername ? (string) $telegramUsername : null;
                 $linkToken->save();
 
-                $linked = true;
+                // One authenticated request may process pending updates for all
+                // customers, so a shared Telegram update cursor cannot lose
+                // another customer's link while polling.
+                $linked = (int) $targetCustomer->id === (int) $customer->id;
             });
 
             if ($linked) {

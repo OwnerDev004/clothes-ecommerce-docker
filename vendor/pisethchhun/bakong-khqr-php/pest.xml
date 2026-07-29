@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pest
+    colors="true"
+    testdox="true"
+    failOnRisky="true"
+    failOnWarning="true"
+    failOnIncomplete="true"
+    failOnSkipped="false"
+    stopOnDefect="false"
+    executionOrder="depends,defects"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <coverage includeUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>src/Exceptions</directory>
+        </exclude>
+    </coverage>
+    <php>
+        <env name="BAKONG_TEST_TOKEN" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImlkIjoiODkyMDVhZTI0NmVlNDA3NiJ9LCJpYXQiOjE3NDkwNTc1NDYsImV4cCI6MTc1NjgzMzU0Nn0.PbHHfBuogbXBSqkMer2T4vEd3tgU6EqbHNOeWsiiVlQ"/>
+    </php>
+</pest>

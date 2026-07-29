@@ -62,7 +62,7 @@ class IndividualInfo
         ?string $languagePreference = null,
         ?string $merchantNameAlternateLanguage = null,
         ?string $merchantCityAlternateLanguage = null,
-        ?string $upiMerchantAccount = null,
+        ?string $upiMerchantAccount = null
     ) {
         if (Utils::isBlank($bakongAccountID)) {
             throw new KHQRException(KHQRException::BAKONG_ACCOUNT_ID_REQUIRED);
@@ -109,8 +109,7 @@ class IndividualInfo
      *     languagePreference?: string|null,
      *     merchantNameAlternateLanguage?: string|null,
      *     merchantCityAlternateLanguage?: string|null,
-     *     upiMerchantAccount?: string|null,
-     *     staticQr?: bool|false
+     *     upiMerchantAccount?: string|null
      * } $optionalData
      */
     public static function withOptionalArray(

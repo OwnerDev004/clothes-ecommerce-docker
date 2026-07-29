@@ -145,6 +145,7 @@ import BaseInput from '~/components/ui/BaseInput.vue'
 import BaseSelect from '~/components/ui/BaseSelect.vue'
 import { useAdminCustomer } from '~/composables/useAdminCustomer'
 import { customerStatus, getDisplayCustomerStatus } from '~/enums/customerStatus'
+import LoadingPage from '~/components/shares/LoadingPage.vue'
 
 definePageMeta({
     layout: 'admin',

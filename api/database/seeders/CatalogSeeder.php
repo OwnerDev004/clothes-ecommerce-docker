@@ -263,6 +263,7 @@ class CatalogSeeder extends Seeder
                 $variants[] = [
                     'product_id' => $product->id,
                     'color' => $colorValue,
+                    'color_name' => $colorValue === '#000000' ? 'Black' : 'White',
                     'size_id' => $sizesByName[$sizeName]->id,
                     'stock_quantity' => 20,
                     'sell_price' => $product->price,

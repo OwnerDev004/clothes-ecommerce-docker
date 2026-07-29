@@ -24,17 +24,20 @@
     "jspdf": "^4.2.1",
     "jwt-decode": "^4.0.0",
     "lucide-vue-next": "^0.453.0",
-    "nuxt": "^3.13.2",
-    "nuxt-swiper": "^1.2.2",
+    "nuxt": "^3.21.10",
+    "nuxt-swiper": "^2.0.2",
     "nuxt-toast": "^1.4.0",
     "nuxt-vitalizer": "^2.0.0",
     "pdfmake": "^0.2.7",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "qrcode": "^1.5.4",
-    "swiper": "^11.1.14",
+    "swiper": "^14.0.5",
     "vue": "latest",
     "vue-router": "latest"
+  },
+  "overrides": {
+    "impound": ">=1.1.0"
   },
   "devDependencies": {
     "@ceereals/vue-pdf": "^0.3.1",
