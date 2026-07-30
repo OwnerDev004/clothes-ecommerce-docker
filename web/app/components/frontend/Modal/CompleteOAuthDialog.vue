@@ -11,32 +11,29 @@
                 <el-form-item label="Username">
                     <el-input v-model="authCompleteForm.user_name" />
                 </el-form-item>
-                <el-form-item label="Telegram Username">
-                    <el-input v-model="authCompleteForm.telegram_username" />
-                </el-form-item>
-                <el-form-item label="Enable Telegram Alerts">
-                    <el-switch v-model="authCompleteForm.enable_telegram_alerts" />
-                </el-form-item>
 
                 <div class="md:col-span-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-sm">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <div class="font-medium text-gray-800">Telegram linking</div>
+                            <div class="font-medium text-gray-800">Telegram Notifications</div>
                             <div class="text-gray-600">
-                                {{ telegramLinked ? 'Linked' : 'Not linked yet. Tap Connect and press Start in the bot.'
-                                }}
+                                {{ telegramLinked ? 'Linked' : 'Link your Telegram to get order updates.' }}
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <el-button size="small" plain :loading="connectingTelegram" @click="connectTelegram">
-                                Connect Telegram
+                            <el-button v-if="!telegramLinked" size="small" plain :loading="connectingTelegram"
+                                @click="connectTelegram">
+                                <Icon name="fa-brands:telegram-plane" class="mr-1" />
+                                Connect
                             </el-button>
-                            <el-button size="small" plain @click="refreshProfile">
-                                Refresh status
-                            </el-button>
+                            <el-tag v-else type="success" size="small" effect="plain">Connected</el-tag>
                         </div>
                     </div>
-                    <p v-if="telegramStatusMessage" class="mt-2 text-xs text-gray-600">
+                    <label v-if="telegramLinked" class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                        <el-switch v-model="authCompleteForm.enable_telegram_alerts" size="small" />
+                        Enable alerts
+                    </label>
+                    <p v-if="telegramStatusMessage" class="mt-2 text-xs text-amber-600">
                         {{ telegramStatusMessage }}
                     </p>
                 </div>
@@ -83,7 +80,6 @@ const { accessToken, userProfile } = storeToRefs(authStore)
 const profileFormRef = ref<FormInstance>()
 const router = useRouter()
 type authCompleteForm = {
-    telegram_username: string;
     user_name: string;
     enable_telegram_alerts: boolean;
     password: string;
@@ -91,9 +87,6 @@ type authCompleteForm = {
 };
 
 const authCompleteRules: FormRules<authCompleteForm> = {
-    telegram_username: [
-        { max: 255, message: 'Telegram Username is too long', trigger: 'blur' },
-    ],
     user_name: [
         { required: true, message: 'Username is required', trigger: 'blur' },
         { max: 255, message: 'Username is too long', trigger: 'blur' },
@@ -117,7 +110,6 @@ const authCompleteRules: FormRules<authCompleteForm> = {
 };
 
 const authCompleteForm = reactive<authCompleteForm>({
-    telegram_username: '',
     user_name: '',
     enable_telegram_alerts: false,
     password: '',
@@ -146,7 +138,6 @@ const getAuthHeaders = () => {
 const fillFromProfile = () => {
     const profile = (userProfile.value || {}) as Record<string, any>
     authCompleteForm.user_name = String(profile.user_name || '')
-    authCompleteForm.telegram_username = String(profile.telegram_username || '')
     authCompleteForm.enable_telegram_alerts = Boolean(profile.enable_telegram_alerts)
 }
 
@@ -167,15 +158,6 @@ const fetchProfile = async () => {
     authStore.setUserProfile(response?.data || null)
 }
 
-const refreshProfile = async () => {
-    try {
-        await pollTelegramLink()
-        await fetchProfile()
-    } catch {
-        // No-op: handled by parent auth logic
-    }
-}
-
 const connectTelegram = async () => {
     telegramStatusMessage.value = ''
     connectingTelegram.value = true
@@ -186,18 +168,14 @@ const connectTelegram = async () => {
             headers: getAuthHeaders(),
         })
         const deepLink = response?.data?.deep_link
-        if (import.meta.dev) {
-            console.log(deepLink);
-        }
-
         if (!deepLink) {
             telegramStatusMessage.value = 'Unable to generate Telegram link.'
             return
         }
         window.open(deepLink, '_blank', 'noopener,noreferrer')
-        telegramStatusMessage.value = 'Telegram opened. Tap Start in the bot, then click Refresh.'
+        telegramStatusMessage.value = 'Opened Telegram. Tap Start in the bot to link.'
     } catch (err: any) {
-        telegramStatusMessage.value = err?.data?.message || 'Failed to connect Telegram.'
+        telegramStatusMessage.value = err?.data?.message || 'Failed to connect.'
     } finally {
         connectingTelegram.value = false
     }
@@ -230,7 +208,6 @@ const submitAuthComplete = async () => {
             headers: getAuthHeaders(),
             body: {
                 user_name: authCompleteForm.user_name,
-                telegram_username: authCompleteForm.telegram_username,
                 enable_telegram_alerts: authCompleteForm.enable_telegram_alerts,
                 password: authCompleteForm.password,
                 password_confirmation: authCompleteForm.confirmPassword,

@@ -14,8 +14,8 @@
               <BaseInput v-model="filters.search_txt" placeholder="Search admins..." clearable />
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
-              <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+            <div class="flex flex-wrap gap-3">
+              <BaseButton @click="resetFilters">Reset</BaseButton>
               <BaseButton v-if="can('admins', 'create')" type="primary" @click="openCreate">Add Admin</BaseButton>
             </div>
           </div>

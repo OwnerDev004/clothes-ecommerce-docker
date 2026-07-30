@@ -133,8 +133,8 @@ const applyAuthFromResponse = (response: any) => {
 const shouldOauthCompleteProfile = (profile: any) => {
     return Boolean(profile?.requires_profile_completion)
 }
-const shouldTelegramAuthCompleteProfile = (profile: any) => {
-    return Boolean(profile?.requires_telegram_completion)
+const checkTelegramConnected = (profile: any) => {
+    return Boolean(profile?.telegram_chat_id || profile?.telegram_user_id)
 }
 
 const submitLogin = async () => {
@@ -162,7 +162,7 @@ const submitLogin = async () => {
             return
         }
 
-        if (shouldTelegramAuthCompleteProfile(profile) || response?.data?.requires_telegram_completion) {
+        if (!checkTelegramConnected(profile)) {
             telegramCompleteDialogOpen.value = true
             return
         }
@@ -217,6 +217,11 @@ const handleOAuthToken = async (token: string, encodedCustomer?: string | null) 
 
         if (shouldOauthCompleteProfile(profile) || profileResponse?.data?.requires_profile_completion) {
             oAuthCompleteDialogOpen.value = true
+            return
+        }
+
+        if (!checkTelegramConnected(profile)) {
+            telegramCompleteDialogOpen.value = true
             return
         }
         await router.replace('/')

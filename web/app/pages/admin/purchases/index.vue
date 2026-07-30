@@ -9,7 +9,7 @@
             <BaseCard>
                 <template #header>
                     <div class="space-y-4">
-                        <div class="flex flex-col gap-4 lg:flex-row  lg:justify-between">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                             <div class="grid grid-cols-2 gap-3 w-full lg:w-[50%]">
                                 <BaseInput v-model="filters.search_txt"
                                     placeholder="Search product, size, color, note..." clearable />

@@ -33,7 +33,7 @@ const emit = defineEmits<{
   <div class="flex h-full min-h-0 flex-col">
     <div class="flex items-center gap-3 rounded-2xl px-3 pb-4 pt-2">
       <div
-        class="grid h-11 w-11 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#f8fafc,#c7d2fe)] font-extrabold tracking-[0.08em] text-slate-950 shadow-[0_14px_30px_rgba(96,165,250,0.22)]">
+        class="grid h-11 w-11 place-items-center rounded-[16px] bg-white font-extrabold tracking-[0.08em] text-slate-950 shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
         CS
       </div>
       <div>

@@ -196,6 +196,12 @@ export default defineNuxtConfig({
     build: {
       cssCodeSplit: false, // combines all CSS into one file
     },
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 200,
+      },
+    },
   },
 
   routeRules: {

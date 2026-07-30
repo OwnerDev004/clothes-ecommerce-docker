@@ -12,8 +12,8 @@
                         <h3 class="text-base font-semibold text-slate-900">{{ card.title }}</h3>
                         <p class="text-[2rem] font-bold leading-none text-slate-500">{{ card.amount }}</p>
                     </div>
-                    <div class="rounded-2xl bg-orange-400/10 p-3">
-                        <Icon :name="card.icon" class="text-3xl text-orange-500" />
+                    <div class="rounded-2xl bg-slate-100 p-3">
+                        <Icon :name="card.icon" class="text-3xl text-slate-500" />
                     </div>
                 </article>
             </div>
@@ -31,7 +31,7 @@
                             </div>
 
                             <div class="flex flex-wrap gap-3">
-                                <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+                                <BaseButton @click="resetFilters">Reset</BaseButton>
                             </div>
                         </div>
 

@@ -15,14 +15,21 @@
                                 <BaseInput v-model="filters.search_txt" placeholder="Search products..." clearable />
                             </div>
 
-                            <div class="grid grid-cols-2 gap-2">
-                                <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+                            <div class="flex flex-wrap gap-2">
+                                <BaseButton @click="showFilters = !showFilters">
+                                    <Icon :name="showFilters ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+                                        class="mr-1 text-sm" />
+                                    Filters
+                                </BaseButton>
+                                <BaseButton @click="resetFilters">Reset</BaseButton>
                                 <BaseButton v-if="can('products', 'create')" type="primary" @click="addProduct">Add
                                     Product</BaseButton>
                             </div>
                         </div>
 
-                        <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+                        <div v-show="showFilters"
+                            class="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 overflow-hidden transition-all duration-200"
+                            :class="showFilters ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'">
                             <BaseSelect v-model="filters.category" :options="categoryOptions"
                                 placeholder="All Categories" class="w-full" />
                             <BaseSelect v-model="filters.sub_category" :options="subCategoryOptions"
@@ -35,10 +42,6 @@
                                 class="w-full" />
                             <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
                                 class="w-full" />
-                        </div>
-
-                        <div class="grid gap-3 xl:grid-cols-4">
-
                         </div>
                     </div>
                 </template>
@@ -116,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import HeaderBreadCrumb from '~/components/admin/HeaderBreadCrumb.vue'
 import BaseCard from '~/components/ui/BaseCard.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
@@ -163,6 +166,7 @@ const {
     deleteProduct,
 } = useAdminProducts()
 
+const showFilters = ref(false)
 const route = useRoute()
 const router = useRouter()
 

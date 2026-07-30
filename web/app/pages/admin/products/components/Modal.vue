@@ -497,7 +497,7 @@ onBeforeUnmount(() => {
                                             <span
                                                 class="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[0.72rem] font-semibold"
                                                 :class="image.image_type === 'thumbnail'
-                                                    ? 'bg-emerald-500 text-white'
+                                                    ? 'bg-slate-800 text-white'
                                                     : 'bg-white/90 text-slate-700'">
                                                 {{ image.image_type === 'thumbnail' ? 'Thumbnail' : 'Gallery' }}
                                             </span>

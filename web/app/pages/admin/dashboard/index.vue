@@ -114,9 +114,9 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
 <template>
   <div class="grid gap-6 text-slate-900">
     <section
-      class="grid gap-5 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(129,140,248,0.18),transparent_22%),linear-gradient(135deg,#ffffff,#eef2ff)] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.9fr)] lg:p-7">
+      class="grid gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.9fr)] lg:p-7">
       <div>
-        <p class="m-0 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+        <p class="m-0 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
           Today at a glance
         </p>
         <h2 class="mt-2 max-w-[16ch] text-[clamp(1.8rem,2.8vw,3.2rem)] font-semibold leading-[0.95] text-slate-950">
@@ -153,7 +153,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           <p class="m-0 mt-1 text-sm">{{ error?.message || 'Please try again.' }}</p>
         </div>
         <BaseButton
-          class="rounded-2xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+          class="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
           @click="refresh">
           Retry</BaseButton>
       </div>
@@ -169,12 +169,12 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="flex items-center justify-between gap-3">
             <div
-              class="grid h-11 w-11 place-items-center rounded-[16px] bg-[linear-gradient(135deg,#eef2ff,#dbeafe)] text-indigo-700">
+              class="grid h-11 w-11 place-items-center rounded-[16px] bg-indigo-100 text-indigo-700">
               <el-icon>
                 <component :is="card.icon" />
               </el-icon>
             </div>
-            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[0.75rem] font-bold text-emerald-700">
+            <span class="rounded-full bg-indigo-100 px-2.5 py-1 text-[0.75rem] font-bold text-indigo-700">
               {{ card.delta }}
             </span>
           </div>
@@ -189,7 +189,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5 flex items-start justify-between gap-4">
             <div>
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Revenue pulse
               </p>
               <h3 class="m-0 text-[1.25rem] font-semibold text-slate-950">Weekly performance</h3>
@@ -204,9 +204,9 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           <div class="grid h-[220px] grid-cols-7 items-end gap-3 pb-4">
             <div v-for="bar in dashboardState.trend" :key="bar.date" class="grid justify-items-center gap-2">
               <div
-                class="flex h-[190px] w-full items-end overflow-hidden rounded-[18px] bg-gradient-to-b from-slate-50 to-indigo-50">
+                class="flex h-[190px] w-full items-end overflow-hidden rounded-[18px] bg-gradient-to-b from-indigo-50/60 to-indigo-100/40">
                 <div
-                  class="w-full rounded-t-[18px] bg-gradient-to-b from-indigo-600 to-violet-600 shadow-[0_12px_30px_rgba(79,70,229,0.26)]"
+                  class="w-full rounded-t-[18px] bg-indigo-500"
                   :style="{ height: `${Math.max((bar.total / trendMax) * 100, 4)}%` }"></div>
               </div>
               <span class="text-[0.82rem] text-slate-500">{{ formatDateLabel(bar.date) }}</span>
@@ -215,7 +215,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
 
           <div class="grid gap-3 md:grid-cols-2">
             <div class="flex gap-3 rounded-[18px] bg-slate-50 p-4">
-              <el-icon class="mt-0.5 text-[1.25rem] text-indigo-700">
+              <el-icon class="mt-0.5 text-[1.25rem] text-amber-600">
                 <CircleCheckFilled />
               </el-icon>
               <div>
@@ -225,7 +225,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
               </div>
             </div>
             <div class="flex gap-3 rounded-[18px] bg-slate-50 p-4">
-              <el-icon class="mt-0.5 text-[1.25rem] text-indigo-700">
+              <el-icon class="mt-0.5 text-[1.25rem] text-emerald-600">
                 <DataLine />
               </el-icon>
               <div>
@@ -240,7 +240,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <article
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-4">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Quick actions
             </p>
             <h3 class="m-0 text-[1.25rem] font-semibold text-slate-950">Move fast</h3>
@@ -249,16 +249,16 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
           <div class="grid gap-2">
             <button v-for="action in quickActions" :key="action.label" type="button"
               @click="fastAction(action.direction)"
-              class="flex w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-4 py-3 text-left text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-              <el-icon class="text-base text-indigo-700">
+              class="flex w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-left text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
+              <el-icon class="text-base text-indigo-500">
                 <component :is="action.icon" />
               </el-icon>
               <span>{{ action.label }}</span>
             </button>
           </div>
 
-          <div class="mt-4 flex gap-3 rounded-[18px] bg-amber-100/80 p-4 text-amber-800">
-            <el-icon class="mt-0.5">
+          <div class="mt-4 flex gap-3 rounded-[18px] bg-amber-50 p-4 text-amber-800">
+            <el-icon class="mt-0.5 text-amber-600">
               <WarningFilled />
             </el-icon>
             <div>
@@ -286,7 +286,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <article
           class="overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="px-5 pb-4 pt-5">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Orders
             </p>
             <h3 class="m-0 text-[1.25rem] font-semibold text-slate-950">Recent checkout activity</h3>
@@ -318,7 +318,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
         <article
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Catalog mix
             </p>
             <h3 class="m-0 text-[1.25rem] font-semibold text-slate-950">Top categories</h3>
@@ -332,7 +332,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
                 <span class="block leading-6 text-slate-500">{{ category.product_count }} products</span>
               </div>
               <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500"
+                <div class="h-full rounded-full bg-indigo-500"
                   :style="{ width: `${category.share}%` }"></div>
               </div>
               <span class="text-sm font-bold text-slate-700">{{ category.share }}%</span>
@@ -341,7 +341,7 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
 
           <div class="mt-5 border-t border-slate-200 pt-4">
             <div class="mb-3">
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-indigo-600">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Activity
               </p>
               <h3 class="m-0 text-[1.25rem] font-semibold text-slate-950">Latest updates</h3>
@@ -349,9 +349,9 @@ const trendMax = computed(() => Math.max(...dashboardState.value.trend.map((item
 
             <div class="space-y-4">
               <article v-for="item in dashboardState.activity" :key="item.title" class="flex gap-3">
-                <div
-                  class="mt-1 h-2.5 w-2.5 rounded-full bg-gradient-to-b from-indigo-600 to-cyan-500 shadow-[0_0_0_6px_rgba(79,70,229,0.08)]">
-                </div>
+              <div
+                class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-500 shadow-[0_0_0_6px_rgba(79,70,229,0.12)]">
+              </div>
                 <div>
                   <strong class="block text-slate-950">{{ item.title }}</strong>
                   <p class="m-0 leading-6 text-slate-500">{{ item.detail }}</p>

@@ -13,7 +13,7 @@
               <div class="w-full lg:max-w-[360px]">
                 <BaseInput v-model="filters.search_txt" placeholder="Search slides..." clearable />
               </div>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="flex flex-wrap gap-3">
                 <BaseButton @click="resetFilters">Reset</BaseButton>
                 <BaseButton v-if="can('hero-slides', 'create')" type="primary" @click="addSlide">
                   Add Slide

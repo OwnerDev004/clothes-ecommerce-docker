@@ -61,7 +61,7 @@
                                 <div class="text-center text-xs font-medium text-slate-600 flex items-center gap-1">
 
                                     {{ step.title }}
-                                    <el-icon v-if="step.state === 'current'" class="is-loading !text-warning"
+                                    <el-icon v-if="step.state === 'current'" class="is-loading !text-amber-500"
                                         :size="12">
                                         <Loading />
                                     </el-icon>
@@ -150,9 +150,9 @@
                             </template>
 
                             <div class="rounded-2xl border p-4 transition" :class="step.state === 'done'
-                                ? 'border-emerald-200 bg-emerald-50/70'
+                                ? 'border-emerald-200 bg-emerald-50/40'
                                 : step.state === 'current'
-                                    ? 'border-amber-200 bg-amber-50/80 shadow-sm'
+                                    ? 'border-amber-200 bg-amber-50/50'
                                     : 'border-slate-200 bg-white'">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="min-w-0">
@@ -163,11 +163,11 @@
                                     </div>
                                     <span
                                         class="inline-flex shrink-0 rounded-full py-1 text-[11px] font-semibold uppercase tracking-wide"
-                                        :class="step.state === 'done'
-                                            ? 'bg-emerald-100 text-emerald-700'
-                                            : step.state === 'current'
-                                                ? 'bg-amber-100 text-amber-700'
-                                                : 'bg-slate-100 text-slate-500'">
+:class="step.state === 'done'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : step.state === 'current'
+                                        ? 'bg-amber-100 text-amber-700'
+                                        : 'bg-slate-100 text-slate-500'">
                                         {{ step.label }}
                                     </span>
                                 </div>

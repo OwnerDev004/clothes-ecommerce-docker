@@ -43,7 +43,7 @@
                                     </button>
 
                                     <button v-if="!disabled" type="button"
-                                        class="inline-flex items-center gap-2 rounded-full border border-rose-200 px-3 py-1.5 text-sm font-medium text-rose-600 hover:border-rose-400"
+                                        class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-slate-400"
                                         @click="handleRemove(file)">
                                         Remove
                                     </button>

@@ -15,8 +15,8 @@
                                 <BaseInput v-model="filters.search_txt" placeholder="Search collections..." clearable />
                             </div>
 
-                            <div class="grid grid-cols-2 gap-2">
-                                <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+                            <div class="flex flex-wrap gap-3">
+                                <BaseButton @click="resetFilters">Reset</BaseButton>
                                 <BaseButton type="primary" @click="addCollection">Add Collection</BaseButton>
                             </div>
                         </div>

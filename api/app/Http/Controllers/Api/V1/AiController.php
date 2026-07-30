@@ -61,6 +61,18 @@ class AiController extends Controller
             'message' => 'required|string'
         ]);
         $result = $this->productsearchService->productAiFilter($filter_prompt['message']);
-        return $this->paginate($result, 'Products list');
+        $products = $result['products'];
+        return response()->json([
+            'status' => true,
+            'message' => 'Products list',
+            'data' => $products->items(),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+            ],
+            'filters' => $result['filters'],
+        ]);
     }
 }

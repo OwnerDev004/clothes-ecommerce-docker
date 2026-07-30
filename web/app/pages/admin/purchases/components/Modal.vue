@@ -38,11 +38,11 @@
                             </p>
                         </div>
 
-                        <div class="rounded-2xl bg-amber-50/80 p-4">
-                            <p class="m-0 text-xs font-semibold uppercase tracking-[0.12em] text-amber-800">
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <p class="m-0 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
                                 Stock recycle
                             </p>
-                            <p class="m-0 mt-2 text-sm leading-6 text-amber-900">
+                            <p class="m-0 mt-2 text-sm leading-6 text-slate-500">
                                 If you edit or delete a purchase, the stock will be rolled back automatically.
                             </p>
                         </div>

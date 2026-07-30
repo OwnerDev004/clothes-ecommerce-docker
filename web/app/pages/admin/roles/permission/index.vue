@@ -246,7 +246,7 @@ onMounted(async () => {
             Role:
             <strong class="text-slate-950">{{ selectedRole?.name || 'None selected' }}</strong>
             <span v-if="selectedRole?.is_system"
-              class="ml-2 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-700">
+              class="ml-2 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
               System role
             </span>
           </p>

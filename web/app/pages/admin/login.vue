@@ -60,7 +60,7 @@ const submitLogin = async () => {
   <div class="px-4 py-8">
     <div
       class="mx-auto grid min-h-[calc(100dvh-4rem)] max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-white shadow-[0_30px_80px_rgba(2,6,23,0.24)] lg:grid-cols-2">
-      <section class="flex flex-col justify-around bg-primary px-8 py-10 text-white sm:px-10">
+      <section class="flex flex-col justify-around bg-slate-800 px-8 py-10 text-white sm:px-10">
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.18em] text-surface">Admin access</p>
           <h1 class="mt-4 text-4xl font-semibold leading-tight">Clothes Shop dashboard</h1>
@@ -77,7 +77,7 @@ const submitLogin = async () => {
       <section class="flex items-center justify-center bg-slate-50 px-6 py-10 sm:px-10">
         <div class="w-full max-w-md">
           <div class="mb-8">
-            <p class="text-xs font-bold uppercase tracking-[0.18em] text-primary">Welcome back</p>
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Welcome back</p>
             <h2 class="mt-2 text-3xl font-semibold text-slate-950">Admin sign in</h2>
             <p class="mt-3 text-sm leading-6 text-slate-500">
               Use your admin credentials to open the dashboard.
@@ -88,14 +88,14 @@ const submitLogin = async () => {
             <div>
               <label class="mb-2 block text-sm font-medium text-slate-700">Email</label>
               <input v-model="form.email" type="email"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-slate-500 focus:ring-1 focus:ring-slate-300"
                 placeholder="admin@example.com" />
             </div>
 
             <div>
               <label class="mb-2 block text-sm font-medium text-slate-700">Password</label>
               <input v-model="form.password" type="password"
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-slate-500 focus:ring-1 focus:ring-slate-300"
                 placeholder="••••••••" />
             </div>
 
@@ -104,7 +104,7 @@ const submitLogin = async () => {
             </p>
 
             <BaseButton type="primary" :disabled="loading" @click="submitLogin"
-              class="flex w-full items-center justify-center gap-2 rounded-2xl  px-4 py-3 font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">
+              class="flex w-full items-center justify-center gap-2 rounded-2xl  px-4 py-3 font-semibold text-white shadow-lg shadow-slate-200 transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60">
               <span>{{ loading ? 'Signing in...' : 'Sign in' }}</span>
             </BaseButton>
           </form>

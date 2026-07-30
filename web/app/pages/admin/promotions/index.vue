@@ -21,9 +21,9 @@
               </div>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="flex flex-wrap gap-3">
               <BaseSelect v-model="filters.is_active" :options="statusOptions" placeholder="All Status"
-                class="w-full" />
+                class="w-full sm:max-w-[200px]" />
             </div>
           </div>
         </template>

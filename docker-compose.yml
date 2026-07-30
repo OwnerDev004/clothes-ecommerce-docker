@@ -58,6 +58,7 @@ services:
     build:
       context: web/
       dockerfile: Dockerfile
+    command: sh -c "npm run dev -- --host 0.0.0.0"
     env_file:
       - ./web/.env
     volumes:
@@ -68,6 +69,7 @@ services:
       - NUXT_PUBLIC_GOOGLE_CLIENT_ID=906332352374-1q9m3svn4j48cvpk8k48v4mt7ooat2a7.apps.googleusercontent.com
       - NUXT_PUBLIC_FACEBOOK_APP_ID=1630377581733106
       - NUXT_PUBLIC_FACEBOOK_GRAPH_VERSION=v19.0
+      - CHOKIDAR_USEPOLLING=1
     depends_on:
       - api
     ports:

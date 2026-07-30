@@ -1,275 +1,260 @@
 <template>
-    <el-dialog v-model="dialogOpen" width="680px" align-center :close-on-click-modal="false" title="Complete Your Profile"
-        class="profile-dialog" @closed="onProfileDialogClosed">
-        <div class="space-y-4">
+    <el-dialog v-model="dialogOpen" width="460px" align-center :close-on-click-modal="false" title="Stay Updated"
+        class="telegram-dialog" @closed="onDialogClosed">
+        <div class="flex flex-col items-center gap-5 py-2 text-center">
 
-            <el-alert v-if="authCompleteFormMessage" :title="authCompleteFormMessage"
-                :type="authCompleteFormMessageType" :closable="false" show-icon />
+            <!-- Connecting / waiting state -->
+            <template v-if="connectingTelegram && !telegramLinked">
+                <div class="flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                    <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-500" />
+                </div>
+                <div>
+                    <p class="text-base font-semibold text-gray-800">Waiting for Telegram...</p>
+                    <p class="mt-1 text-sm text-gray-500">Tap <strong>Start</strong> in the bot to link your account.</p>
+                </div>
+                <div class="flex flex-col items-center gap-2 w-full">
+                    <a :href="deepLink" target="_blank"
+                        class="inline-flex items-center gap-2 rounded-lg border border-[#0088CC] px-4 py-2 text-sm font-medium text-[#0088CC] hover:bg-blue-50 transition-colors"
+                        @click="onOpenTelegram">
+                        <Icon name="fa-brands:telegram-plane" class="text-base" />
+                        Open Telegram
+                    </a>
+                    <el-button size="small" :loading="refreshingStatus" @click="refreshProfile">
+                        Check connection
+                    </el-button>
+                </div>
+            </template>
 
-            <el-form ref="profileFormRef" :model="authCompleteForm" :rules="authCompleteRules" label-position="top"
-                class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <el-form-item label="Telegram Username">
-                    <el-input v-model="authCompleteForm.telegram_username" />
-                </el-form-item>
-                <el-form-item label="Enable Telegram Alerts">
-                    <el-switch v-model="authCompleteForm.enable_telegram_alerts" />
-                </el-form-item>
+            <!-- Connected state -->
+            <template v-else-if="telegramLinked">
+                <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
+                    <Icon name="mdi:check-circle" class="text-5xl text-green-500" />
+                </div>
+                <div>
+                    <p class="text-base font-semibold text-gray-800">Linked to Telegram</p>
+                    <p v-if="telegramUsername" class="text-sm text-gray-500">&#64;{{ telegramUsername }}</p>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-600">
+                    <el-switch v-model="alertsEnabled" @change="saveAlerts" />
+                    Enable order notifications
+                </label>
+                <el-button type="primary" class="mt-1 w-full" @click="done">
+                    Done
+                </el-button>
+            </template>
 
-                <div class="md:col-span-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-sm">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                            <div class="font-medium text-gray-800">Telegram linking</div>
-                            <div class="text-gray-600">
-                                {{ telegramLinked ? 'Linked' : 'Not linked yet. Tap Connect and press Start in the bot.'
-                                }}
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <el-button size="small" plain :loading="connectingTelegram" @click="connectTelegram">
-                                Connect Telegram
-                            </el-button>
-                            <el-button size="small" plain @click="refreshProfile">
-                                Refresh status
-                            </el-button>
-                        </div>
-                    </div>
-                    <p v-if="telegramStatusMessage" class="mt-2 text-xs text-gray-600">
-                        {{ telegramStatusMessage }}
+            <!-- Initial state: not connected -->
+            <template v-else>
+                <div class="flex h-20 w-20 items-center justify-center rounded-full bg-[#E8F4FD]">
+                    <Icon name="fa-brands:telegram-plane" class="text-4xl text-[#0088CC]" />
+                </div>
+                <div>
+                    <p class="text-base font-semibold text-gray-800">Get notified on Telegram</p>
+                    <p class="mt-1 text-sm leading-relaxed text-gray-500">
+                        Receive real-time order updates:<br />
+                        order confirmation &bull; payment received &bull; shipping &bull; delivery
                     </p>
                 </div>
-
-            </el-form>
-        </div>
-
-        <template #footer>
-            <div class="flex justify-end gap-2">
-                <el-button @click="dialogOpen = false">Cancel</el-button>
-                <el-button type="primary" :loading="savingAuthComplete" @click="submitAuthComplete">
-                    Save changes
+                <el-button type="primary" size="large" class="mt-2 w-full !text-base" :loading="loading"
+                    @click="connectTelegram">
+                    <Icon name="fa-brands:telegram-plane" class="mr-2 text-lg" />
+                    Connect Telegram
                 </el-button>
-            </div>
-        </template>
+            </template>
+
+            <p v-if="statusMessage" class="text-xs" :class="statusOk ? 'text-green-600' : 'text-amber-600'">
+                {{ statusMessage }}
+            </p>
+        </div>
     </el-dialog>
 </template>
 
 <script setup lang="ts">
-import type { FormInstance, FormRules } from 'element-plus';
-import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '~/stores/authStore'
 
-const savingAuthComplete = ref(false);
-const authCompleteFormMessage = ref('');
-const authCompleteFormMessageType = ref<'success' | 'warning' | 'error' | 'info'>('info');
-const telegramStatusMessage = ref('');
-const connectingTelegram = ref(false);
-let telegramPollTimer: ReturnType<typeof setInterval> | null = null
-const config = useRuntimeConfig();
+const config = useRuntimeConfig()
+const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const authStore = useAuthStore()
-const apiBase = (config.public.apiBase || '').replace(/\/$/, '');
 const { accessToken, userProfile } = storeToRefs(authStore)
-const profileFormRef = ref<FormInstance>()
 const router = useRouter()
-type authCompleteForm = {
-    telegram_username: string;
-    enable_telegram_alerts: boolean;
-};
 
-const authCompleteRules: FormRules<authCompleteForm> = {
-    telegram_username: [
-        { max: 255, message: 'Telegram Username is too long', trigger: 'blur' },
-    ]
-};
+const telegramBotUsername = config.public.telegramBotUsername || 'DyzakTechStoreBot'
 
-const authCompleteForm = reactive<authCompleteForm>({
-    telegram_username: '',
-    enable_telegram_alerts: false,
-});
+const loading = ref(false)
+const connectingTelegram = ref(false)
+const refreshingStatus = ref(false)
+const statusMessage = ref('')
+const statusOk = ref(false)
+const deepLink = ref('')
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
-const props = defineProps<{ modelValue: boolean }>();
-const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>();
+const props = defineProps<{ modelValue: boolean }>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 const dialogOpen = computed({
     get: () => props.modelValue,
-    set: (value: boolean) => emit('update:modelValue', value),
-});
-
-const telegramLinked = computed(() => {
-    const profile = (userProfile.value || {}) as Record<string, any>
-    return Boolean(profile.telegram_user_id || profile.telegram_chat_id)
+    set: (v) => emit('update:modelValue', v),
 })
 
-// getAuthHeaders
-const getAuthHeaders = () => {
+const alertsEnabled = ref(false)
+
+const telegramLinked = computed(() => {
+    const p = (userProfile.value || {}) as Record<string, any>
+    return Boolean(p.telegram_user_id || p.telegram_chat_id)
+})
+
+const telegramUsername = computed(() => {
+    const p = (userProfile.value || {}) as Record<string, any>
+    return String(p.telegram_username || p.telegram_user_id || '')
+})
+
+const getHeaders = () => {
     return accessToken.value
         ? { Authorization: `Bearer ${accessToken.value}` }
         : undefined
 }
 
-const fillFromProfile = () => {
-    const profile = (userProfile.value || {}) as Record<string, any>
-    authCompleteForm.telegram_username = String(profile.telegram_username || '')
-    authCompleteForm.enable_telegram_alerts = Boolean(profile.enable_telegram_alerts)
+const connectTelegram = async () => {
+    statusMessage.value = ''
+    loading.value = true
+    try {
+        const res: any = await $fetch(`${apiBase}/telegram/connect-link`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getHeaders(),
+        })
+        const link = res?.data?.deep_link
+        if (!link) {
+            statusMessage.value = 'Unable to generate Telegram link. Try again.'
+            return
+        }
+        deepLink.value = link
+        loading.value = false
+        connectingTelegram.value = true
+        window.open(link, '_blank', 'noopener,noreferrer')
+        startPolling()
+    } catch (err: any) {
+        statusMessage.value = err?.data?.message || 'Failed to connect. Try again.'
+    } finally {
+        loading.value = false
+    }
 }
 
-const pollTelegramLink = async () => {
+const onOpenTelegram = () => {
+    window.open(deepLink.value, '_blank', 'noopener,noreferrer')
+}
+
+const pollLink = async () => {
     return await $fetch(`${apiBase}/telegram/poll-link`, {
         method: 'POST',
         credentials: 'include',
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
     })
 }
 
 const fetchProfile = async () => {
-    const response: any = await $fetch(`${apiBase}/profile`, {
+    const res: any = await $fetch(`${apiBase}/profile`, {
         method: 'GET',
         credentials: 'include',
-        headers: getAuthHeaders(),
+        headers: getHeaders(),
     })
-    authStore.setUserProfile(response?.data || null)
+    if (res?.data) {
+        authStore.setUserProfile(res.data)
+        alertsEnabled.value = Boolean(res.data.enable_telegram_alerts)
+    }
+}
+
+const startPolling = () => {
+    stopPolling()
+    const startedAt = Date.now()
+    pollTimer = setInterval(async () => {
+        if (Date.now() - startedAt > 120_000) {
+            stopPolling()
+            statusMessage.value = 'Taking longer than expected? Tap "Check connection" below.'
+            statusOk.value = false
+            return
+        }
+        try {
+            const res: any = await pollLink()
+            if (res?.data?.linked || telegramLinked.value) {
+                await fetchProfile()
+                stopPolling()
+                connectingTelegram.value = false
+                statusMessage.value = ''
+            }
+        } catch {
+            // keep polling
+        }
+    }, 3000)
+}
+
+const stopPolling = () => {
+    if (pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
+    }
 }
 
 const refreshProfile = async () => {
+    refreshingStatus.value = true
     try {
-        const response: any = await pollTelegramLink()
+        const res: any = await pollLink()
         await fetchProfile()
-        telegramStatusMessage.value = response?.data?.linked || telegramLinked.value
-            ? 'Telegram connected successfully.'
-            : 'Not connected yet. Open Telegram and tap Start.'
+        if (res?.data?.linked || telegramLinked.value) {
+            connectingTelegram.value = false
+            statusMessage.value = ''
+        } else {
+            statusMessage.value = 'Not connected yet. Tap Open Telegram above and press Start.'
+            statusOk.value = false
+        }
     } catch {
-        // No-op: handled by parent auth logic
-    }
-}
-
-const stopTelegramPolling = () => {
-    if (telegramPollTimer) {
-        clearInterval(telegramPollTimer)
-        telegramPollTimer = null
-    }
-}
-
-const startTelegramPolling = () => {
-    stopTelegramPolling()
-    const startedAt = Date.now()
-    telegramPollTimer = setInterval(async () => {
-        if (Date.now() - startedAt > 90_000 || telegramLinked.value) {
-            stopTelegramPolling()
-            return
-        }
-
-        try {
-            const response: any = await pollTelegramLink()
-            if (response?.data?.linked) {
-                await fetchProfile()
-                telegramStatusMessage.value = 'Telegram connected successfully.'
-                stopTelegramPolling()
-            }
-        } catch {
-            // Keep the link dialog usable while Telegram/webhook delivery catches up.
-        }
-    }, 2000)
-}
-
-const connectTelegram = async () => {
-    telegramStatusMessage.value = ''
-    connectingTelegram.value = true
-    try {
-        const response: any = await $fetch(`${apiBase}/telegram/connect-link`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: getAuthHeaders(),
-        })
-        const deepLink = response?.data?.deep_link
-        if (import.meta.dev) {
-          console.log(deepLink);
-        }
-
-        if (!deepLink) {
-            telegramStatusMessage.value = 'Unable to generate Telegram link.'
-            return
-        }
-        window.open(deepLink, '_blank', 'noopener,noreferrer')
-        telegramStatusMessage.value = 'Telegram opened. Tap Start in the bot; we will check the connection automatically.'
-        startTelegramPolling()
-    } catch (err: any) {
-        telegramStatusMessage.value = err?.data?.message || 'Failed to connect Telegram.'
+        statusMessage.value = 'Check failed. Try again.'
     } finally {
-        connectingTelegram.value = false
+        refreshingStatus.value = false
     }
+}
+
+const saveAlerts = async () => {
+    try {
+        await $fetch(`${apiBase}/profile`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: getHeaders(),
+            body: { enable_telegram_alerts: alertsEnabled.value },
+        })
+    } catch {
+        alertsEnabled.value = !alertsEnabled.value
+    }
+}
+
+const done = () => {
+    dialogOpen.value = false
+    router.replace('/')
+}
+
+const onDialogClosed = () => {
+    stopPolling()
+    connectingTelegram.value = false
+    statusMessage.value = ''
+    loading.value = false
 }
 
 watch(dialogOpen, (open) => {
     if (open) {
-        fillFromProfile()
-        telegramStatusMessage.value = ''
+        alertsEnabled.value = Boolean((userProfile.value as any)?.enable_telegram_alerts)
+        connectingTelegram.value = false
     } else {
-        stopTelegramPolling()
+        stopPolling()
     }
 })
-
-onBeforeUnmount(stopTelegramPolling)
-
-const submitAuthComplete = async () => {
-    if (!profileFormRef.value) {
-        return
-    }
-
-    const valid = await profileFormRef.value.validate().catch(() => false)
-    if (!valid) {
-        return
-    }
-
-    savingAuthComplete.value = true;
-    try {
-        await pollTelegramLink()
-        await fetchProfile()
-        const response: any = await $fetch(`${apiBase}/profile`, {
-            method: 'PUT',
-            credentials: 'include',
-            headers: getAuthHeaders(),
-            body: {
-                telegram_username: authCompleteForm.telegram_username,
-                enable_telegram_alerts: authCompleteForm.enable_telegram_alerts,
-
-            },
-        });
-        if (response?.data) {
-            authStore.setUserProfile(response.data)
-        }
-        authCompleteFormMessage.value = 'Profile updated successfully';
-        authCompleteFormMessageType.value = 'success';
-        emit('update:modelValue', false)
-        router.replace('/')
-    } catch (error: any) {
-        const statusCode = error?.statusCode ?? error?.status
-        if (statusCode === 401 || statusCode === 403) {
-            authCompleteFormMessage.value = 'Session expired. Please login again.';
-            authCompleteFormMessageType.value = 'error';
-            authStore.resetAuth()
-            return
-        }
-        const apiMessage = error?.data?.message
-        const errors = error?.data?.errors
-        if (errors && typeof errors === 'object') {
-            const firstKey = Object.keys(errors)[0]
-            const firstMessage = firstKey ? errors[firstKey]?.[0] : null
-            if (firstMessage) {
-                authCompleteFormMessage.value = firstMessage
-                authCompleteFormMessageType.value = 'error'
-                return
-            }
-        }
-        authCompleteFormMessage.value = apiMessage || 'Failed to update profile';
-        authCompleteFormMessageType.value = 'error';
-    } finally {
-        savingAuthComplete.value = false;
-    }
-};
-
-const onProfileDialogClosed = () => {
-    authCompleteFormMessage.value = '';
-    authCompleteFormMessageType.value = 'info';
-    telegramStatusMessage.value = '';
-};
 </script>
 
-<style scoped></style>
+<style scoped>
+.telegram-dialog :deep(.el-dialog__body) {
+    padding-top: 8px;
+}
+.telegram-dialog :deep(.el-dialog__title) {
+    font-weight: 600;
+}
+</style>

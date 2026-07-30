@@ -46,22 +46,23 @@
               </NuxtLink>
             </div>
           </div>
-
-
         </div>
       </section>
     </div>
     <CompleteOAuthDialog v-model="authCompleteDialogOpen" />
+    <CompleteTelegramDialong v-model="telegramCompleteDialogOpen" />
   </div>
 </template>
 
 <script setup lang="ts">
 import CompleteOAuthDialog from '~/components/frontend/Modal/CompleteOAuthDialog.vue'
+import CompleteTelegramDialong from '~/components/frontend/Modal/CompleteTelegramDialong.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import BaseInput from '~/components/ui/BaseInput.vue'
 import BaseSelect from '~/components/ui/BaseSelect.vue'
 import { useAuthStore } from '~/stores/authStore'
 import type { FormInstance, FormRules } from 'element-plus'
+
 
 definePageMeta({
   layout: 'guest',
@@ -73,15 +74,10 @@ const apiBase = (config.public.apiBase || '').replace(/\/$/, '')
 const router = useRouter()
 const authStore = useAuthStore()
 const authCompleteDialogOpen = ref<boolean>(false)
+const telegramCompleteDialogOpen = ref<boolean>(false)
 const genderOptions = ref<any[]>([
-  {
-    id: 'male',
-    label: 'Male'
-  },
-  {
-    id: 'female',
-    label: 'Female'
-  }
+  { id: 'male', label: 'Male' },
+  { id: 'female', label: 'Female' }
 ])
 
 const form = reactive({
@@ -125,18 +121,14 @@ const signupRules: FormRules<typeof form> = {
 const loading = ref(false)
 const errorMessage = ref('')
 
-
-const shouldCompleteProfile = (profile: any) => {
-  return Boolean(profile?.requires_profile_completion)
+const checkTelegramConnected = (profile: any) => {
+  return Boolean(profile?.telegram_chat_id || profile?.telegram_user_id)
 }
-
 
 const submitSignup = async () => {
   errorMessage.value = ''
   const valid = await signupFormRef.value?.validate().catch(() => false)
-  if (!valid) {
-    return
-  }
+  if (!valid) return
 
   loading.value = true
   try {
@@ -145,14 +137,28 @@ const submitSignup = async () => {
       credentials: 'include',
       body: form
     })
-    // applyAuthFromResponse(response)
-    const profile = response?.data?.user ?? response?.data?.customer ?? null
 
-    if (shouldCompleteProfile(profile) || response?.data?.requires_profile_completion) {
+    const token = response?.data?.access_token ?? null
+    const profile = response?.data?.customer ?? response?.data?.user ?? null
+
+    if (token) {
+      authStore.setAccessToken(token)
+      authStore.setAuthenticated(true)
+      authStore.setUserProfile(profile)
+    }
+
+    if (profile?.requires_profile_completion || response?.data?.requires_profile_completion) {
       authCompleteDialogOpen.value = true
       return
     }
-    await router.replace('/auth/login')
+
+    if (!checkTelegramConnected(profile)) {
+      telegramCompleteDialogOpen.value = true
+      return
+    }
+
+    ElMessage({ message: 'Account created successfully', type: 'success' })
+    await router.replace('/')
   } catch (err: any) {
     const errors = err?.data?.errors
     const firstError = errors && typeof errors === 'object'

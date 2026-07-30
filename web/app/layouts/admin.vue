@@ -304,3 +304,15 @@ onMounted(() => {
     background-color: rgba(100, 116, 139, 0.9);
 }
 </style>
+
+<style>
+/* ── Minimal admin color system ── */
+/* Keep Element Plus default colors for functional elements (tags, buttons, alerts).
+   Only tone down the most extreme decorative colors. */
+
+/* el-switch — keep default green but make it slightly muted */
+.el-switch.is-checked .el-switch__core {
+    border-color: #64748b !important;
+    background-color: #64748b !important;
+}
+</style>

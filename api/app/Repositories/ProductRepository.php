@@ -70,10 +70,10 @@ class ProductRepository extends BaseRepository
 
             if ($searchText !== '') {
                 $query->where(function ($q) use ($searchText) {
-                    $q->where('products.name', 'like', '%' . $searchText . '%')
-                        ->orWhere('products.sku', 'like', '%' . $searchText . '%')
-                        ->orWhere('products.slug', 'like', '%' . $searchText . '%')
-                        ->orWhere('products.desc', 'like', '%' . $searchText . '%');
+                    $q->where('products.name', 'ilike', '%' . $searchText . '%')
+                        ->orWhere('products.sku', 'ilike', '%' . $searchText . '%')
+                        ->orWhere('products.slug', 'ilike', '%' . $searchText . '%')
+                        ->orWhere('products.desc', 'ilike', '%' . $searchText . '%');
                 });
             }
 
@@ -136,7 +136,7 @@ class ProductRepository extends BaseRepository
                             ->whereColumn('brands.id', 'products.brand_id')
                             ->where(function ($w) use ($brand) {
                                 $w->where('brands.slug', $brand)
-                                    ->orWhere('brands.name', 'like', '%' . $brand . '%');
+                                    ->orWhere('brands.name', 'ilike', '%' . $brand . '%');
                             });
                     });
                 }
@@ -147,7 +147,7 @@ class ProductRepository extends BaseRepository
                     $sub->selectRaw('1')
                         ->from('product_variants')
                         ->whereColumn('product_variants.product_id', 'products.id')
-                        ->where('product_variants.color_name', 'like', '%' . $color . '%');
+                        ->where('product_variants.color_name', 'ilike', '%' . $color . '%');
                 });
             }
 
@@ -161,7 +161,7 @@ class ProductRepository extends BaseRepository
                             if (is_numeric($size)) {
                                 $w->where('sizes.id', (int) $size);
                             } else {
-                                $w->where('sizes.name', 'like', '%' . $size . '%');
+                                $w->where('sizes.name', 'ilike', '%' . $size . '%');
                             }
                         });
                 });

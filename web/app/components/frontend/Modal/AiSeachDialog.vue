@@ -4,7 +4,7 @@
         <div class="space-y-4">
             <base-input type="textarea" :rows="4" v-model="message_prompt" />
             <div class="place-self-end">
-                <ui-base-button type="primary" :loading="pending" @click="aiProductSearch">
+                <ui-base-button type="primary" :loading="pending" @click="handleSearch">
                     Search
 
                     <Icon name="mingcute:ai-fill" />
@@ -26,6 +26,11 @@ const { message_prompt, pending, aiProductSearch } = useAiFeature()
 const model = defineModel<boolean | undefined>()
 const onAiSearchDialogClosed = () => {
     message_prompt.value = ''
+}
+
+const handleSearch = async () => {
+    await aiProductSearch()
+    model.value = false
 }
 
 </script>

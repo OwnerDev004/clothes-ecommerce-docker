@@ -207,12 +207,40 @@
               </div>
             </div>
 
+            <!-- AI Search Banner -->
+            <div
+              v-if="isAiSearch && searchTxtFilter && !isLoadingProducts"
+              class="flex items-center gap-2 mb-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-sm text-indigo-700 animate-fade-in"
+            >
+              <Icon name="mingcute:ai-fill" class="text-lg shrink-0" />
+              <span>
+                AI search results for <strong>"{{ searchTxtFilter }}"</strong>
+                <span v-if="!isLoadingProducts" class="text-indigo-400"> — {{ meta.total }} product{{ meta.total !== 1 ? 's' : '' }} found</span>
+              </span>
+              <button
+                @click="clearFilters"
+                class="ml-auto text-indigo-400 hover:text-indigo-700 transition-colors"
+                title="Clear AI search"
+              >
+                <Icon name="mdi:close" class="text-lg" />
+              </button>
+            </div>
+
             <!-- Active Filter Chips -->
             <div
               v-if="activeFilterCount && !isLoadingProducts"
               class="flex flex-wrap items-center gap-2 mb-4 animate-fade-in"
             >
               <span class="text-xs font-medium text-slate-400 mr-1">Active:</span>
+              <button
+                v-if="searchTxtFilter"
+                @click="searchTxtFilter = ''; applyFilters()"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors border border-indigo-200"
+              >
+                <Icon name="mingcute:ai-fill" class="text-sm" />
+                "{{ searchTxtFilter }}"
+                <Icon name="mdi:close" class="text-sm" />
+              </button>
               <button
                 v-if="colorFilter"
                 @click="colorFilter = ''; applyFilters()"
@@ -487,6 +515,7 @@ const brandFilter = ref('')
 const subCategoryFilter = ref('')
 const subCategorySlugMap = ref<Record<string, string>>({})
 const collectionFilter = ref('')
+const searchTxtFilter = ref('')
 const sortBy = ref<'latest' | 'price_low' | 'price_high' | 'name_asc'>('latest')
 
 const page = ref(1)
@@ -509,8 +538,11 @@ const isFetching = computed(() =>
   !products.value.length
 )
 
+const isAiSearch = computed(() => route.query.ai === '1' || route.query.ai === 'true')
+
 const activeFilterCount = computed(() => {
   let count = 0
+  if (searchTxtFilter.value) count++
   if (colorFilter.value) count++
   if (sizeFilter.value) count++
   if (brandFilter.value) count++
@@ -575,6 +607,8 @@ const priceMaxParam = computed(() => {
   return Number.isFinite(value) ? value : MAX_PRICE
 })
 
+const searchTxtParam = computed(() => queryValue('search_txt'))
+
 const queryValue = (key: string) => {
   const raw = route.query[key]
   return Array.isArray(raw) ? String(raw[0] || '') : String(raw || '')
@@ -612,6 +646,7 @@ const initializeCategoryState = () => {
   brandFilter.value = brandParam.value || ''
   colorFilter.value = queryValue('color') || ''
   sizeFilter.value = queryValue('size') || ''
+  searchTxtFilter.value = searchTxtParam.value || ''
   const requestedSort = queryValue('sort_by')
   sortBy.value = (['latest', 'price_low', 'price_high', 'name_asc'] as string[]).includes(requestedSort)
     ? requestedSort as typeof sortBy.value
@@ -660,6 +695,7 @@ const fetchFilterOptions = async () => {
     const response: any = await $fetch(`${apiBase}/products/filters`, {
       method: 'GET',
       query: {
+        search_txt: searchTxtFilter.value || undefined,
         category: selectedCategory.value || undefined,
         sub_category: subCategoryFilter.value || undefined,
         collection: collectionFilter.value || undefined,
@@ -699,6 +735,7 @@ const fetchProducts = async () => {
       query: {
         page: page.value,
         per_page: meta.value.per_page,
+        search_txt: searchTxtFilter.value || undefined,
         category: selectedCategory.value || undefined,
         sub_category: subCategoryFilter.value || undefined,
         collection: collectionFilter.value || undefined,
@@ -744,6 +781,7 @@ const applyFilters = async (closeMobile = false) => {
     : '/frontend/categories'
 
   const targetQuery: Record<string, string> = {}
+  if (searchTxtFilter.value) targetQuery.search_txt = searchTxtFilter.value
   if (subCategoryFilter.value) targetQuery.sub_category = subCategoryFilter.value
   if (collectionFilter.value) targetQuery.collection = collectionFilter.value
   if (brandFilter.value) targetQuery.brand = brandFilter.value
@@ -804,6 +842,7 @@ const onPriceChangeMobile = (_value: [number, number]) => {
 
 // --- Clear Filters ---
 const clearFilters = async () => {
+  searchTxtFilter.value = ''
   colorFilter.value = ''
   sizeFilter.value = ''
   brandFilter.value = ''

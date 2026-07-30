@@ -13,15 +13,16 @@
                             <div class="w-full lg:max-w-[360px]">
                                 <BaseInput v-model="filters.search_txt" placeholder="Search Customers..." clearable />
                             </div>
+                            <div class="flex flex-wrap gap-3">
+                                <BaseButton @click="resetFilters">Reset</BaseButton>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="All Categories"
+                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <BaseSelect v-model="filters.sort_by" :options="sortOptions" placeholder="Sort by"
                                 class="w-full" />
                             <BaseSelect v-model="filters.status" :options="statusOptions" placeholder="All Status"
                                 class="w-full" />
-
                         </div>
-
                     </div>
                 </template>
 

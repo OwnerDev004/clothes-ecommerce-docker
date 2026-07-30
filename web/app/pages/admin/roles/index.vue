@@ -15,7 +15,7 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
-              <BaseButton @click="resetFilters">Reset Filters</BaseButton>
+              <BaseButton @click="resetFilters">Reset</BaseButton>
               <BaseButton v-if="can('roles', 'create')" type="primary" @click="openCreate">Add Role</BaseButton>
             </div>
           </div>

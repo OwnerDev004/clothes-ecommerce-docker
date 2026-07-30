@@ -170,9 +170,9 @@ const pipelineItems = computed(() => [
     </HeaderBreadCrumb>
 
     <section
-      class="grid gap-5 rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.14),transparent_20%),linear-gradient(135deg,#ffffff,#ecfeff)] p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.85fr)] lg:p-7">
+      class="grid gap-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.85fr)] lg:p-7">
       <div>
-        <p class="m-0 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+        <p class="m-0 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
           Analytics
         </p>
         <h1 class="mt-2 max-w-[16ch] text-[clamp(1.9rem,2.8vw,3.3rem)] font-semibold leading-[0.95] text-slate-950">
@@ -213,7 +213,7 @@ const pipelineItems = computed(() => [
           <p class="m-0 mt-1 text-sm">{{ error?.message || 'Please try again.' }}</p>
         </div>
         <BaseButton
-          class="rounded-2xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+          class="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
           @click="refresh">
           Retry
         </BaseButton>
@@ -230,12 +230,12 @@ const pipelineItems = computed(() => [
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="flex items-center justify-between gap-3">
             <div
-              class="grid h-11 w-11 place-items-center rounded-[16px] bg-[linear-gradient(135deg,#ecfeff,#cffafe)] text-cyan-700">
+              class="grid h-11 w-11 place-items-center rounded-[16px] bg-indigo-100 text-indigo-700">
               <el-icon>
                 <component :is="card.icon" />
               </el-icon>
             </div>
-            <span class="rounded-full bg-cyan-100 px-2.5 py-1 text-[0.75rem] font-bold text-cyan-700">
+            <span class="rounded-full bg-indigo-100 px-2.5 py-1 text-[0.75rem] font-bold text-indigo-700">
               Live
             </span>
           </div>
@@ -250,7 +250,7 @@ const pipelineItems = computed(() => [
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5 flex items-start justify-between gap-4">
             <div>
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Revenue pulse
               </p>
               <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Weekly performance</h2>
@@ -266,9 +266,9 @@ const pipelineItems = computed(() => [
           <div class="grid h-[240px] grid-cols-7 items-end gap-3 pb-4">
             <div v-for="bar in analyticsState.trend" :key="bar.date" class="grid justify-items-center gap-2">
               <div
-                class="flex h-[200px] w-full items-end overflow-hidden rounded-[18px] bg-gradient-to-b from-slate-50 to-cyan-50">
+                class="flex h-[200px] w-full items-end overflow-hidden rounded-[18px] bg-gradient-to-b from-indigo-50/60 to-indigo-100/40">
                 <div
-                  class="w-full rounded-t-[18px] bg-gradient-to-b from-cyan-600 to-blue-600 shadow-[0_12px_30px_rgba(8,145,178,0.26)]"
+                  class="w-full rounded-t-[18px] bg-indigo-500"
                   :style="{ height: `${Math.max((bar.total / trendMax) * 100, 4)}%` }"></div>
               </div>
               <span class="text-[0.82rem] text-slate-500">{{ formatDateLabel(bar.date) }}</span>
@@ -287,7 +287,7 @@ const pipelineItems = computed(() => [
         <article
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-4">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Order pipeline
             </p>
             <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Status breakdown</h2>
@@ -301,7 +301,7 @@ const pipelineItems = computed(() => [
                 <strong class="text-slate-950">{{ item.count }}</strong>
               </div>
               <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full rounded-full bg-gradient-to-r from-cyan-600 to-blue-500"
+                <div class="h-full rounded-full bg-indigo-500"
                   :style="{ width: `${Math.max((item.count / statusMax) * 100, 4)}%` }"></div>
               </div>
             </div>
@@ -314,7 +314,7 @@ const pipelineItems = computed(() => [
           class="overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="px-5 pb-4 pt-5 flex justify-between items-center">
             <div>
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Orders
               </p>
               <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Recent checkout activity</h2>
@@ -351,7 +351,7 @@ const pipelineItems = computed(() => [
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5 flex justify-between items-center">
             <div>
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Watchlist
               </p>
               <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Low stock items</h2>
@@ -392,7 +392,7 @@ const pipelineItems = computed(() => [
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5 flex items-center justify-between gap-3">
             <div>
-              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+              <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
                 Catalog mix
               </p>
               <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Top categories</h2>
@@ -408,7 +408,7 @@ const pipelineItems = computed(() => [
                 <span class="block leading-6 text-slate-500">{{ category.product_count }} products</span>
               </div>
               <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full rounded-full bg-gradient-to-r from-cyan-600 to-blue-500"
+                <div class="h-full rounded-full bg-indigo-500"
                   :style="{ width: `${category.share}%` }"></div>
               </div>
               <span class="text-sm font-bold text-slate-700">{{ category.share }}%</span>
@@ -419,7 +419,7 @@ const pipelineItems = computed(() => [
         <article
           class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
           <div class="mb-5">
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Activity
             </p>
             <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Latest updates</h2>
@@ -428,7 +428,7 @@ const pipelineItems = computed(() => [
           <div class="space-y-4">
             <article v-for="item in analyticsState.activity" :key="item.title" class="flex gap-3">
               <div
-                class="mt-1 h-2.5 w-2.5 rounded-full bg-gradient-to-b from-cyan-600 to-blue-500 shadow-[0_0_0_6px_rgba(8,145,178,0.08)]">
+                class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-500 shadow-[0_0_0_6px_rgba(79,70,229,0.12)]">
               </div>
               <div>
                 <strong class="block text-slate-950">{{ item.title }}</strong>
@@ -443,7 +443,7 @@ const pipelineItems = computed(() => [
       <section class="rounded-[24px] border border-slate-200 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.07)]">
         <div class="mb-4 flex items-center justify-between gap-3">
           <div>
-            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
+            <p class="m-0 mb-2 text-[0.75rem] font-extrabold uppercase tracking-[0.16em] text-slate-600">
               Admin shortcuts
             </p>
             <h2 class="m-0 text-[1.25rem] font-semibold text-slate-950">Move faster from here</h2>
@@ -453,28 +453,28 @@ const pipelineItems = computed(() => [
         <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <NuxtLink to="/admin/products"
             class="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-            <el-icon class="text-base text-cyan-700">
+            <el-icon class="text-base text-indigo-500">
               <Goods />
             </el-icon>
             <span>Manage products</span>
           </NuxtLink>
           <NuxtLink to="/admin/categories"
             class="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-            <el-icon class="text-base text-cyan-700">
+            <el-icon class="text-base text-indigo-500">
               <Histogram />
             </el-icon>
             <span>Review categories</span>
           </NuxtLink>
           <NuxtLink to="/admin/customers"
             class="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-            <el-icon class="text-base text-cyan-700">
+            <el-icon class="text-base text-indigo-500">
               <User />
             </el-icon>
             <span>Customer support</span>
           </NuxtLink>
           <NuxtLink to="/admin/promotions"
             class="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition hover:-translate-y-px hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]">
-            <el-icon class="text-base text-cyan-700">
+            <el-icon class="text-base text-indigo-500">
               <Tickets />
             </el-icon>
             <span>Launch promotions</span>

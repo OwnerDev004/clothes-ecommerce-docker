@@ -64,6 +64,38 @@
                         placeholder="Enter your address" />
                 </el-form-item>
 
+                <div class="md:col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <Icon name="fa-brands:telegram-plane" class="text-lg text-[#0088CC]" />
+                            <span class="font-medium text-gray-800">Telegram Notifications</span>
+                        </div>
+                        <el-tag :type="telegramLinked ? 'success' : 'info'" size="small" effect="plain">
+                            {{ telegramLinked ? 'Connected' : 'Not connected' }}
+                        </el-tag>
+                    </div>
+                    <p v-if="telegramLinked" class="text-xs text-gray-500">
+                        Connected as &#64;{{ telegramUsername }}
+                    </p>
+                    <p v-else class="text-xs text-gray-500">
+                        Connect your Telegram to receive order updates (payment confirmation, shipping, delivery).
+                    </p>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <el-button v-if="!telegramLinked" size="small" type="primary" plain
+                            :loading="connectingTelegram" @click="connectTelegramSimple">
+                            <Icon name="fa-brands:telegram-plane" class="mr-1" />
+                            Connect Telegram
+                        </el-button>
+                        <label v-if="telegramLinked" class="flex items-center gap-2 text-sm text-gray-600">
+                            <el-switch v-model="telegramAlertsEnabled" @change="saveAlertsViaProfile" />
+                            Enable alerts
+                        </label>
+                    </div>
+                    <p v-if="telegramStatusMessage" class="text-xs" :class="telegramStatusOk ? 'text-green-600' : 'text-amber-600'">
+                        {{ telegramStatusMessage }}
+                    </p>
+                </div>
+
                 <el-form-item label="Password" class="md:col-span-2">
                     <el-input disabled placeholder="Password change API is not available yet" />
                 </el-form-item>
@@ -161,6 +193,61 @@ const profileRules: FormRules<ProfileForm> = {
     ]
 }
 
+const telegramLinked = computed(() => {
+    const profile = (userProfile.value || {}) as Record<string, any>
+    return Boolean(profile.telegram_user_id || profile.telegram_chat_id)
+})
+
+const telegramUsername = computed(() => {
+    const profile = (userProfile.value || {}) as Record<string, any>
+    return String(profile.telegram_username || profile.telegram_user_id || '')
+})
+
+const telegramAlertsEnabled = ref(false)
+const connectingTelegram = ref(false)
+const telegramStatusMessage = ref('')
+const telegramStatusOk = ref(false)
+
+const connectTelegramSimple = async () => {
+    telegramStatusMessage.value = ''
+    connectingTelegram.value = true
+    try {
+        const response: any = await $fetch(`${apiBase}/telegram/connect-link`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: getAuthHeaders(),
+        })
+        const deepLink = response?.data?.deep_link
+        if (!deepLink) {
+            telegramStatusMessage.value = 'Unable to generate link.'
+            telegramStatusOk.value = false
+            return
+        }
+        window.open(deepLink, '_blank', 'noopener,noreferrer')
+        telegramStatusMessage.value = 'Telegram opened. Tap Start in the bot to connect.'
+        telegramStatusOk.value = true
+    } catch (err: any) {
+        telegramStatusMessage.value = err?.data?.message || 'Failed to connect.'
+        telegramStatusOk.value = false
+    } finally {
+        connectingTelegram.value = false
+    }
+}
+
+const saveAlertsViaProfile = async () => {
+    const previous = telegramAlertsEnabled.value
+    try {
+        await $fetch(`${apiBase}/profile`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: getAuthHeaders(),
+            body: { enable_telegram_alerts: telegramAlertsEnabled.value },
+        })
+    } catch {
+        telegramAlertsEnabled.value = previous
+    }
+}
+
 const userDisplayName = computed(() => {
     const profile = userProfile.value || {}
     return (
@@ -201,6 +288,7 @@ const fillProfileFormFromStore = () => {
     profileForm.dob = String(profile.dob || '')
     profileForm.address = String(profile.address || '')
     avatarPreview.value = String(profile.avatar_url || '')
+    telegramAlertsEnabled.value = Boolean(profile.enable_telegram_alerts)
 }
 
 const hydrateProfile = async () => {
